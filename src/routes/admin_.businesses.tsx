@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/admin/businesses")({ component: BusinessVetting });
+export const Route = createFileRoute("/admin_/businesses")({ component: BusinessVetting });
 
 function BusinessVetting() {
   const queryClient = useQueryClient();

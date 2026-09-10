@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import { CATEGORIES } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/admin/members")({ component: MembersPage });
+export const Route = createFileRoute("/admin_/members")({ component: MembersPage });
 
 const STATUSES = ["prospect", "applicant", "active", "suspended", "inactive"];
 

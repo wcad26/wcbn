@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { STAGES, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/admin/applications")({ component: ApplicationsPipeline });
+export const Route = createFileRoute("/admin_/applications")({ component: ApplicationsPipeline });
 
 function ApplicationsPipeline() {
   const queryClient = useQueryClient();
