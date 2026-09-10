@@ -23,6 +23,7 @@ function ContributionsPage() {
   const [method, setMethod] = useState("mobile_money");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
+  const [proof, setProof] = useState<File | null>(null);
 
   const { data } = useQuery({
     queryKey: ["portal", "contributions", wcbnId],
@@ -36,19 +37,31 @@ function ContributionsPage() {
     },
   });
 
+  const invoices = data?.invoices ?? [];
+  const selected = invoices.find((i) => i.id === invoiceId);
+  const currency = selected?.currency_code ?? invoices[0]?.currency_code ?? "XAF";
+  const outstanding = invoices.reduce((sum, i) => sum + Math.max(0, Number(i.amount) - Number(i.paid_amount)), 0);
+  const paidTotal = invoices.reduce((sum, i) => sum + Number(i.paid_amount), 0);
+  const today = new Date().toISOString().slice(0, 10);
+  const overdue = invoices.filter((i) => i.due_date < today && Number(i.paid_amount) < Number(i.amount));
+  const nextDue = invoices.filter((i) => Number(i.paid_amount) < Number(i.amount) && i.due_date >= today).sort((a, b) => a.due_date.localeCompare(b.due_date))[0];
+
   const declare = useMutation({
     mutationFn: async () => {
       if (!identity) throw new Error("Not signed in");
+      let proofPath: string | null = null;
+      if (proof) proofPath = await uploadDocument(identity.userId, "payments", proof);
       const { error } = await supabase.from("wcbn_payments").insert({
-        invoice_id: invoiceId, amount: Number(amount), currency_code: "XAF", method,
-        reference: reference || null, notes: notes || null, status: "declared", submitted_by: identity.userId, paid_at: new Date().toISOString(),
+        invoice_id: invoiceId, amount: Number(amount), currency_code: currency, method,
+        reference: reference || null, notes: notes || null, proof_url: proofPath, status: "declared", submitted_by: identity.userId, paid_at: new Date().toISOString(),
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Payment declared. Finance will confirm it shortly."); setAmount(""); setReference(""); setNotes("");
+    onSuccess: () => { toast.success("Payment declared. Finance will confirm it shortly."); setAmount(""); setReference(""); setNotes(""); setProof(null);
       queryClient.invalidateQueries({ queryKey: ["portal", "contributions"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   return (
     <MemberPage title="Contributions" description="Your dues schedule, invoices and payment history. Declare a payment you have already made and finance will confirm it.">
