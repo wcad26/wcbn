@@ -10,33 +10,261 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BusinessesRouteImport } from './routes/businesses'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ImpactRouteImport } from './routes/impact'
+import { Route as MembershipRouteImport } from './routes/membership'
+import { Route as PortalRouteImport } from './routes/portal'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
+import { Route as AdminBusinessesRouteImport } from './routes/admin.businesses'
+import { Route as AdminContributionsRouteImport } from './routes/admin.contributions'
+import { Route as AdminCriteriaRouteImport } from './routes/admin.criteria'
+import { Route as AdminMembersRouteImport } from './routes/admin.members'
+import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
+import { Route as PortalApplicationRouteImport } from './routes/portal.application'
+import { Route as PortalBusinessRouteImport } from './routes/portal.business'
+import { Route as PortalContributionsRouteImport } from './routes/portal.contributions'
+import { Route as PortalImpactRouteImport } from './routes/portal.impact'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessesRoute = BusinessesRouteImport.update({
+  id: '/businesses',
+  path: '/businesses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImpactRoute = ImpactRouteImport.update({
+  id: '/impact',
+  path: '/impact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipRoute = MembershipRouteImport.update({
+  id: '/membership',
+  path: '/membership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBusinessesRoute = AdminBusinessesRouteImport.update({
+  id: '/businesses',
+  path: '/businesses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContributionsRoute = AdminContributionsRouteImport.update({
+  id: '/contributions',
+  path: '/contributions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCriteriaRoute = AdminCriteriaRouteImport.update({
+  id: '/criteria',
+  path: '/criteria',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMembersRoute = AdminMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AdminRoute,
+} as any)
+const BusinessesSlugRoute = BusinessesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => BusinessesRoute,
+} as any)
+const PortalApplicationRoute = PortalApplicationRouteImport.update({
+  id: '/application',
+  path: '/application',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalBusinessRoute = PortalBusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalContributionsRoute = PortalContributionsRouteImport.update({
+  id: '/contributions',
+  path: '/contributions',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalImpactRoute = PortalImpactRouteImport.update({
+  id: '/impact',
+  path: '/impact',
+  getParentRoute: () => PortalRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/businesses': typeof BusinessesRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/impact': typeof ImpactRoute
+  '/membership': typeof MembershipRoute
+  '/portal': typeof PortalRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/contributions': typeof AdminContributionsRoute
+  '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/businesses/$slug': typeof BusinessesSlugRoute
+  '/portal/application': typeof PortalApplicationRoute
+  '/portal/business': typeof PortalBusinessRoute
+  '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/businesses': typeof BusinessesRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/impact': typeof ImpactRoute
+  '/membership': typeof MembershipRoute
+  '/portal': typeof PortalRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/contributions': typeof AdminContributionsRoute
+  '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/businesses/$slug': typeof BusinessesSlugRoute
+  '/portal/application': typeof PortalApplicationRoute
+  '/portal/business': typeof PortalBusinessRoute
+  '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/businesses': typeof BusinessesRouteWithChildren
+  '/contact': typeof ContactRoute
+  '/impact': typeof ImpactRoute
+  '/membership': typeof MembershipRoute
+  '/portal': typeof PortalRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/contributions': typeof AdminContributionsRoute
+  '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/businesses/$slug': typeof BusinessesSlugRoute
+  '/portal/application': typeof PortalApplicationRoute
+  '/portal/business': typeof PortalBusinessRoute
+  '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/auth'
+    | '/businesses'
+    | '/contact'
+    | '/impact'
+    | '/membership'
+    | '/portal'
+    | '/admin/applications'
+    | '/admin/businesses'
+    | '/admin/contributions'
+    | '/admin/criteria'
+    | '/admin/members'
+    | '/businesses/$slug'
+    | '/portal/application'
+    | '/portal/business'
+    | '/portal/contributions'
+    | '/portal/impact'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/auth'
+    | '/businesses'
+    | '/contact'
+    | '/impact'
+    | '/membership'
+    | '/portal'
+    | '/admin/applications'
+    | '/admin/businesses'
+    | '/admin/contributions'
+    | '/admin/criteria'
+    | '/admin/members'
+    | '/businesses/$slug'
+    | '/portal/application'
+    | '/portal/business'
+    | '/portal/contributions'
+    | '/portal/impact'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/admin'
+    | '/auth'
+    | '/businesses'
+    | '/contact'
+    | '/impact'
+    | '/membership'
+    | '/portal'
+    | '/admin/applications'
+    | '/admin/businesses'
+    | '/admin/contributions'
+    | '/admin/criteria'
+    | '/admin/members'
+    | '/businesses/$slug'
+    | '/portal/application'
+    | '/portal/business'
+    | '/portal/contributions'
+    | '/portal/impact'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  BusinessesRoute: typeof BusinessesRouteWithChildren
+  ContactRoute: typeof ContactRoute
+  ImpactRoute: typeof ImpactRoute
+  MembershipRoute: typeof MembershipRoute
+  PortalRoute: typeof PortalRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +276,192 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/businesses': {
+      id: '/businesses'
+      path: '/businesses'
+      fullPath: '/businesses'
+      preLoaderRoute: typeof BusinessesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/impact': {
+      id: '/impact'
+      path: '/impact'
+      fullPath: '/impact'
+      preLoaderRoute: typeof ImpactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership': {
+      id: '/membership'
+      path: '/membership'
+      fullPath: '/membership'
+      preLoaderRoute: typeof MembershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/applications'
+      fullPath: '/admin/applications'
+      preLoaderRoute: typeof AdminApplicationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/businesses': {
+      id: '/admin/businesses'
+      path: '/businesses'
+      fullPath: '/admin/businesses'
+      preLoaderRoute: typeof AdminBusinessesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contributions': {
+      id: '/admin/contributions'
+      path: '/contributions'
+      fullPath: '/admin/contributions'
+      preLoaderRoute: typeof AdminContributionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/criteria': {
+      id: '/admin/criteria'
+      path: '/criteria'
+      fullPath: '/admin/criteria'
+      preLoaderRoute: typeof AdminCriteriaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/members': {
+      id: '/admin/members'
+      path: '/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AdminMembersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/businesses/$slug': {
+      id: '/businesses/$slug'
+      path: '/$slug'
+      fullPath: '/businesses/$slug'
+      preLoaderRoute: typeof BusinessesSlugRouteImport
+      parentRoute: typeof BusinessesRoute
+    }
+    '/portal/application': {
+      id: '/portal/application'
+      path: '/application'
+      fullPath: '/portal/application'
+      preLoaderRoute: typeof PortalApplicationRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/business': {
+      id: '/portal/business'
+      path: '/business'
+      fullPath: '/portal/business'
+      preLoaderRoute: typeof PortalBusinessRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/contributions': {
+      id: '/portal/contributions'
+      path: '/contributions'
+      fullPath: '/portal/contributions'
+      preLoaderRoute: typeof PortalContributionsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/impact': {
+      id: '/portal/impact'
+      path: '/impact'
+      fullPath: '/portal/impact'
+      preLoaderRoute: typeof PortalImpactRouteImport
+      parentRoute: typeof PortalRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminApplicationsRoute: typeof AdminApplicationsRoute
+  AdminBusinessesRoute: typeof AdminBusinessesRoute
+  AdminContributionsRoute: typeof AdminContributionsRoute
+  AdminCriteriaRoute: typeof AdminCriteriaRoute
+  AdminMembersRoute: typeof AdminMembersRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminApplicationsRoute: AdminApplicationsRoute,
+  AdminBusinessesRoute: AdminBusinessesRoute,
+  AdminContributionsRoute: AdminContributionsRoute,
+  AdminCriteriaRoute: AdminCriteriaRoute,
+  AdminMembersRoute: AdminMembersRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface BusinessesRouteChildren {
+  BusinessesSlugRoute: typeof BusinessesSlugRoute
+}
+
+const BusinessesRouteChildren: BusinessesRouteChildren = {
+  BusinessesSlugRoute: BusinessesSlugRoute,
+}
+
+const BusinessesRouteWithChildren = BusinessesRoute._addFileChildren(
+  BusinessesRouteChildren,
+)
+
+interface PortalRouteChildren {
+  PortalApplicationRoute: typeof PortalApplicationRoute
+  PortalBusinessRoute: typeof PortalBusinessRoute
+  PortalContributionsRoute: typeof PortalContributionsRoute
+  PortalImpactRoute: typeof PortalImpactRoute
+}
+
+const PortalRouteChildren: PortalRouteChildren = {
+  PortalApplicationRoute: PortalApplicationRoute,
+  PortalBusinessRoute: PortalBusinessRoute,
+  PortalContributionsRoute: PortalContributionsRoute,
+  PortalImpactRoute: PortalImpactRoute,
+}
+
+const PortalRouteWithChildren =
+  PortalRoute._addFileChildren(PortalRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AuthRoute: AuthRoute,
+  BusinessesRoute: BusinessesRouteWithChildren,
+  ContactRoute: ContactRoute,
+  ImpactRoute: ImpactRoute,
+  MembershipRoute: MembershipRoute,
+  PortalRoute: PortalRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

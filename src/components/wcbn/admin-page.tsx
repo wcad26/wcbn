@@ -1,0 +1,3 @@
+import type { ReactNode } from "react";
+import { PortalShell } from "./portal-shell";
+export function AdminPage({title,description,action,children}:{title:string;description:string;action?:ReactNode;children:ReactNode}){return <PortalShell admin><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-gold">WCBN leadership</p><h1 className="mt-2 font-display text-4xl font-bold">{title}</h1><p className="mt-2 text-sm text-muted-foreground">{description}</p></div>{action}</div><div className="mt-8">{children}</div></PortalShell>}
