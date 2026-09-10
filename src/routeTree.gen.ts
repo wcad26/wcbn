@@ -23,10 +23,13 @@ import { Route as AdminBusinessesRouteImport } from './routes/admin.businesses'
 import { Route as AdminContributionsRouteImport } from './routes/admin.contributions'
 import { Route as AdminCriteriaRouteImport } from './routes/admin.criteria'
 import { Route as AdminMembersRouteImport } from './routes/admin.members'
+import { Route as AdminRolesRouteImport } from './routes/admin.roles'
+import { Route as AuthAdminRouteImport } from './routes/auth.admin'
 import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
 import { Route as PortalApplicationRouteImport } from './routes/portal.application'
 import { Route as PortalBusinessRouteImport } from './routes/portal.business'
 import { Route as PortalContributionsRouteImport } from './routes/portal.contributions'
+import { Route as PortalCovenantRouteImport } from './routes/portal.covenant'
 import { Route as PortalImpactRouteImport } from './routes/portal.impact'
 
 const IndexRoute = IndexRouteImport.update({
@@ -99,6 +102,16 @@ const AdminMembersRoute = AdminMembersRouteImport.update({
   path: '/members',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AuthAdminRoute = AuthAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthRoute,
+} as any)
 const BusinessesSlugRoute = BusinessesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -119,6 +132,11 @@ const PortalContributionsRoute = PortalContributionsRouteImport.update({
   path: '/contributions',
   getParentRoute: () => PortalRoute,
 } as any)
+const PortalCovenantRoute = PortalCovenantRouteImport.update({
+  id: '/covenant',
+  path: '/covenant',
+  getParentRoute: () => PortalRoute,
+} as any)
 const PortalImpactRoute = PortalImpactRouteImport.update({
   id: '/impact',
   path: '/impact',
@@ -129,7 +147,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
@@ -140,17 +158,20 @@ export interface FileRoutesByFullPath {
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/covenant': typeof PortalCovenantRoute
   '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
@@ -161,10 +182,13 @@ export interface FileRoutesByTo {
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/covenant': typeof PortalCovenantRoute
   '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRoutesById {
@@ -172,7 +196,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
@@ -183,10 +207,13 @@ export interface FileRoutesById {
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/roles': typeof AdminRolesRoute
+  '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/covenant': typeof PortalCovenantRoute
   '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRouteTypes {
@@ -206,10 +233,13 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/criteria'
     | '/admin/members'
+    | '/admin/roles'
+    | '/auth/admin'
     | '/businesses/$slug'
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
+    | '/portal/covenant'
     | '/portal/impact'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -227,10 +257,13 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/criteria'
     | '/admin/members'
+    | '/admin/roles'
+    | '/auth/admin'
     | '/businesses/$slug'
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
+    | '/portal/covenant'
     | '/portal/impact'
   id:
     | '__root__'
@@ -248,10 +281,13 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/criteria'
     | '/admin/members'
+    | '/admin/roles'
+    | '/auth/admin'
     | '/businesses/$slug'
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
+    | '/portal/covenant'
     | '/portal/impact'
   fileRoutesById: FileRoutesById
 }
@@ -259,7 +295,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   BusinessesRoute: typeof BusinessesRouteWithChildren
   ContactRoute: typeof ContactRoute
   ImpactRoute: typeof ImpactRoute
@@ -367,6 +403,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMembersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/auth/admin': {
+      id: '/auth/admin'
+      path: '/admin'
+      fullPath: '/auth/admin'
+      preLoaderRoute: typeof AuthAdminRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/businesses/$slug': {
       id: '/businesses/$slug'
       path: '/$slug'
@@ -395,6 +445,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalContributionsRouteImport
       parentRoute: typeof PortalRoute
     }
+    '/portal/covenant': {
+      id: '/portal/covenant'
+      path: '/covenant'
+      fullPath: '/portal/covenant'
+      preLoaderRoute: typeof PortalCovenantRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/portal/impact': {
       id: '/portal/impact'
       path: '/impact'
@@ -411,6 +468,7 @@ interface AdminRouteChildren {
   AdminContributionsRoute: typeof AdminContributionsRoute
   AdminCriteriaRoute: typeof AdminCriteriaRoute
   AdminMembersRoute: typeof AdminMembersRoute
+  AdminRolesRoute: typeof AdminRolesRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -419,9 +477,20 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContributionsRoute: AdminContributionsRoute,
   AdminCriteriaRoute: AdminCriteriaRoute,
   AdminMembersRoute: AdminMembersRoute,
+  AdminRolesRoute: AdminRolesRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface AuthRouteChildren {
+  AuthAdminRoute: typeof AuthAdminRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthAdminRoute: AuthAdminRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 interface BusinessesRouteChildren {
   BusinessesSlugRoute: typeof BusinessesSlugRoute
@@ -439,6 +508,7 @@ interface PortalRouteChildren {
   PortalApplicationRoute: typeof PortalApplicationRoute
   PortalBusinessRoute: typeof PortalBusinessRoute
   PortalContributionsRoute: typeof PortalContributionsRoute
+  PortalCovenantRoute: typeof PortalCovenantRoute
   PortalImpactRoute: typeof PortalImpactRoute
 }
 
@@ -446,6 +516,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalApplicationRoute: PortalApplicationRoute,
   PortalBusinessRoute: PortalBusinessRoute,
   PortalContributionsRoute: PortalContributionsRoute,
+  PortalCovenantRoute: PortalCovenantRoute,
   PortalImpactRoute: PortalImpactRoute,
 }
 
@@ -456,7 +527,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   BusinessesRoute: BusinessesRouteWithChildren,
   ContactRoute: ContactRoute,
   ImpactRoute: ImpactRoute,

@@ -1,12 +1,86 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, SlidersHorizontal } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Search } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { PublicPage } from "@/components/wcbn/public-page";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import { SDGS } from "@/lib/wcbn";
 
-export const Route=createFileRoute("/businesses")({head:()=>({meta:[{title:"Vetted Business Catalog | WCBN"},{name:"description",content:"Discover trusted businesses led by validated members of the World Changers Business Network."},{property:"og:title",content:"WCBN Business Catalog"},{property:"og:description",content:"Explore vetted enterprises creating ethical and measurable impact."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:Businesses});
-type Business=Database["public"]["Tables"]["wcbn_businesses"]["Row"];
-function Businesses(){const [items,setItems]=useState<Business[]>([]);const [query,setQuery]=useState("");useEffect(()=>{supabase.from("wcbn_businesses").select("*").eq("is_active",true).eq("vetting_status","approved").order("is_featured",{ascending:false}).then(({data})=>setItems(data??[]))},[]);const filtered=useMemo(()=>items.filter(x=>`${x.display_name} ${x.sector} ${x.country}`.toLowerCase().includes(query.toLowerCase())),[items,query]);return <PublicPage eyebrow="Business catalog" title="Trusted enterprises. Meaningful impact." intro="Explore businesses vetted for legitimacy, integrity, excellence and contribution."><section className="mx-auto max-w-7xl px-5 py-20 lg:px-8"><div className="flex gap-3"><div className="relative flex-1"><Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"/><Input value={query} onChange={e=>setQuery(e.target.value)} className="h-12 pl-11" placeholder="Search businesses, sectors or countries"/></div><Button variant="outline" size="lg"><SlidersHorizontal/> Filters</Button></div>{filtered.length?<div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{filtered.map(x=><Link key={x.id} to="/businesses/$slug" params={{slug:x.slug}} className="group border border-border bg-card"><div className="aspect-[16/9] overflow-hidden bg-secondary">{x.cover_url&&<img src={x.cover_url} alt={`${x.display_name} cover`} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy"/>}</div><div className="p-6"><p className="text-xs font-semibold uppercase tracking-[0.12em] text-gold">{x.sector}</p><h2 className="mt-3 font-display text-2xl font-bold">{x.display_name}</h2><p className="mt-2 text-sm text-muted-foreground">{x.city?`${x.city}, `:""}{x.country}</p><p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">{x.summary}</p></div></Link>)}</div>:<div className="mt-16 border-y border-border py-20 text-center"><h2 className="font-display text-2xl font-bold">The catalog is being curated.</h2><p className="mt-3 text-muted-foreground">Vetted and activated member businesses will appear here.</p></div>}</section></PublicPage>}
+export const Route = createFileRoute("/businesses")({
+  head: () => ({ meta: [
+    { title: "Vetted Business Catalog | WCBN" },
+    { name: "description", content: "Discover trusted businesses led by validated members of the World Changers Business Network." },
+    { property: "og:title", content: "WCBN Business Catalog" },
+    { property: "og:description", content: "Explore vetted enterprises creating ethical and measurable impact." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ]}),
+  component: Businesses,
+});
+
+function Businesses() {
+  const [query, setQuery] = useState("");
+  const [sector, setSector] = useState("");
+  const [country, setCountry] = useState("");
+  const [sdg, setSdg] = useState("");
+
+  const { data: items = [], isLoading } = useQuery({
+    queryKey: ["public", "businesses"],
+    queryFn: async () => (await supabase
+      .from("wcbn_businesses")
+      .select("id, slug, display_name, sector, country, city, summary, cover_url, logo_url, is_featured, wcbn_business_sdgs(sdg_number)")
+      .eq("is_active", true).eq("vetting_status", "approved")
+      .order("is_featured", { ascending: false })).data ?? [],
+  });
+
+  const sectors = [...new Set(items.map((i) => i.sector))].sort();
+  const countries = [...new Set(items.map((i) => i.country))].sort();
+
+  const filtered = useMemo(() => items.filter((x) => {
+    const sdgs = (x.wcbn_business_sdgs as { sdg_number: number }[] | null)?.map((s) => s.sdg_number) ?? [];
+    return `${x.display_name} ${x.sector} ${x.country}`.toLowerCase().includes(query.toLowerCase())
+      && (!sector || x.sector === sector) && (!country || x.country === country) && (!sdg || sdgs.includes(Number(sdg)));
+  }), [items, query, sector, country, sdg]);
+
+  return (
+    <PublicPage eyebrow="Business catalog" title="Trusted enterprises. Meaningful impact." intro="Every listing here is led by a validated WCBN member and vetted for legitimacy, integrity, excellence and contribution.">
+      <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+        <div className="grid gap-3 md:grid-cols-[1fr_auto_auto_auto]">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={query} onChange={(e) => setQuery(e.target.value)} className="h-12 rounded-2xl pl-11" placeholder="Search businesses, sectors or countries" />
+          </div>
+          <select value={sector} onChange={(e) => setSector(e.target.value)} className="h-12 rounded-2xl border border-input bg-background px-4 text-sm"><option value="">All sectors</option>{sectors.map((s) => <option key={s}>{s}</option>)}</select>
+          <select value={country} onChange={(e) => setCountry(e.target.value)} className="h-12 rounded-2xl border border-input bg-background px-4 text-sm"><option value="">All countries</option>{countries.map((c) => <option key={c}>{c}</option>)}</select>
+          <select value={sdg} onChange={(e) => setSdg(e.target.value)} className="h-12 rounded-2xl border border-input bg-background px-4 text-sm"><option value="">All SDGs</option>{SDGS.map((l, i) => <option key={l} value={i + 1}>{i + 1}. {l}</option>)}</select>
+        </div>
+
+        {isLoading && <p className="mt-12 text-sm text-muted-foreground">Loading the catalog…</p>}
+
+        {!isLoading && (filtered.length ? (
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((x) => (
+              <Link key={x.id} to="/businesses/$slug" params={{ slug: x.slug }} className="group overflow-hidden rounded-3xl border border-border bg-card shadow-card transition hover:-translate-y-1">
+                <div className="aspect-[16/9] overflow-hidden bg-secondary">
+                  {x.cover_url ? <img src={x.cover_url} alt={`${x.display_name} cover`} className="size-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" /> : <div className="size-full gradient-brand opacity-80" />}
+                </div>
+                <div className="p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">{x.sector}</p>
+                  <h2 className="mt-3 text-xl font-bold">{x.display_name}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{x.city ? `${x.city}, ` : ""}{x.country}</p>
+                  <p className="mt-4 line-clamp-3 text-sm leading-6 text-muted-foreground">{x.summary}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-16 rounded-3xl border border-border bg-card py-20 text-center shadow-card">
+            <h2 className="text-2xl font-bold">The catalog is being curated.</h2>
+            <p className="mt-3 text-muted-foreground">Vetted and activated member businesses will appear here.</p>
+          </div>
+        ))}
+      </section>
+    </PublicPage>
+  );
+}
