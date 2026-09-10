@@ -23,6 +23,7 @@ import { Route as AdminBusinessesRouteImport } from './routes/admin.businesses'
 import { Route as AdminContributionsRouteImport } from './routes/admin.contributions'
 import { Route as AdminCriteriaRouteImport } from './routes/admin.criteria'
 import { Route as AdminMembersRouteImport } from './routes/admin.members'
+import { Route as AdminRolesRouteImport } from './routes/admin.roles'
 import { Route as AuthAdminRouteImport } from './routes/auth.admin'
 import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
 import { Route as PortalApplicationRouteImport } from './routes/portal.application'
@@ -101,6 +102,11 @@ const AdminMembersRoute = AdminMembersRouteImport.update({
   path: '/members',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRolesRoute = AdminRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AuthAdminRoute = AuthAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/portal/application': typeof PortalApplicationRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/portal/application': typeof PortalApplicationRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/portal/application': typeof PortalApplicationRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/criteria'
     | '/admin/members'
+    | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
     | '/portal/application'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/criteria'
     | '/admin/members'
+    | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
     | '/portal/application'
@@ -270,6 +281,7 @@ export interface FileRouteTypes {
     | '/admin/contributions'
     | '/admin/criteria'
     | '/admin/members'
+    | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
     | '/portal/application'
@@ -391,6 +403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMembersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/roles'
+      fullPath: '/admin/roles'
+      preLoaderRoute: typeof AdminRolesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/auth/admin': {
       id: '/auth/admin'
       path: '/admin'
@@ -449,6 +468,7 @@ interface AdminRouteChildren {
   AdminContributionsRoute: typeof AdminContributionsRoute
   AdminCriteriaRoute: typeof AdminCriteriaRoute
   AdminMembersRoute: typeof AdminMembersRoute
+  AdminRolesRoute: typeof AdminRolesRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -457,6 +477,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminContributionsRoute: AdminContributionsRoute,
   AdminCriteriaRoute: AdminCriteriaRoute,
   AdminMembersRoute: AdminMembersRoute,
+  AdminRolesRoute: AdminRolesRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
