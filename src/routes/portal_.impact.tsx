@@ -82,16 +82,22 @@ function ImpactPage() {
     mutationFn: async () => {
       if (!identity) throw new Error("Not signed in");
       const memberId = await ensureWcbnMember(identity);
-      const { error } = await supabase.from("wcbn_annual_reviews").insert({
+      const payload = {
         wcbn_member_id: memberId, review_year: year,
         jobs_created: Number(review.jobs_created || 0), people_trained: Number(review.people_trained || 0),
         businesses_supported: Number(review.businesses_supported || 0), community_initiatives: Number(review.community_initiatives || 0),
         achievements: review.achievements || null, challenges: review.challenges || null, next_objectives: review.next_objectives || null,
         sdg_evidence: sdgs, status: "submitted", submitted_at: new Date().toISOString(),
-      });
-      if (error) throw error;
+      };
+      if (currentReview) {
+        const { error } = await supabase.from("wcbn_annual_reviews").update(payload).eq("id", currentReview.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("wcbn_annual_reviews").insert(payload);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => { toast.success(`${year} impact review submitted`); queryClient.invalidateQueries({ queryKey: ["portal", "impact"] }); },
+    onSuccess: () => { toast.success(`${year} impact review saved`); queryClient.invalidateQueries({ queryKey: ["portal", "impact"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
