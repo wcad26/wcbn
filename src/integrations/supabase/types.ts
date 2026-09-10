@@ -2848,6 +2848,871 @@ export type Database = {
           },
         ]
       }
+      wcbn_annual_reviews: {
+        Row: {
+          achievements: string | null
+          business_status: string | null
+          businesses_supported: number
+          challenges: string | null
+          community_initiatives: number
+          created_at: string
+          id: string
+          jobs_created: number
+          next_objectives: string | null
+          people_trained: number
+          review_year: number
+          reviewed_by: string | null
+          sdg_evidence: Json
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          wcbn_member_id: string
+        }
+        Insert: {
+          achievements?: string | null
+          business_status?: string | null
+          businesses_supported?: number
+          challenges?: string | null
+          community_initiatives?: number
+          created_at?: string
+          id?: string
+          jobs_created?: number
+          next_objectives?: string | null
+          people_trained?: number
+          review_year: number
+          reviewed_by?: string | null
+          sdg_evidence?: Json
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          wcbn_member_id: string
+        }
+        Update: {
+          achievements?: string | null
+          business_status?: string | null
+          businesses_supported?: number
+          challenges?: string | null
+          community_initiatives?: number
+          created_at?: string
+          id?: string
+          jobs_created?: number
+          next_objectives?: string | null
+          people_trained?: number
+          review_year?: number
+          reviewed_by?: string | null
+          sdg_evidence?: Json
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          wcbn_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_annual_reviews_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_annual_reviews_wcbn_member_id_fkey"
+            columns: ["wcbn_member_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_application_stages: {
+        Row: {
+          application_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          reviewer_id: string | null
+          risk_level: string | null
+          stage_code: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reviewer_id?: string | null
+          risk_level?: string | null
+          stage_code: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reviewer_id?: string | null
+          risk_level?: string | null
+          stage_code?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_application_stages_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_application_stages_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_applications: {
+        Row: {
+          applicant_data: Json
+          created_at: string
+          criteria_version_id: string
+          current_stage: string
+          dcg_verified: boolean
+          decided_at: string | null
+          decided_by: string | null
+          decision_reason: string | null
+          id: string
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          wca_verified: boolean
+          wcbn_member_id: string
+        }
+        Insert: {
+          applicant_data?: Json
+          created_at?: string
+          criteria_version_id: string
+          current_stage?: string
+          dcg_verified?: boolean
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_reason?: string | null
+          id?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          wca_verified?: boolean
+          wcbn_member_id: string
+        }
+        Update: {
+          applicant_data?: Json
+          created_at?: string
+          criteria_version_id?: string
+          current_stage?: string
+          dcg_verified?: boolean
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_reason?: string | null
+          id?: string
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          wca_verified?: boolean
+          wcbn_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_applications_criteria_version_id_fkey"
+            columns: ["criteria_version_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_criteria_versions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_applications_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_applications_wcbn_member_id_fkey"
+            columns: ["wcbn_member_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_business_sdgs: {
+        Row: {
+          business_id: string
+          contribution: string | null
+          sdg_number: number
+        }
+        Insert: {
+          business_id: string
+          contribution?: string | null
+          sdg_number: number
+        }
+        Update: {
+          business_id?: string
+          contribution?: string | null
+          sdg_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_business_sdgs_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_businesses: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          city: string | null
+          country: string
+          cover_url: string | null
+          created_at: string
+          description: string | null
+          display_name: string
+          email: string | null
+          employee_count: number | null
+          gallery: Json
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          legal_name: string
+          logo_url: string | null
+          markets: Json
+          owner_member_id: string
+          phone: string | null
+          products_services: Json
+          registration_number: string | null
+          risk_level: string
+          sector: string
+          slug: string
+          summary: string | null
+          updated_at: string
+          vetting_status: string
+          website_url: string | null
+          years_operating: number | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          city?: string | null
+          country: string
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_name: string
+          email?: string | null
+          employee_count?: number | null
+          gallery?: Json
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          legal_name: string
+          logo_url?: string | null
+          markets?: Json
+          owner_member_id: string
+          phone?: string | null
+          products_services?: Json
+          registration_number?: string | null
+          risk_level?: string
+          sector: string
+          slug: string
+          summary?: string | null
+          updated_at?: string
+          vetting_status?: string
+          website_url?: string | null
+          years_operating?: number | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          city?: string | null
+          country?: string
+          cover_url?: string | null
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          email?: string | null
+          employee_count?: number | null
+          gallery?: Json
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          legal_name?: string
+          logo_url?: string | null
+          markets?: Json
+          owner_member_id?: string
+          phone?: string | null
+          products_services?: Json
+          registration_number?: string | null
+          risk_level?: string
+          sector?: string
+          slug?: string
+          summary?: string | null
+          updated_at?: string
+          vetting_status?: string
+          website_url?: string | null
+          years_operating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_businesses_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_businesses_owner_member_id_fkey"
+            columns: ["owner_member_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_criteria: {
+        Row: {
+          code: string
+          config: Json
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          is_disqualifying: boolean
+          is_required: boolean
+          label: string
+          section: string
+          version_id: string
+          weight: number
+        }
+        Insert: {
+          code: string
+          config?: Json
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_disqualifying?: boolean
+          is_required?: boolean
+          label: string
+          section: string
+          version_id: string
+          weight?: number
+        }
+        Update: {
+          code?: string
+          config?: Json
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          is_disqualifying?: boolean
+          is_required?: boolean
+          label?: string
+          section?: string
+          version_id?: string
+          weight?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_criteria_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_criteria_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_criteria_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          minimum_score: number
+          name: string
+          strong_score: number
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          minimum_score?: number
+          name: string
+          strong_score?: number
+          version_number: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          minimum_score?: number
+          name?: string
+          strong_score?: number
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_criteria_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_dues_plans: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          currency_code: string
+          frequency: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          currency_code: string
+          frequency: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          currency_code?: string
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_dues_plans_currency_code_fkey"
+            columns: ["currency_code"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      wcbn_impact_commitments: {
+        Row: {
+          created_at: string
+          id: string
+          measures: Json
+          sdg_numbers: number[]
+          statement: string
+          status: string
+          target_year: number
+          updated_at: string
+          wcbn_member_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          measures?: Json
+          sdg_numbers?: number[]
+          statement: string
+          status?: string
+          target_year: number
+          updated_at?: string
+          wcbn_member_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          measures?: Json
+          sdg_numbers?: number[]
+          statement?: string
+          status?: string
+          target_year?: number
+          updated_at?: string
+          wcbn_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_impact_commitments_wcbn_member_id_fkey"
+            columns: ["wcbn_member_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          currency_code: string
+          due_date: string
+          dues_plan_id: string | null
+          id: string
+          invoice_number: string
+          paid_amount: number
+          period_end: string
+          period_start: string
+          status: string
+          updated_at: string
+          wcbn_member_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency_code: string
+          due_date: string
+          dues_plan_id?: string | null
+          id?: string
+          invoice_number: string
+          paid_amount?: number
+          period_end: string
+          period_start: string
+          status?: string
+          updated_at?: string
+          wcbn_member_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency_code?: string
+          due_date?: string
+          dues_plan_id?: string | null
+          id?: string
+          invoice_number?: string
+          paid_amount?: number
+          period_end?: string
+          period_start?: string
+          status?: string
+          updated_at?: string
+          wcbn_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_invoices_currency_code_fkey"
+            columns: ["currency_code"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "wcbn_invoices_dues_plan_id_fkey"
+            columns: ["dues_plan_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_dues_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_invoices_wcbn_member_id_fkey"
+            columns: ["wcbn_member_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_members: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          inducted_at: string | null
+          member_id: string
+          next_review_date: string | null
+          profile_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          inducted_at?: string | null
+          member_id: string
+          next_review_date?: string | null
+          profile_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          inducted_at?: string | null
+          member_id?: string
+          next_review_date?: string | null
+          profile_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_members_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: true
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency_code: string
+          id: string
+          invoice_id: string
+          method: string
+          notes: string | null
+          paid_at: string | null
+          proof_url: string | null
+          provider: string | null
+          reference: string | null
+          status: string
+          submitted_by: string
+          updated_at: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency_code: string
+          id?: string
+          invoice_id: string
+          method: string
+          notes?: string | null
+          paid_at?: string | null
+          proof_url?: string | null
+          provider?: string | null
+          reference?: string | null
+          status?: string
+          submitted_by: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency_code?: string
+          id?: string
+          invoice_id?: string
+          method?: string
+          notes?: string | null
+          paid_at?: string | null
+          proof_url?: string | null
+          provider?: string | null
+          reference?: string | null
+          status?: string
+          submitted_by?: string
+          updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_payments_currency_code_fkey"
+            columns: ["currency_code"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "wcbn_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_payments_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_payments_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          permissions: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          permissions?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          permissions?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      wcbn_scores: {
+        Row: {
+          application_id: string
+          created_at: string
+          criterion_id: string
+          id: string
+          is_red_flag: boolean
+          notes: string | null
+          reviewer_id: string
+          score: number
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          criterion_id: string
+          id?: string
+          is_red_flag?: boolean
+          notes?: string | null
+          reviewer_id: string
+          score?: number
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          criterion_id?: string
+          id?: string
+          is_red_flag?: boolean
+          notes?: string | null
+          reviewer_id?: string
+          score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_scores_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_scores_criterion_id_fkey"
+            columns: ["criterion_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_scores_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_user_roles: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          is_active: boolean
+          role_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean
+          role_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          is_active?: boolean
+          role_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_user_roles_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_user_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2962,6 +3827,10 @@ export type Database = {
       }
       user_belongs_to_region: {
         Args: { _region_id: string; _user_id: string }
+        Returns: boolean
+      }
+      wcbn_has_permission: {
+        Args: { _permission: string; _user_id: string }
         Returns: boolean
       }
     }
