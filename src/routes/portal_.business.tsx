@@ -120,7 +120,25 @@ function BusinessPage() {
         </aside>
 
         <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-          <h2 className="text-lg font-semibold">{editingId ? "Edit listing" : "New listing"}</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">{editingId ? "Edit listing" : "New listing"}</h2>
+            {current && (
+              <div className="flex flex-wrap items-center gap-2">
+                {current.is_active && current.slug && (
+                  <Button asChild variant="outline" size="sm"><Link to="/businesses/$slug" params={{ slug: current.slug }}><ExternalLink />View public page</Link></Button>
+                )}
+                <Button variant="ghost" size="sm" disabled={remove.isPending} onClick={() => { if (confirm("Remove this listing?")) remove.mutate(current.id); }}><Trash2 />Remove</Button>
+              </div>
+            )}
+          </div>
+          {current && (
+            <p className="mt-3 rounded-2xl bg-muted p-3 text-xs text-muted-foreground">
+              {current.is_active ? "This listing is live in the public catalog."
+                : current.vetting_status === "approved" ? "Approved by leadership. It will appear publicly once activated."
+                : current.vetting_status === "rejected" ? `Not approved.${current.vetting_notes ? ` ${current.vetting_notes}` : " Contact WCBN leadership for guidance."}`
+                : "Awaiting vetting by WCBN leadership. You can keep editing until it is approved."}
+            </p>
+          )}
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <F label="Business name"><Input value={form.display_name} onChange={(e) => set("display_name", e.target.value)} /></F>
             <F label="Registered legal name"><Input value={form.legal_name} onChange={(e) => set("legal_name", e.target.value)} /></F>
@@ -141,7 +159,7 @@ function BusinessPage() {
               <Label className="mb-3 block">SDG contributions</Label>
               <div className="flex flex-wrap gap-2">
                 {SDGS.map((label, i) => { const n = i + 1; const on = form.sdgs.includes(n);
-                  return <button type="button" key={n} onClick={() => set("sdgs", on ? form.sdgs.filter((s) => s !== n) : [...form.sdgs, n])} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${on ? "gradient-brand text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"}`}>{n}. {label}</button>;
+                  return <button type="button" key={n} onClick={() => set("sdgs", on ? form.sdgs.filter((s) => s !== n) : [...form.sdgs, n])} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${on ? "gradient-brand text-white" : "bg-muted text-muted-foreground hover:bg-secondary"}`}>{n}. {label}</button>;
                 })}
               </div>
             </div>
