@@ -1,0 +1,8 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { PublicPage } from "@/components/wcbn/public-page";
+
+export const Route=createFileRoute("/businesses")({head:()=>({meta:[{title:"Vetted Business Catalog | WCBN"},{name:"description",content:"Discover trusted businesses led by validated members of the World Changers Business Network."},{property:"og:title",content:"WCBN Business Catalog"},{property:"og:description",content:"Explore vetted enterprises creating ethical and measurable impact."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}]}),component:Businesses});
+function Businesses(){return <PublicPage eyebrow="Business catalog" title="Trusted enterprises. Meaningful impact." intro="Explore businesses vetted for legitimacy, integrity, excellence and contribution."><section className="mx-auto max-w-7xl px-5 py-20 lg:px-8"><div className="flex gap-3"><div className="relative flex-1"><Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"/><Input className="h-12 pl-11" placeholder="Search businesses, sectors or countries"/></div><Button variant="outline" size="lg"><SlidersHorizontal/> Filters</Button></div><div className="mt-16 border-y border-border py-20 text-center"><h2 className="font-display text-2xl font-bold">The catalog is being curated.</h2><p className="mt-3 text-muted-foreground">Vetted and activated member businesses will appear here.</p></div></section></PublicPage>}

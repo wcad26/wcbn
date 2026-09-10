@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Building2, Globe2, Handshake, Sparkles } from "lucide-react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/wcbn/page-shell";
 import { SectionHeading } from "@/components/wcbn/section-heading";
@@ -33,4 +34,4 @@ function Index() {
 }
 
 function Stat({ number, label }: { number: string; label: string }) { return <div className="border-r border-primary-foreground/15 px-5 py-8 text-center"><strong className="block font-display text-3xl md:text-4xl">{number}</strong><span className="mt-2 block text-xs uppercase tracking-[0.12em] text-primary-foreground/60">{label}</span></div>; }
-function Feature({ icon, title, copy }: { icon: React.ReactNode; title: string; copy: string }) { return <article className="border border-primary-foreground/15 p-7 text-primary-foreground"><span className="grid size-11 place-items-center rounded-md bg-gold text-ink">{icon}</span><h3 className="mt-8 font-display text-xl font-bold">{title}</h3><p className="mt-3 text-sm leading-7 text-primary-foreground/60">{copy}</p></article>; }
+function Feature({ icon, title, copy }: { icon: ReactNode; title: string; copy: string }) { return <article className="border border-primary-foreground/15 p-7 text-primary-foreground"><span className="grid size-11 place-items-center rounded-md bg-gold text-ink">{icon}</span><h3 className="mt-8 font-display text-xl font-bold">{title}</h3><p className="mt-3 text-sm leading-7 text-primary-foreground/60">{copy}</p></article>; }
