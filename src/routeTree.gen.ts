@@ -28,6 +28,7 @@ import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
 import { Route as PortalApplicationRouteImport } from './routes/portal.application'
 import { Route as PortalBusinessRouteImport } from './routes/portal.business'
 import { Route as PortalContributionsRouteImport } from './routes/portal.contributions'
+import { Route as PortalCovenantRouteImport } from './routes/portal.covenant'
 import { Route as PortalImpactRouteImport } from './routes/portal.impact'
 
 const IndexRoute = IndexRouteImport.update({
@@ -125,6 +126,11 @@ const PortalContributionsRoute = PortalContributionsRouteImport.update({
   path: '/contributions',
   getParentRoute: () => PortalRoute,
 } as any)
+const PortalCovenantRoute = PortalCovenantRouteImport.update({
+  id: '/covenant',
+  path: '/covenant',
+  getParentRoute: () => PortalRoute,
+} as any)
 const PortalImpactRoute = PortalImpactRouteImport.update({
   id: '/impact',
   path: '/impact',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/covenant': typeof PortalCovenantRoute
   '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRoutesByTo {
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/covenant': typeof PortalCovenantRoute
   '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRoutesById {
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/covenant': typeof PortalCovenantRoute
   '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRouteTypes {
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
+    | '/portal/covenant'
     | '/portal/impact'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
+    | '/portal/covenant'
     | '/portal/impact'
   id:
     | '__root__'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
+    | '/portal/covenant'
     | '/portal/impact'
   fileRoutesById: FileRoutesById
 }
@@ -414,6 +426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalContributionsRouteImport
       parentRoute: typeof PortalRoute
     }
+    '/portal/covenant': {
+      id: '/portal/covenant'
+      path: '/covenant'
+      fullPath: '/portal/covenant'
+      preLoaderRoute: typeof PortalCovenantRouteImport
+      parentRoute: typeof PortalRoute
+    }
     '/portal/impact': {
       id: '/portal/impact'
       path: '/impact'
@@ -468,6 +487,7 @@ interface PortalRouteChildren {
   PortalApplicationRoute: typeof PortalApplicationRoute
   PortalBusinessRoute: typeof PortalBusinessRoute
   PortalContributionsRoute: typeof PortalContributionsRoute
+  PortalCovenantRoute: typeof PortalCovenantRoute
   PortalImpactRoute: typeof PortalImpactRoute
 }
 
@@ -475,6 +495,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalApplicationRoute: PortalApplicationRoute,
   PortalBusinessRoute: PortalBusinessRoute,
   PortalContributionsRoute: PortalContributionsRoute,
+  PortalCovenantRoute: PortalCovenantRoute,
   PortalImpactRoute: PortalImpactRoute,
 }
 
