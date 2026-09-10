@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AdminPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useIdentity } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/admin/businesses")({ component: BusinessVetting });
@@ -19,7 +20,7 @@ function BusinessVetting() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+    mutationFn: async ({ id, patch }: { id: string; patch: TablesUpdate<"wcbn_businesses"> }) => {
       const { error } = await supabase.from("wcbn_businesses").update(patch).eq("id", id);
       if (error) throw error;
     },

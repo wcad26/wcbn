@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AdminPage } from "@/components/wcbn/admin-page";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { CATEGORIES } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/admin/members")({ component: MembersPage });
@@ -24,7 +25,7 @@ function MembersPage() {
   });
 
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, string> }) => {
+    mutationFn: async ({ id, patch }: { id: string; patch: TablesUpdate<"wcbn_members"> }) => {
       const { error } = await supabase.from("wcbn_members").update(patch).eq("id", id);
       if (error) throw error;
     },

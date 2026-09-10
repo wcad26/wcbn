@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useIdentity } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/admin/criteria")({ component: CriteriaPage });
@@ -28,7 +29,7 @@ function CriteriaPage() {
   });
 
   const updateCriterion = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Record<string, unknown> }) => {
+    mutationFn: async ({ id, patch }: { id: string; patch: TablesUpdate<"wcbn_criteria"> }) => {
       const { error } = await supabase.from("wcbn_criteria").update(patch).eq("id", id);
       if (error) throw error;
     },
@@ -37,7 +38,7 @@ function CriteriaPage() {
   });
 
   const updateVersion = useMutation({
-    mutationFn: async (patch: Record<string, unknown>) => {
+    mutationFn: async (patch: TablesUpdate<"wcbn_criteria">) => {
       if (!data?.active) return;
       const { error } = await supabase.from("wcbn_criteria_versions").update(patch).eq("id", data.active.id);
       if (error) throw error;
