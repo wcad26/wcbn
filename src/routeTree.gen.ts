@@ -26,11 +26,11 @@ import { Route as AdminMembersRouteImport } from './routes/admin_.members'
 import { Route as AdminRolesRouteImport } from './routes/admin_.roles'
 import { Route as AuthAdminRouteImport } from './routes/auth_.admin'
 import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
-import { Route as PortalApplicationRouteImport } from './routes/portal.application'
-import { Route as PortalBusinessRouteImport } from './routes/portal.business'
-import { Route as PortalContributionsRouteImport } from './routes/portal.contributions'
-import { Route as PortalCovenantRouteImport } from './routes/portal.covenant'
-import { Route as PortalImpactRouteImport } from './routes/portal.impact'
+import { Route as PortalApplicationRouteImport } from './routes/portal_.application'
+import { Route as PortalBusinessRouteImport } from './routes/portal_.business'
+import { Route as PortalContributionsRouteImport } from './routes/portal_.contributions'
+import { Route as PortalCovenantRouteImport } from './routes/portal_.covenant'
+import { Route as PortalImpactRouteImport } from './routes/portal_.impact'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -118,29 +118,29 @@ const BusinessesSlugRoute = BusinessesSlugRouteImport.update({
   getParentRoute: () => BusinessesRoute,
 } as any)
 const PortalApplicationRoute = PortalApplicationRouteImport.update({
-  id: '/application',
-  path: '/application',
-  getParentRoute: () => PortalRoute,
+  id: '/portal_/application',
+  path: '/portal/application',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PortalBusinessRoute = PortalBusinessRouteImport.update({
-  id: '/business',
-  path: '/business',
-  getParentRoute: () => PortalRoute,
+  id: '/portal_/business',
+  path: '/portal/business',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PortalContributionsRoute = PortalContributionsRouteImport.update({
-  id: '/contributions',
-  path: '/contributions',
-  getParentRoute: () => PortalRoute,
+  id: '/portal_/contributions',
+  path: '/portal/contributions',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PortalCovenantRoute = PortalCovenantRouteImport.update({
-  id: '/covenant',
-  path: '/covenant',
-  getParentRoute: () => PortalRoute,
+  id: '/portal_/covenant',
+  path: '/portal/covenant',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PortalImpactRoute = PortalImpactRouteImport.update({
-  id: '/impact',
-  path: '/impact',
-  getParentRoute: () => PortalRoute,
+  id: '/portal_/impact',
+  path: '/portal/impact',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -152,7 +152,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
-  '/portal': typeof PortalRouteWithChildren
+  '/portal': typeof PortalRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/businesses': typeof AdminBusinessesRoute
   '/admin/contributions': typeof AdminContributionsRoute
@@ -176,7 +176,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
-  '/portal': typeof PortalRouteWithChildren
+  '/portal': typeof PortalRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/businesses': typeof AdminBusinessesRoute
   '/admin/contributions': typeof AdminContributionsRoute
@@ -201,7 +201,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
-  '/portal': typeof PortalRouteWithChildren
+  '/portal': typeof PortalRoute
   '/admin_/applications': typeof AdminApplicationsRoute
   '/admin_/businesses': typeof AdminBusinessesRoute
   '/admin_/contributions': typeof AdminContributionsRoute
@@ -210,11 +210,11 @@ export interface FileRoutesById {
   '/admin_/roles': typeof AdminRolesRoute
   '/auth_/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
-  '/portal/application': typeof PortalApplicationRoute
-  '/portal/business': typeof PortalBusinessRoute
-  '/portal/contributions': typeof PortalContributionsRoute
-  '/portal/covenant': typeof PortalCovenantRoute
-  '/portal/impact': typeof PortalImpactRoute
+  '/portal_/application': typeof PortalApplicationRoute
+  '/portal_/business': typeof PortalBusinessRoute
+  '/portal_/contributions': typeof PortalContributionsRoute
+  '/portal_/covenant': typeof PortalCovenantRoute
+  '/portal_/impact': typeof PortalImpactRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -284,11 +284,11 @@ export interface FileRouteTypes {
     | '/admin_/roles'
     | '/auth_/admin'
     | '/businesses/$slug'
-    | '/portal/application'
-    | '/portal/business'
-    | '/portal/contributions'
-    | '/portal/covenant'
-    | '/portal/impact'
+    | '/portal_/application'
+    | '/portal_/business'
+    | '/portal_/contributions'
+    | '/portal_/covenant'
+    | '/portal_/impact'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -300,7 +300,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   ImpactRoute: typeof ImpactRoute
   MembershipRoute: typeof MembershipRoute
-  PortalRoute: typeof PortalRouteWithChildren
+  PortalRoute: typeof PortalRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminBusinessesRoute: typeof AdminBusinessesRoute
   AdminContributionsRoute: typeof AdminContributionsRoute
@@ -308,6 +308,11 @@ export interface RootRouteChildren {
   AdminMembersRoute: typeof AdminMembersRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AuthAdminRoute: typeof AuthAdminRoute
+  PortalApplicationRoute: typeof PortalApplicationRoute
+  PortalBusinessRoute: typeof PortalBusinessRoute
+  PortalContributionsRoute: typeof PortalContributionsRoute
+  PortalCovenantRoute: typeof PortalCovenantRoute
+  PortalImpactRoute: typeof PortalImpactRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -431,40 +436,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessesSlugRouteImport
       parentRoute: typeof BusinessesRoute
     }
-    '/portal/application': {
-      id: '/portal/application'
-      path: '/application'
+    '/portal_/application': {
+      id: '/portal_/application'
+      path: '/portal/application'
       fullPath: '/portal/application'
       preLoaderRoute: typeof PortalApplicationRouteImport
-      parentRoute: typeof PortalRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/portal/business': {
-      id: '/portal/business'
-      path: '/business'
+    '/portal_/business': {
+      id: '/portal_/business'
+      path: '/portal/business'
       fullPath: '/portal/business'
       preLoaderRoute: typeof PortalBusinessRouteImport
-      parentRoute: typeof PortalRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/portal/contributions': {
-      id: '/portal/contributions'
-      path: '/contributions'
+    '/portal_/contributions': {
+      id: '/portal_/contributions'
+      path: '/portal/contributions'
       fullPath: '/portal/contributions'
       preLoaderRoute: typeof PortalContributionsRouteImport
-      parentRoute: typeof PortalRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/portal/covenant': {
-      id: '/portal/covenant'
-      path: '/covenant'
+    '/portal_/covenant': {
+      id: '/portal_/covenant'
+      path: '/portal/covenant'
       fullPath: '/portal/covenant'
       preLoaderRoute: typeof PortalCovenantRouteImport
-      parentRoute: typeof PortalRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/portal/impact': {
-      id: '/portal/impact'
-      path: '/impact'
+    '/portal_/impact': {
+      id: '/portal_/impact'
+      path: '/portal/impact'
       fullPath: '/portal/impact'
       preLoaderRoute: typeof PortalImpactRouteImport
-      parentRoute: typeof PortalRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -481,25 +486,6 @@ const BusinessesRouteWithChildren = BusinessesRoute._addFileChildren(
   BusinessesRouteChildren,
 )
 
-interface PortalRouteChildren {
-  PortalApplicationRoute: typeof PortalApplicationRoute
-  PortalBusinessRoute: typeof PortalBusinessRoute
-  PortalContributionsRoute: typeof PortalContributionsRoute
-  PortalCovenantRoute: typeof PortalCovenantRoute
-  PortalImpactRoute: typeof PortalImpactRoute
-}
-
-const PortalRouteChildren: PortalRouteChildren = {
-  PortalApplicationRoute: PortalApplicationRoute,
-  PortalBusinessRoute: PortalBusinessRoute,
-  PortalContributionsRoute: PortalContributionsRoute,
-  PortalCovenantRoute: PortalCovenantRoute,
-  PortalImpactRoute: PortalImpactRoute,
-}
-
-const PortalRouteWithChildren =
-  PortalRoute._addFileChildren(PortalRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -509,7 +495,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   ImpactRoute: ImpactRoute,
   MembershipRoute: MembershipRoute,
-  PortalRoute: PortalRouteWithChildren,
+  PortalRoute: PortalRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminBusinessesRoute: AdminBusinessesRoute,
   AdminContributionsRoute: AdminContributionsRoute,
@@ -517,6 +503,11 @@ const rootRouteChildren: RootRouteChildren = {
   AdminMembersRoute: AdminMembersRoute,
   AdminRolesRoute: AdminRolesRoute,
   AuthAdminRoute: AuthAdminRoute,
+  PortalApplicationRoute: PortalApplicationRoute,
+  PortalBusinessRoute: PortalBusinessRoute,
+  PortalContributionsRoute: PortalContributionsRoute,
+  PortalCovenantRoute: PortalCovenantRoute,
+  PortalImpactRoute: PortalImpactRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
