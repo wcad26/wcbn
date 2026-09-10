@@ -45,6 +45,22 @@ function ImpactPage() {
     setMeasures(Array.isArray(data.commitment.measures) ? (data.commitment.measures as string[]).join("\n") : "");
   }, [data?.commitment]);
 
+  const currentReview = data?.reviews.find((r) => r.review_year === year) ?? null;
+  const reviewLocked = !!currentReview && currentReview.status !== "draft" && currentReview.status !== "submitted";
+
+  useEffect(() => {
+    if (!currentReview) return;
+    setReview({
+      jobs_created: String(currentReview.jobs_created ?? ""),
+      people_trained: String(currentReview.people_trained ?? ""),
+      businesses_supported: String(currentReview.businesses_supported ?? ""),
+      community_initiatives: String(currentReview.community_initiatives ?? ""),
+      achievements: currentReview.achievements ?? "",
+      challenges: currentReview.challenges ?? "",
+      next_objectives: currentReview.next_objectives ?? "",
+    });
+  }, [currentReview]);
+
   const saveCommitment = useMutation({
     mutationFn: async () => {
       if (!identity) throw new Error("Not signed in");
