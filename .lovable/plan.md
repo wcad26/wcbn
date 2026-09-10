@@ -4,7 +4,7 @@ A public-facing network website, a member portal, and a leadership admin portal,
 
 ## Guiding principle
 
-WCA membership makes you eligible to apply. WCBN membership is selective and earned through validation. The platform enforces that in software: the applicant never re-enters name, region, DCG, contact or membership data — the system verifies it, and the application focuses only on business, leadership, impact and covenant.
+Active WCA membership and active participation in a DCG make a person eligible to apply. WCBN membership is selective and earned through validation. The platform enforces that in software: the applicant never re-enters name, region, DCG, contact or membership data — the system verifies it, and the application focuses only on business, leadership, impact and covenant. WCBN administrators can configure every eligibility criterion, score weight, threshold, required document, review stage and disqualification rule without a code change.
 
 ---
 
@@ -48,13 +48,14 @@ Modern dashboard: dark-capable, KPI tiles, charts, dense but calm tables, slide-
 - **Contributions** — dues plans (monthly/annual, per category and currency), invoice generation, record manual payments, confirm member-submitted proofs, reconcile online payments, arrears reporting and reminders.
 - **Impact** — aggregated index, SDG coverage, annual review submissions, export for the transformation report.
 - **Content** — manage homepage, pages, news, events, leadership bios.
+- **Criteria & workflow builder** — administrators enable/disable criteria, mark them mandatory or advisory, set score weights and thresholds, configure required documents, add review questions, reorder review stages, and maintain red-flag/disqualification rules. Active WCA membership and active DCG participation begin as mandatory defaults but remain explicitly managed in this controlled settings area; every change is versioned and audited so applications already under review retain the rules under which they were submitted.
 - **Settings & roles** — WCBN roles (Admin, Validator, Committee Member, Finance, Content) with permissions, workflow configuration, audit log.
 
 ## 4. Simplifications from WCA reuse
 
 - Sign-in only; no registration, no email verification, no duplicate profile capture.
-- WCA verification is automatic: on first sign-in the system reads the member record, ID, region, DCG, status and join date. No membership number typing, no manual check.
-- Inactive or missing WCA membership blocks the application with a clear message.
+- WCA and DCG verification is automatic: on first sign-in the system reads the member record, ID, region, active DCG assignment, status and join date. No membership number or DCG typing, and no duplicate manual check.
+- Inactive or missing WCA membership, or no active DCG membership, blocks the application by default with a clear message and next steps; authorized administrators can change how these criteria operate through the criteria builder.
 - Endorsement request goes to the applicant's existing WCA leader in-app rather than by email chasing.
 - Application is one resumable form split into short steps; reviewers, not the applicant, drive the later stages.
 
@@ -71,7 +72,8 @@ Brand colors inherited from WCA, applied through the modern system in the attach
 ## Technical notes
 
 - TanStack Start, connected to the existing Supabase project (ref `dtqyyvjosdgoqloxybnx`); `profiles`, `members`, `regions`, `dcgs`, `user_roles`, `currencies` are read, never duplicated.
-- New tables, all prefixed `wcbn_`: `wcbn_members`, `wcbn_applications`, `wcbn_application_stages`, `wcbn_scores`, `wcbn_interviews`, `wcbn_endorsements`, `wcbn_businesses`, `wcbn_business_documents`, `wcbn_sectors`, `wcbn_sdgs`, `wcbn_business_sdgs`, `wcbn_impact_commitments`, `wcbn_annual_reviews`, `wcbn_covenants`, `wcbn_dues_plans`, `wcbn_invoices`, `wcbn_payments`, `wcbn_roles`, `wcbn_user_roles`, `wcbn_audit_log`, `wcbn_content`.
+- New tables, all prefixed `wcbn_`: `wcbn_members`, `wcbn_applications`, `wcbn_application_stages`, `wcbn_criteria`, `wcbn_criteria_versions`, `wcbn_application_criteria_results`, `wcbn_scores`, `wcbn_interviews`, `wcbn_endorsements`, `wcbn_businesses`, `wcbn_business_documents`, `wcbn_sectors`, `wcbn_sdgs`, `wcbn_business_sdgs`, `wcbn_impact_commitments`, `wcbn_annual_reviews`, `wcbn_covenants`, `wcbn_dues_plans`, `wcbn_invoices`, `wcbn_payments`, `wcbn_roles`, `wcbn_user_roles`, `wcbn_audit_log`, `wcbn_content`.
+- Eligibility reads the existing `dcg_members` relationship and verifies that both the DCG assignment and the underlying WCA member are active. Criteria definitions are versioned; each submitted application stores the criteria version used, preventing later admin changes from silently altering an in-progress decision.
 - RLS throughout: public reads restricted to activated businesses and safe columns; members read/write their own records; WCBN staff access via a `wcbn_has_permission()` security-definer function. Grants issued with every new table.
 - Storage buckets for business logos, galleries and application documents.
 - Public catalog/detail routes are server-rendered for SEO; member and admin areas sit behind the authenticated layout.
@@ -84,6 +86,8 @@ Brand colors inherited from WCA, applied through the modern system in the attach
 4. Admin portal — pipeline, scorecard, interviews, members, business vetting.
 5. Contributions — dues, invoices, manual + declared payments, arrears; online checkout once rails are chosen.
 6. Impact index, annual review, reports, content management, polish.
+
+This document is the master implementation plan. Delivery will proceed in the build order above, with completed and remaining work tracked against it until the full scope is finished.
 
 ## Open items
 
