@@ -65,6 +65,11 @@ function ContributionsPage() {
 
   return (
     <MemberPage title="Contributions" description="Your dues schedule, invoices and payment history. Declare a payment you have already made and finance will confirm it.">
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <MetricCard label="Outstanding balance" value={money(outstanding, currency)} detail={`${invoices.length} invoice(s) on record`} icon={CircleDollarSign} />
+        <MetricCard label="Total contributed" value={money(paidTotal, currency)} detail="Confirmed by finance" icon={Receipt} />
+        <MetricCard label={overdue.length ? "Overdue" : "Next payment due"} value={overdue.length ? money(overdue.reduce((s, i) => s + (Number(i.amount) - Number(i.paid_amount)), 0), currency) : nextDue ? money(Number(nextDue.amount) - Number(nextDue.paid_amount), currency) : "—"} detail={overdue.length ? `${overdue.length} invoice(s) past due` : nextDue ? `Due ${nextDue.due_date}` : "Nothing due"} icon={TriangleAlert} />
+      </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
@@ -128,6 +133,13 @@ function ContributionsPage() {
             </div>
             <div className="space-y-2"><Label>Reference</Label><Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Transaction reference" /></div>
             <div className="space-y-2"><Label>Notes</Label><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+            <div className="space-y-2">
+              <Label>Proof of payment (optional)</Label>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm font-medium hover:border-primary/50">
+                <FileUp className="size-4" />{proof ? proof.name : "Attach a receipt or screenshot"}
+                <input type="file" className="hidden" onChange={(e) => setProof(e.target.files?.[0] ?? null)} />
+              </label>
+            </div>
             <Button className="w-full" disabled={!invoiceId || !amount || declare.isPending} onClick={() => declare.mutate()}>
               {declare.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit for confirmation
             </Button>
