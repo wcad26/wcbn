@@ -124,7 +124,7 @@ function ApplicationPage() {
 
   async function removeDocument(id: string) {
     const { error } = await supabase.from("wcbn_member_documents").delete().eq("id", id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     queryClient.invalidateQueries({ queryKey: ["portal", "application"] });
   }
 
@@ -220,7 +220,7 @@ function ApplicationPage() {
                 {step > 0 && <Button variant="ghost" onClick={() => setStep(step - 1)}>Back</Button>}
                 <Button variant="outline" disabled={save.isPending || submitted} onClick={() => save.mutate(false)}><Save />Save progress</Button>
                 {step < 3
-                  ? <Button onClick={() => { const m = missing(step); if (m.length && !submitted) return toast.error("Please complete the required answers on this step first."); setStep(step + 1); }}>Next step</Button>
+                  ? <Button onClick={() => { const m = missing(step); if (m.length && !submitted) { toast.error("Please complete the required answers on this step first."); return; } setStep(step + 1); }}>Next step</Button>
                   : <Button disabled={save.isPending || !eligible || submitted || [0, 1, 2].some((i) => missing(i).length > 0)} onClick={() => save.mutate(true)}>{save.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit application</Button>}
               </div>
             </>
