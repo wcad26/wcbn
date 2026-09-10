@@ -11,12 +11,18 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BusinessesRouteImport } from './routes/businesses'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as MembershipRouteImport } from './routes/membership'
 import { Route as PortalRouteImport } from './routes/portal'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
+import { Route as AdminBusinessesRouteImport } from './routes/admin.businesses'
+import { Route as AdminContributionsRouteImport } from './routes/admin.contributions'
+import { Route as AdminCriteriaRouteImport } from './routes/admin.criteria'
+import { Route as AdminMembersRouteImport } from './routes/admin.members'
 import { Route as PortalApplicationRouteImport } from './routes/portal.application'
 import { Route as PortalBusinessRouteImport } from './routes/portal.business'
 import { Route as PortalContributionsRouteImport } from './routes/portal.contributions'
@@ -30,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -62,6 +73,31 @@ const PortalRoute = PortalRouteImport.update({
   path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBusinessesRoute = AdminBusinessesRouteImport.update({
+  id: '/businesses',
+  path: '/businesses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContributionsRoute = AdminContributionsRouteImport.update({
+  id: '/contributions',
+  path: '/contributions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCriteriaRoute = AdminCriteriaRouteImport.update({
+  id: '/criteria',
+  path: '/criteria',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMembersRoute = AdminMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AdminRoute,
+} as any)
 const PortalApplicationRoute = PortalApplicationRouteImport.update({
   id: '/application',
   path: '/application',
@@ -86,12 +122,18 @@ const PortalImpactRoute = PortalImpactRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRoute
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
   '/portal': typeof PortalRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/contributions': typeof AdminContributionsRoute
+  '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/members': typeof AdminMembersRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
@@ -100,12 +142,18 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRoute
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
   '/portal': typeof PortalRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/contributions': typeof AdminContributionsRoute
+  '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/members': typeof AdminMembersRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
@@ -115,12 +163,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRoute
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
   '/portal': typeof PortalRouteWithChildren
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/contributions': typeof AdminContributionsRoute
+  '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/members': typeof AdminMembersRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
@@ -131,12 +185,18 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/admin'
     | '/auth'
     | '/businesses'
     | '/contact'
     | '/impact'
     | '/membership'
     | '/portal'
+    | '/admin/applications'
+    | '/admin/businesses'
+    | '/admin/contributions'
+    | '/admin/criteria'
+    | '/admin/members'
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
@@ -145,12 +205,18 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/admin'
     | '/auth'
     | '/businesses'
     | '/contact'
     | '/impact'
     | '/membership'
     | '/portal'
+    | '/admin/applications'
+    | '/admin/businesses'
+    | '/admin/contributions'
+    | '/admin/criteria'
+    | '/admin/members'
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
@@ -159,12 +225,18 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/admin'
     | '/auth'
     | '/businesses'
     | '/contact'
     | '/impact'
     | '/membership'
     | '/portal'
+    | '/admin/applications'
+    | '/admin/businesses'
+    | '/admin/contributions'
+    | '/admin/criteria'
+    | '/admin/members'
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
@@ -174,6 +246,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   BusinessesRoute: typeof BusinessesRoute
   ContactRoute: typeof ContactRoute
@@ -196,6 +269,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -240,6 +320,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/applications'
+      fullPath: '/admin/applications'
+      preLoaderRoute: typeof AdminApplicationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/businesses': {
+      id: '/admin/businesses'
+      path: '/businesses'
+      fullPath: '/admin/businesses'
+      preLoaderRoute: typeof AdminBusinessesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contributions': {
+      id: '/admin/contributions'
+      path: '/contributions'
+      fullPath: '/admin/contributions'
+      preLoaderRoute: typeof AdminContributionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/criteria': {
+      id: '/admin/criteria'
+      path: '/criteria'
+      fullPath: '/admin/criteria'
+      preLoaderRoute: typeof AdminCriteriaRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/members': {
+      id: '/admin/members'
+      path: '/members'
+      fullPath: '/admin/members'
+      preLoaderRoute: typeof AdminMembersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/portal/application': {
       id: '/portal/application'
       path: '/application'
@@ -271,6 +386,24 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminApplicationsRoute: typeof AdminApplicationsRoute
+  AdminBusinessesRoute: typeof AdminBusinessesRoute
+  AdminContributionsRoute: typeof AdminContributionsRoute
+  AdminCriteriaRoute: typeof AdminCriteriaRoute
+  AdminMembersRoute: typeof AdminMembersRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminApplicationsRoute: AdminApplicationsRoute,
+  AdminBusinessesRoute: AdminBusinessesRoute,
+  AdminContributionsRoute: AdminContributionsRoute,
+  AdminCriteriaRoute: AdminCriteriaRoute,
+  AdminMembersRoute: AdminMembersRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface PortalRouteChildren {
   PortalApplicationRoute: typeof PortalApplicationRoute
   PortalBusinessRoute: typeof PortalBusinessRoute
@@ -291,6 +424,7 @@ const PortalRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   BusinessesRoute: BusinessesRoute,
   ContactRoute: ContactRoute,
