@@ -1,0 +1,131 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export type Identity = {
+  userId: string;
+  email: string | null;
+  fullName: string;
+  profile: { id: string; first_name: string | null; last_name: string | null; email: string | null; phone: string | null; region_id: string | null } | null;
+  member: { id: string; member_id: string; status: string | null; join_date: string | null; region_id: string } | null;
+  regionName: string | null;
+  dcgName: string | null;
+  dcgActive: boolean;
+  wcaActive: boolean;
+  wcbnMember: { id: string; category: string; status: string; inducted_at: string | null; next_review_date: string | null } | null;
+  permissions: string[];
+  isStaff: boolean;
+};
+
+export const CATEGORIES = ["Associate", "Member", "Leader", "Impact Partner", "Fellow"] as const;
+
+export const STAGES = [
+  { code: "applied", label: "Applied" },
+  { code: "wca_verified", label: "WCA verified" },
+  { code: "character_review", label: "Character review" },
+  { code: "business_review", label: "Business review" },
+  { code: "impact_review", label: "Impact & SDG review" },
+  { code: "leadership_review", label: "Leadership review" },
+  { code: "interview", label: "Interview" },
+  { code: "committee_review", label: "Committee review" },
+  { code: "decision", label: "Decision" },
+  { code: "inducted", label: "Inducted" },
+] as const;
+
+export const SDGS = [
+  "No poverty", "Zero hunger", "Good health & well-being", "Quality education", "Gender equality",
+  "Clean water & sanitation", "Affordable & clean energy", "Decent work & economic growth", "Industry, innovation & infrastructure",
+  "Reduced inequalities", "Sustainable cities", "Responsible consumption", "Climate action", "Life below water",
+  "Life on land", "Peace, justice & institutions", "Partnerships for the goals",
+];
+
+export function money(amount: number, currency = "XAF") {
+  return new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
+}
+
+export function slugify(value: string) {
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
+}
+
+async function fetchIdentity(): Promise<Identity | null> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData.session?.user;
+  if (!user) return null;
+
+  const [{ data: profile }, { data: member }, { data: roleRows }] = await Promise.all([
+    supabase.from("profiles").select("id, first_name, last_name, email, phone, region_id").eq("id", user.id).maybeSingle(),
+    supabase.from("members").select("id, member_id, status, join_date, region_id").eq("profile_id", user.id).limit(1).maybeSingle(),
+    supabase.from("wcbn_user_roles").select("is_active, wcbn_roles(name, permissions, is_active)").eq("user_id", user.id).eq("is_active", true),
+  ]);
+
+  let regionName: string | null = null;
+  if (member?.region_id ?? profile?.region_id) {
+    const { data: region } = await supabase.from("regions").select("name").eq("id", (member?.region_id ?? profile?.region_id)!).maybeSingle();
+    regionName = region?.name ?? null;
+  }
+
+  let dcgName: string | null = null;
+  let dcgActive = false;
+  if (member?.id) {
+    const { data: dcgRow } = await supabase.from("dcg_members").select("is_active, dcgs(name, is_active)").eq("member_id", member.id).eq("is_active", true).limit(1).maybeSingle();
+    const dcg = dcgRow?.dcgs as { name: string; is_active: boolean } | null | undefined;
+    dcgName = dcg?.name ?? null;
+    dcgActive = !!dcgRow?.is_active && !!dcg?.is_active;
+  }
+
+  const { data: wcbnMember } = await supabase.from("wcbn_members").select("id, category, status, inducted_at, next_review_date").eq("profile_id", user.id).maybeSingle();
+
+  const permissions = (roleRows ?? []).flatMap((r) => {
+    const role = r.wcbn_roles as { permissions: unknown; is_active: boolean } | null;
+    if (!role?.is_active) return [];
+    return Array.isArray(role.permissions) ? (role.permissions as string[]) : [];
+  });
+
+  // WCA super admins also hold WCBN leadership access (enforced in the database).
+  const { data: superAdmin } = await supabase.rpc("is_super_admin_user", { _user_id: user.id });
+  const isStaff = permissions.length > 0 || superAdmin === true;
+  if (superAdmin === true && !permissions.includes("*")) permissions.push("*");
+
+  const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || (user.email ?? "WCBN member");
+
+  return {
+    userId: user.id,
+    email: user.email ?? profile?.email ?? null,
+    fullName,
+    profile: profile ?? null,
+    member: member ?? null,
+    regionName,
+    dcgName,
+    dcgActive,
+    wcaActive: member?.status === "active",
+    wcbnMember: wcbnMember ?? null,
+    permissions,
+    isStaff,
+  };
+}
+
+export function useIdentity() {
+  return useQuery({ queryKey: ["wcbn", "identity"], queryFn: fetchIdentity, staleTime: 30_000 });
+}
+
+export function can(identity: Identity | null | undefined, permission: string) {
+  if (!identity) return false;
+  return identity.permissions.includes("*") || identity.permissions.includes(permission);
+}
+
+/** Creates the WCBN membership record for the signed-in member on first use. */
+export async function ensureWcbnMember(identity: Identity) {
+  if (identity.wcbnMember) return identity.wcbnMember.id;
+  if (!identity.member) throw new Error("No active World Changers Association member record was found for your account.");
+  const { data, error } = await supabase
+    .from("wcbn_members")
+    .insert({ profile_id: identity.userId, member_id: identity.member.id, category: "Associate", status: "prospect" })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+export function useInvalidateIdentity() {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: ["wcbn", "identity"] });
+}
