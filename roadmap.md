@@ -5,4 +5,4 @@
 - [x] Member portal and application workflow
 - [x] Admin portal and validation pipeline
 - [x] Contributions and payments
-- [ ] Impact reporting, content management, and final polish
+- [x] Impact reporting, content management, and final polish
