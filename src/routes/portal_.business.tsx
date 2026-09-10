@@ -135,7 +135,7 @@ function BusinessPage() {
             <p className="mt-3 rounded-2xl bg-muted p-3 text-xs text-muted-foreground">
               {current.is_active ? "This listing is live in the public catalog."
                 : current.vetting_status === "approved" ? "Approved by leadership. It will appear publicly once activated."
-                : current.vetting_status === "rejected" ? `Not approved.${current.vetting_notes ? ` ${current.vetting_notes}` : " Contact WCBN leadership for guidance."}`
+                : current.vetting_status === "rejected" ? "Not approved. Contact WCBN leadership for guidance on what to strengthen."
                 : "Awaiting vetting by WCBN leadership. You can keep editing until it is approved."}
             </p>
           )}
