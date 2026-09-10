@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal/covenant")({ component: CovenantPage });
+export const Route = createFileRoute("/portal_/covenant")({ component: CovenantPage });
 
 const CLAUSES = [
   ["Christ at the centre", "I will lead my enterprise as a steward, honouring Christ in every decision, contract and relationship."],

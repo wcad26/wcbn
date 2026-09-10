@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { SDGS, ensureWcbnMember, useIdentity, useInvalidateIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal/application")({ component: ApplicationPage });
+export const Route = createFileRoute("/portal_/application")({ component: ApplicationPage });
 
 type Answers = {
   business_name: string; sector: string; country: string; years_operating: string; employees: string;
