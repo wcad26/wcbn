@@ -1,15 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Send } from "lucide-react";
+import { CircleDollarSign, FileUp, Loader2, Receipt, Send, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
+import { MetricCard } from "@/components/wcbn/metric-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { money, useIdentity } from "@/lib/wcbn";
+import { money, uploadDocument, useIdentity } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/portal_/contributions")({ component: ContributionsPage });
 
