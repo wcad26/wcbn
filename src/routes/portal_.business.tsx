@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Save } from "lucide-react";
+import { ExternalLink, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,21 @@ function BusinessPage() {
     });
   }, [editingId, businesses]);
 
+  const current = businesses?.find((b) => b.id === editingId) ?? null;
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("wcbn_businesses").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Listing removed");
+      setEditingId(null); setForm(EMPTY);
+      queryClient.invalidateQueries({ queryKey: ["portal", "businesses"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const save = useMutation({
     mutationFn: async () => {
       if (!identity) throw new Error("Not signed in");
@@ -60,7 +75,7 @@ function BusinessPage() {
         years_operating: form.years_operating ? Number(form.years_operating) : null,
         employee_count: form.employee_count ? Number(form.employee_count) : null,
         registration_number: form.registration_number || null,
-        vetting_status: "pending",
+        ...(current?.vetting_status === "approved" ? {} : { vetting_status: "pending" }),
       };
       let businessId = editingId;
       if (editingId) {
