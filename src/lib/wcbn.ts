@@ -11,7 +11,7 @@ export type Identity = {
   dcgName: string | null;
   dcgActive: boolean;
   wcaActive: boolean;
-  wcbnMember: { id: string; category: string; status: string; inducted_at: string | null; next_review_date: string | null } | null;
+  wcbnMember: { id: string; category: string; status: string; inducted_at: string | null; next_review_date: string | null; covenant_accepted_at: string | null } | null;
   permissions: string[];
   isStaff: boolean;
 };
@@ -72,7 +72,7 @@ async function fetchIdentity(): Promise<Identity | null> {
     dcgActive = !!dcgRow?.is_active && !!dcg?.is_active;
   }
 
-  const { data: wcbnMember } = await supabase.from("wcbn_members").select("id, category, status, inducted_at, next_review_date").eq("profile_id", user.id).maybeSingle();
+  const { data: wcbnMember } = await supabase.from("wcbn_members").select("id, category, status, inducted_at, next_review_date, covenant_accepted_at").eq("profile_id", user.id).maybeSingle();
 
   const permissions = (roleRows ?? []).flatMap((r) => {
     const role = r.wcbn_roles as { permissions: unknown; is_active: boolean } | null;
@@ -128,4 +128,22 @@ export async function ensureWcbnMember(identity: Identity) {
 export function useInvalidateIdentity() {
   const qc = useQueryClient();
   return () => qc.invalidateQueries({ queryKey: ["wcbn", "identity"] });
+}
+
+export const DOC_BUCKET = "wcbn-documents";
+
+/** Uploads a private supporting document and returns its storage path. */
+export async function uploadDocument(userId: string, folder: string, file: File) {
+  const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+  const path = `${userId}/${folder}/${Date.now()}-${safe}`;
+  const { error } = await supabase.storage.from(DOC_BUCKET).upload(path, file, { upsert: false });
+  if (error) throw error;
+  return path;
+}
+
+/** Creates a short-lived link so the owner (or leadership) can open a private document. */
+export async function documentUrl(path: string) {
+  const { data, error } = await supabase.storage.from(DOC_BUCKET).createSignedUrl(path, 300);
+  if (error) throw error;
+  return data.signedUrl;
 }

@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BadgeCheck, BarChart3, BriefcaseBusiness, CircleDollarSign, ClipboardCheck, FileText,
-  LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, ShieldCheck, Users, X,
+  LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, ShieldCheck, UserRound, Users, X,
 } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,6 +18,7 @@ const memberLinks = [
   ["Contributions", "/portal/contributions", CircleDollarSign],
   ["Impact", "/portal/impact", FileText],
   ["Covenant", "/portal/covenant", ScrollText],
+  ["My profile", "/portal/profile", UserRound],
 ] as const;
 
 const adminLinks = [

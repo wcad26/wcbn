@@ -1,17 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Send } from "lucide-react";
+import { CircleDollarSign, FileUp, Loader2, Receipt, Send, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
+import { MetricCard } from "@/components/wcbn/metric-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { money, useIdentity } from "@/lib/wcbn";
+import { money, uploadDocument, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal/contributions")({ component: ContributionsPage });
+export const Route = createFileRoute("/portal_/contributions")({ component: ContributionsPage });
 
 function ContributionsPage() {
   const { data: identity } = useIdentity();
@@ -22,6 +23,7 @@ function ContributionsPage() {
   const [method, setMethod] = useState("mobile_money");
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
+  const [proof, setProof] = useState<File | null>(null);
 
   const { data } = useQuery({
     queryKey: ["portal", "contributions", wcbnId],
@@ -35,22 +37,39 @@ function ContributionsPage() {
     },
   });
 
+  const invoices = data?.invoices ?? [];
+  const selected = invoices.find((i) => i.id === invoiceId);
+  const currency = selected?.currency_code ?? invoices[0]?.currency_code ?? "XAF";
+  const outstanding = invoices.reduce((sum, i) => sum + Math.max(0, Number(i.amount) - Number(i.paid_amount)), 0);
+  const paidTotal = invoices.reduce((sum, i) => sum + Number(i.paid_amount), 0);
+  const today = new Date().toISOString().slice(0, 10);
+  const overdue = invoices.filter((i) => i.due_date < today && Number(i.paid_amount) < Number(i.amount));
+  const nextDue = invoices.filter((i) => Number(i.paid_amount) < Number(i.amount) && i.due_date >= today).sort((a, b) => a.due_date.localeCompare(b.due_date))[0];
+
   const declare = useMutation({
     mutationFn: async () => {
       if (!identity) throw new Error("Not signed in");
+      let proofPath: string | null = null;
+      if (proof) proofPath = await uploadDocument(identity.userId, "payments", proof);
       const { error } = await supabase.from("wcbn_payments").insert({
-        invoice_id: invoiceId, amount: Number(amount), currency_code: "XAF", method,
-        reference: reference || null, notes: notes || null, status: "declared", submitted_by: identity.userId, paid_at: new Date().toISOString(),
+        invoice_id: invoiceId, amount: Number(amount), currency_code: currency, method,
+        reference: reference || null, notes: notes || null, proof_url: proofPath, status: "declared", submitted_by: identity.userId, paid_at: new Date().toISOString(),
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Payment declared. Finance will confirm it shortly."); setAmount(""); setReference(""); setNotes("");
+    onSuccess: () => { toast.success("Payment declared. Finance will confirm it shortly."); setAmount(""); setReference(""); setNotes(""); setProof(null);
       queryClient.invalidateQueries({ queryKey: ["portal", "contributions"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
+
   return (
     <MemberPage title="Contributions" description="Your dues schedule, invoices and payment history. Declare a payment you have already made and finance will confirm it.">
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <MetricCard label="Outstanding balance" value={money(outstanding, currency)} detail={`${invoices.length} invoice(s) on record`} icon={CircleDollarSign} />
+        <MetricCard label="Total contributed" value={money(paidTotal, currency)} detail="Confirmed by finance" icon={Receipt} />
+        <MetricCard label={overdue.length ? "Overdue" : "Next payment due"} value={overdue.length ? money(overdue.reduce((s, i) => s + (Number(i.amount) - Number(i.paid_amount)), 0), currency) : nextDue ? money(Number(nextDue.amount) - Number(nextDue.paid_amount), currency) : "—"} detail={overdue.length ? `${overdue.length} invoice(s) past due` : nextDue ? `Due ${nextDue.due_date}` : "Nothing due"} icon={TriangleAlert} />
+      </div>
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-6">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
@@ -114,6 +133,13 @@ function ContributionsPage() {
             </div>
             <div className="space-y-2"><Label>Reference</Label><Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Transaction reference" /></div>
             <div className="space-y-2"><Label>Notes</Label><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+            <div className="space-y-2">
+              <Label>Proof of payment (optional)</Label>
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm font-medium hover:border-primary/50">
+                <FileUp className="size-4" />{proof ? proof.name : "Attach a receipt or screenshot"}
+                <input type="file" className="hidden" onChange={(e) => setProof(e.target.files?.[0] ?? null)} />
+              </label>
+            </div>
             <Button className="w-full" disabled={!invoiceId || !amount || declare.isPending} onClick={() => declare.mutate()}>
               {declare.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit for confirmation
             </Button>

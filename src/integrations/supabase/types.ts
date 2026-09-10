@@ -3439,9 +3439,51 @@ export type Database = {
           },
         ]
       }
+      wcbn_member_documents: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          label: string
+          storage_path: string
+          updated_at: string
+          uploaded_by: string
+          wcbn_member_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          label: string
+          storage_path: string
+          updated_at?: string
+          uploaded_by: string
+          wcbn_member_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string
+          storage_path?: string
+          updated_at?: string
+          uploaded_by?: string
+          wcbn_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_member_documents_wcbn_member_id_fkey"
+            columns: ["wcbn_member_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       wcbn_members: {
         Row: {
           category: string
+          covenant_accepted_at: string | null
           created_at: string
           id: string
           inducted_at: string | null
@@ -3453,6 +3495,7 @@ export type Database = {
         }
         Insert: {
           category?: string
+          covenant_accepted_at?: string | null
           created_at?: string
           id?: string
           inducted_at?: string | null
@@ -3464,6 +3507,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          covenant_accepted_at?: string | null
           created_at?: string
           id?: string
           inducted_at?: string | null
@@ -3829,9 +3873,14 @@ export type Database = {
         Args: { _region_id: string; _user_id: string }
         Returns: boolean
       }
+      wcbn_accept_covenant: { Args: never; Returns: string }
       wcbn_has_permission: {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
+      }
+      wcbn_submit_application: {
+        Args: { _application_id: string }
+        Returns: string
       }
     }
     Enums: {

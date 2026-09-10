@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { SDGS, ensureWcbnMember, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal/impact")({ component: ImpactPage });
+export const Route = createFileRoute("/portal_/impact")({ component: ImpactPage });
 
 function ImpactPage() {
   const { data: identity } = useIdentity();
@@ -45,6 +45,22 @@ function ImpactPage() {
     setMeasures(Array.isArray(data.commitment.measures) ? (data.commitment.measures as string[]).join("\n") : "");
   }, [data?.commitment]);
 
+  const currentReview = data?.reviews.find((r) => r.review_year === year) ?? null;
+  const reviewLocked = !!currentReview && currentReview.status !== "draft" && currentReview.status !== "submitted";
+
+  useEffect(() => {
+    if (!currentReview) return;
+    setReview({
+      jobs_created: String(currentReview.jobs_created ?? ""),
+      people_trained: String(currentReview.people_trained ?? ""),
+      businesses_supported: String(currentReview.businesses_supported ?? ""),
+      community_initiatives: String(currentReview.community_initiatives ?? ""),
+      achievements: currentReview.achievements ?? "",
+      challenges: currentReview.challenges ?? "",
+      next_objectives: currentReview.next_objectives ?? "",
+    });
+  }, [currentReview]);
+
   const saveCommitment = useMutation({
     mutationFn: async () => {
       if (!identity) throw new Error("Not signed in");
@@ -66,16 +82,22 @@ function ImpactPage() {
     mutationFn: async () => {
       if (!identity) throw new Error("Not signed in");
       const memberId = await ensureWcbnMember(identity);
-      const { error } = await supabase.from("wcbn_annual_reviews").insert({
+      const payload = {
         wcbn_member_id: memberId, review_year: year,
         jobs_created: Number(review.jobs_created || 0), people_trained: Number(review.people_trained || 0),
         businesses_supported: Number(review.businesses_supported || 0), community_initiatives: Number(review.community_initiatives || 0),
         achievements: review.achievements || null, challenges: review.challenges || null, next_objectives: review.next_objectives || null,
         sdg_evidence: sdgs, status: "submitted", submitted_at: new Date().toISOString(),
-      });
-      if (error) throw error;
+      };
+      if (currentReview) {
+        const { error } = await supabase.from("wcbn_annual_reviews").update(payload).eq("id", currentReview.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("wcbn_annual_reviews").insert(payload);
+        if (error) throw error;
+      }
     },
-    onSuccess: () => { toast.success(`${year} impact review submitted`); queryClient.invalidateQueries({ queryKey: ["portal", "impact"] }); },
+    onSuccess: () => { toast.success(`${year} impact review saved`); queryClient.invalidateQueries({ queryKey: ["portal", "impact"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -111,7 +133,10 @@ function ImpactPage() {
               <div className="space-y-2 sm:col-span-2"><Label>Challenges</Label><Textarea rows={3} value={review.challenges} onChange={(e) => setReview({ ...review, challenges: e.target.value })} /></div>
               <div className="space-y-2 sm:col-span-2"><Label>Next year objectives</Label><Textarea rows={3} value={review.next_objectives} onChange={(e) => setReview({ ...review, next_objectives: e.target.value })} /></div>
             </div>
-            <Button className="mt-5" disabled={submitReview.isPending} onClick={() => submitReview.mutate()}>{submitReview.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit review</Button>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Button disabled={submitReview.isPending || reviewLocked} onClick={() => submitReview.mutate()}>{submitReview.isPending ? <Loader2 className="animate-spin" /> : <Send />}{currentReview ? "Update review" : "Submit review"}</Button>
+              {reviewLocked && <span className="text-xs text-muted-foreground">This year's review has been reviewed by leadership and can no longer be changed.</span>}
+            </div>
           </div>
 
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">

@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Save } from "lucide-react";
+import { ExternalLink, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { SDGS, ensureWcbnMember, slugify, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal/business")({ component: BusinessPage });
+export const Route = createFileRoute("/portal_/business")({ component: BusinessPage });
 
 type Form = {
   display_name: string; legal_name: string; sector: string; country: string; city: string;
@@ -44,6 +44,21 @@ function BusinessPage() {
     });
   }, [editingId, businesses]);
 
+  const current = businesses?.find((b) => b.id === editingId) ?? null;
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("wcbn_businesses").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Listing removed");
+      setEditingId(null); setForm(EMPTY);
+      queryClient.invalidateQueries({ queryKey: ["portal", "businesses"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const save = useMutation({
     mutationFn: async () => {
       if (!identity) throw new Error("Not signed in");
@@ -60,7 +75,7 @@ function BusinessPage() {
         years_operating: form.years_operating ? Number(form.years_operating) : null,
         employee_count: form.employee_count ? Number(form.employee_count) : null,
         registration_number: form.registration_number || null,
-        vetting_status: "pending",
+        ...(current?.vetting_status === "approved" ? {} : { vetting_status: "pending" }),
       };
       let businessId = editingId;
       if (editingId) {
@@ -105,7 +120,25 @@ function BusinessPage() {
         </aside>
 
         <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-          <h2 className="text-lg font-semibold">{editingId ? "Edit listing" : "New listing"}</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold">{editingId ? "Edit listing" : "New listing"}</h2>
+            {current && (
+              <div className="flex flex-wrap items-center gap-2">
+                {current.is_active && current.slug && (
+                  <Button asChild variant="outline" size="sm"><Link to="/businesses/$slug" params={{ slug: current.slug }}><ExternalLink />View public page</Link></Button>
+                )}
+                <Button variant="ghost" size="sm" disabled={remove.isPending} onClick={() => { if (confirm("Remove this listing?")) remove.mutate(current.id); }}><Trash2 />Remove</Button>
+              </div>
+            )}
+          </div>
+          {current && (
+            <p className="mt-3 rounded-2xl bg-muted p-3 text-xs text-muted-foreground">
+              {current.is_active ? "This listing is live in the public catalog."
+                : current.vetting_status === "approved" ? "Approved by leadership. It will appear publicly once activated."
+                : current.vetting_status === "rejected" ? "Not approved. Contact WCBN leadership for guidance on what to strengthen."
+                : "Awaiting vetting by WCBN leadership. You can keep editing until it is approved."}
+            </p>
+          )}
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <F label="Business name"><Input value={form.display_name} onChange={(e) => set("display_name", e.target.value)} /></F>
             <F label="Registered legal name"><Input value={form.legal_name} onChange={(e) => set("legal_name", e.target.value)} /></F>
@@ -126,7 +159,7 @@ function BusinessPage() {
               <Label className="mb-3 block">SDG contributions</Label>
               <div className="flex flex-wrap gap-2">
                 {SDGS.map((label, i) => { const n = i + 1; const on = form.sdgs.includes(n);
-                  return <button type="button" key={n} onClick={() => set("sdgs", on ? form.sdgs.filter((s) => s !== n) : [...form.sdgs, n])} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${on ? "gradient-brand text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-secondary"}`}>{n}. {label}</button>;
+                  return <button type="button" key={n} onClick={() => set("sdgs", on ? form.sdgs.filter((s) => s !== n) : [...form.sdgs, n])} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${on ? "gradient-brand text-white" : "bg-muted text-muted-foreground hover:bg-secondary"}`}>{n}. {label}</button>;
                 })}
               </div>
             </div>
