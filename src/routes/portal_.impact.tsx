@@ -133,7 +133,10 @@ function ImpactPage() {
               <div className="space-y-2 sm:col-span-2"><Label>Challenges</Label><Textarea rows={3} value={review.challenges} onChange={(e) => setReview({ ...review, challenges: e.target.value })} /></div>
               <div className="space-y-2 sm:col-span-2"><Label>Next year objectives</Label><Textarea rows={3} value={review.next_objectives} onChange={(e) => setReview({ ...review, next_objectives: e.target.value })} /></div>
             </div>
-            <Button className="mt-5" disabled={submitReview.isPending} onClick={() => submitReview.mutate()}>{submitReview.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit review</Button>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Button disabled={submitReview.isPending || reviewLocked} onClick={() => submitReview.mutate()}>{submitReview.isPending ? <Loader2 className="animate-spin" /> : <Send />}{currentReview ? "Update review" : "Submit review"}</Button>
+              {reviewLocked && <span className="text-xs text-muted-foreground">This year's review has been reviewed by leadership and can no longer be changed.</span>}
+            </div>
           </div>
 
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
