@@ -38,7 +38,7 @@ function CriteriaPage() {
   });
 
   const updateVersion = useMutation({
-    mutationFn: async (patch: TablesUpdate<"wcbn_criteria">) => {
+    mutationFn: async (patch: TablesUpdate<"wcbn_criteria_versions">) => {
       if (!data?.active) return;
       const { error } = await supabase.from("wcbn_criteria_versions").update(patch).eq("id", data.active.id);
       if (error) throw error;
