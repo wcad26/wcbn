@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/admin/contributions")({ component: ContributionsAdmin });
+export const Route = createFileRoute("/admin_/contributions")({ component: ContributionsAdmin });
 
 function ContributionsAdmin() {
   const queryClient = useQueryClient();

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/auth/admin")({
+export const Route = createFileRoute("/auth_/admin")({
   head: () => ({ meta: [
     { title: "Leadership sign in | WCBN" },
     { name: "description", content: "Secure sign in for World Changers Business Network leadership to manage members, businesses and contributions." },

@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/admin/roles")({ component: RolesPage });
+export const Route = createFileRoute("/admin_/roles")({ component: RolesPage });
 
 function RolesPage() {
   const queryClient = useQueryClient();
