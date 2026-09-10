@@ -16,6 +16,11 @@ import { Route as BusinessesRouteImport } from './routes/businesses'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as MembershipRouteImport } from './routes/membership'
+import { Route as PortalRouteImport } from './routes/portal'
+import { Route as PortalApplicationRouteImport } from './routes/portal.application'
+import { Route as PortalBusinessRouteImport } from './routes/portal.business'
+import { Route as PortalContributionsRouteImport } from './routes/portal.contributions'
+import { Route as PortalImpactRouteImport } from './routes/portal.impact'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +57,31 @@ const MembershipRoute = MembershipRouteImport.update({
   path: '/membership',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalApplicationRoute = PortalApplicationRouteImport.update({
+  id: '/application',
+  path: '/application',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalBusinessRoute = PortalBusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalContributionsRoute = PortalContributionsRouteImport.update({
+  id: '/contributions',
+  path: '/contributions',
+  getParentRoute: () => PortalRoute,
+} as any)
+const PortalImpactRoute = PortalImpactRouteImport.update({
+  id: '/impact',
+  path: '/impact',
+  getParentRoute: () => PortalRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +91,11 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
+  '/portal': typeof PortalRouteWithChildren
+  '/portal/application': typeof PortalApplicationRoute
+  '/portal/business': typeof PortalBusinessRoute
+  '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +105,11 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
+  '/portal': typeof PortalRouteWithChildren
+  '/portal/application': typeof PortalApplicationRoute
+  '/portal/business': typeof PortalBusinessRoute
+  '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +120,11 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
+  '/portal': typeof PortalRouteWithChildren
+  '/portal/application': typeof PortalApplicationRoute
+  '/portal/business': typeof PortalBusinessRoute
+  '/portal/contributions': typeof PortalContributionsRoute
+  '/portal/impact': typeof PortalImpactRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +136,11 @@ export interface FileRouteTypes {
     | '/contact'
     | '/impact'
     | '/membership'
+    | '/portal'
+    | '/portal/application'
+    | '/portal/business'
+    | '/portal/contributions'
+    | '/portal/impact'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +150,11 @@ export interface FileRouteTypes {
     | '/contact'
     | '/impact'
     | '/membership'
+    | '/portal'
+    | '/portal/application'
+    | '/portal/business'
+    | '/portal/contributions'
+    | '/portal/impact'
   id:
     | '__root__'
     | '/'
@@ -109,6 +164,11 @@ export interface FileRouteTypes {
     | '/contact'
     | '/impact'
     | '/membership'
+    | '/portal'
+    | '/portal/application'
+    | '/portal/business'
+    | '/portal/contributions'
+    | '/portal/impact'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +179,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   ImpactRoute: typeof ImpactRoute
   MembershipRoute: typeof MembershipRoute
+  PortalRoute: typeof PortalRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -172,8 +233,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MembershipRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/application': {
+      id: '/portal/application'
+      path: '/application'
+      fullPath: '/portal/application'
+      preLoaderRoute: typeof PortalApplicationRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/business': {
+      id: '/portal/business'
+      path: '/business'
+      fullPath: '/portal/business'
+      preLoaderRoute: typeof PortalBusinessRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/contributions': {
+      id: '/portal/contributions'
+      path: '/contributions'
+      fullPath: '/portal/contributions'
+      preLoaderRoute: typeof PortalContributionsRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/impact': {
+      id: '/portal/impact'
+      path: '/impact'
+      fullPath: '/portal/impact'
+      preLoaderRoute: typeof PortalImpactRouteImport
+      parentRoute: typeof PortalRoute
+    }
   }
 }
+
+interface PortalRouteChildren {
+  PortalApplicationRoute: typeof PortalApplicationRoute
+  PortalBusinessRoute: typeof PortalBusinessRoute
+  PortalContributionsRoute: typeof PortalContributionsRoute
+  PortalImpactRoute: typeof PortalImpactRoute
+}
+
+const PortalRouteChildren: PortalRouteChildren = {
+  PortalApplicationRoute: PortalApplicationRoute,
+  PortalBusinessRoute: PortalBusinessRoute,
+  PortalContributionsRoute: PortalContributionsRoute,
+  PortalImpactRoute: PortalImpactRoute,
+}
+
+const PortalRouteWithChildren =
+  PortalRoute._addFileChildren(PortalRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -183,6 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   ImpactRoute: ImpactRoute,
   MembershipRoute: MembershipRoute,
+  PortalRoute: PortalRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
