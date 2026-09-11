@@ -42,10 +42,8 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
-          {signedIn ? (
+          {signedIn && (
             <Button asChild variant="ghost" className="rounded-full"><Link to="/portal">My portal</Link></Button>
-          ) : (
-            <Button asChild variant="ghost" className="rounded-full"><Link to="/auth">Member sign in</Link></Button>
           )}
           <Button asChild className="rounded-full gradient-brand shadow-soft"><Link to="/membership">Apply to WCBN</Link></Button>
         </div>
@@ -55,7 +53,9 @@ export function SiteHeader() {
         <nav className="border-t border-border bg-background px-4 py-4 lg:hidden">
           {links.map(([label, to]) => <Link key={to} to={to} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-3 font-medium hover:bg-muted">{label}</Link>)}
           <div className="mt-3 grid gap-2">
-            <Button asChild variant="outline" className="w-full rounded-full"><Link to={signedIn ? "/portal" : "/auth"} onClick={() => setOpen(false)}>{signedIn ? "My portal" : "Member sign in"}</Link></Button>
+            {signedIn && (
+              <Button asChild variant="outline" className="w-full rounded-full"><Link to="/portal" onClick={() => setOpen(false)}>My portal</Link></Button>
+            )}
             <Button asChild className="w-full rounded-full gradient-brand"><Link to="/membership" onClick={() => setOpen(false)}>Apply to WCBN</Link></Button>
           </div>
         </nav>
