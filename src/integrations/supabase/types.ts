@@ -2980,6 +2980,7 @@ export type Database = {
       wcbn_applications: {
         Row: {
           applicant_data: Json
+          applicant_type: string
           created_at: string
           criteria_version_id: string
           current_stage: string
@@ -2996,6 +2997,7 @@ export type Database = {
         }
         Insert: {
           applicant_data?: Json
+          applicant_type?: string
           created_at?: string
           criteria_version_id: string
           current_stage?: string
@@ -3012,6 +3014,7 @@ export type Database = {
         }
         Update: {
           applicant_data?: Json
+          applicant_type?: string
           created_at?: string
           criteria_version_id?: string
           current_stage?: string
@@ -3093,6 +3096,7 @@ export type Database = {
           is_active: boolean
           is_featured: boolean
           legal_name: string
+          listing_type: string
           logo_url: string | null
           markets: Json
           owner_member_id: string
@@ -3124,6 +3128,7 @@ export type Database = {
           is_active?: boolean
           is_featured?: boolean
           legal_name: string
+          listing_type?: string
           logo_url?: string | null
           markets?: Json
           owner_member_id: string
@@ -3155,6 +3160,7 @@ export type Database = {
           is_active?: boolean
           is_featured?: boolean
           legal_name?: string
+          listing_type?: string
           logo_url?: string | null
           markets?: Json
           owner_member_id?: string
@@ -3189,6 +3195,7 @@ export type Database = {
       }
       wcbn_criteria: {
         Row: {
+          applies_to: string
           code: string
           config: Json
           description: string | null
@@ -3203,6 +3210,7 @@ export type Database = {
           weight: number
         }
         Insert: {
+          applies_to?: string
           code: string
           config?: Json
           description?: string | null
@@ -3217,6 +3225,7 @@ export type Database = {
           weight?: number
         }
         Update: {
+          applies_to?: string
           code?: string
           config?: Json
           description?: string | null
@@ -3248,6 +3257,8 @@ export type Database = {
           is_active: boolean
           minimum_score: number
           name: string
+          professional_minimum_score: number
+          professional_strong_score: number
           strong_score: number
           version_number: number
         }
@@ -3258,6 +3269,8 @@ export type Database = {
           is_active?: boolean
           minimum_score?: number
           name: string
+          professional_minimum_score?: number
+          professional_strong_score?: number
           strong_score?: number
           version_number: number
         }
@@ -3268,6 +3281,8 @@ export type Database = {
           is_active?: boolean
           minimum_score?: number
           name?: string
+          professional_minimum_score?: number
+          professional_strong_score?: number
           strong_score?: number
           version_number?: number
         }
@@ -3623,6 +3638,7 @@ export type Database = {
           id: string
           inducted_at: string | null
           member_id: string
+          member_type: string
           next_review_date: string | null
           profile_id: string
           status: string
@@ -3635,6 +3651,7 @@ export type Database = {
           id?: string
           inducted_at?: string | null
           member_id: string
+          member_type?: string
           next_review_date?: string | null
           profile_id: string
           status?: string
@@ -3647,6 +3664,7 @@ export type Database = {
           id?: string
           inducted_at?: string | null
           member_id?: string
+          member_type?: string
           next_review_date?: string | null
           profile_id?: string
           status?: string
