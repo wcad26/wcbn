@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, FileUp, Loader2, Save, Send, Trash2, XCircle } from "lucide-react";
+import { CheckCircle2, Loader2, Save, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { COUNTRIES, SDGS, SECTORS, STAGES, documentUrl, ensureWcbnMember, uploadDocument, useIdentity, useInvalidateIdentity } from "@/lib/wcbn";
+import { COUNTRIES, SDGS, SECTORS, STAGES, ensureWcbnMember, useIdentity, useInvalidateIdentity } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/portal_/application")({ component: ApplicationPage });
 
@@ -41,7 +41,6 @@ function ApplicationPage() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>(EMPTY);
-  const [uploading, setUploading] = useState(false);
   const wcbnId = identity?.wcbnMember?.id;
 
   const { data, isLoading } = useQuery({
@@ -49,11 +48,10 @@ function ApplicationPage() {
     enabled: !!wcbnId,
     queryFn: async () => {
       const { data: application } = await supabase.from("wcbn_applications").select("*").eq("wcbn_member_id", wcbnId!).maybeSingle();
-      const [stages, documents] = await Promise.all([
-        application ? supabase.from("wcbn_application_stages").select("*").eq("application_id", application.id).order("created_at") : Promise.resolve({ data: [] }),
-        supabase.from("wcbn_member_documents").select("*").eq("wcbn_member_id", wcbnId!).eq("kind", "application").order("created_at", { ascending: false }),
-      ]);
-      return { application, stages: stages.data ?? [], documents: documents.data ?? [] };
+      const stages = application
+        ? await supabase.from("wcbn_application_stages").select("*").eq("application_id", application.id).order("created_at")
+        : { data: [] };
+      return { application, stages: stages.data ?? [] };
     },
   });
 
@@ -110,41 +108,22 @@ function ApplicationPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  async function addDocument(file: File) {
-    if (!identity) return;
-    setUploading(true);
-    try {
-      const memberId = await ensureWcbnMember(identity);
-      const path = await uploadDocument(identity.userId, "application", file);
-      const { error } = await supabase.from("wcbn_member_documents").insert({ wcbn_member_id: memberId, uploaded_by: identity.userId, kind: "application", label: file.name, storage_path: path });
-      if (error) throw error;
-      toast.success("Document uploaded");
-      queryClient.invalidateQueries({ queryKey: ["portal", "application"] });
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function removeDocument(id: string) {
-    const { error } = await supabase.from("wcbn_member_documents").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    queryClient.invalidateQueries({ queryKey: ["portal", "application"] });
-  }
-
-  async function openDocument(path: string) {
-    try { window.open(await documentUrl(path), "_blank", "noopener"); }
-    catch (e) { toast.error((e as Error).message); }
-  }
-
   const set = <K extends keyof Answers>(key: K, value: Answers[K]) => setAnswers((a) => ({ ...a, [key]: value }));
 
   const busy = identityLoading || isLoading;
 
   return (
-    <MemberPage title="My application" description="Your WCA identity, region and DCG are verified automatically. Only new business, character and impact information is collected.">
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+    <MemberPage title="My application" description="Complete the form below to apply.">
+      <div className="space-y-6">
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Verified from WCA</h2>
+          <ul className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            <li className="flex items-center gap-2">{identity?.wcaActive ? <CheckCircle2 className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active WCA membership</li>
+            <li className="flex items-center gap-2">{identity?.dcgActive ? <CheckCircle2 className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active DCG participation</li>
+          </ul>
+          {!eligible && <p className="mt-4 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Both are required to submit. Contact your regional WCA office for help.</p>}
+        </section>
+
         <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <div className="mb-6">
             <div className="flex items-center justify-between text-sm">
@@ -235,7 +214,6 @@ function ApplicationPage() {
                   <Row label="Business phone" value={answers.business_phone || "—"} />
                   <Row label="Business email" value={answers.business_email || "—"} />
                   <Row label="SDGs" value={answers.sdgs.length ? answers.sdgs.join(", ") : "—"} />
-                  <Row label="Documents attached" value={String(data?.documents.length ?? 0)} />
                   {[0, 1].some((i) => missing(i).length > 0) && (
                     <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Some required answers are still empty. Complete steps 1–2 before submitting.</p>
                   )}
@@ -255,36 +233,8 @@ function ApplicationPage() {
           )}
         </div>
 
-        <aside className="space-y-4">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Verified from WCA</h2>
-            <ul className="mt-4 space-y-3 text-sm">
-              <li className="flex items-center gap-2">{identity?.wcaActive ? <CheckCircle2 className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active WCA membership</li>
-              <li className="flex items-center gap-2">{identity?.dcgActive ? <CheckCircle2 className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active DCG participation</li>
-            </ul>
-            {!eligible && <p className="mt-4 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Both are mandatory before an application can be submitted. Contact your regional WCA office so your membership or DCG record can be reactivated.</p>}
-          </div>
-
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Supporting documents (optional)</h2>
-            <p className="mt-2 text-xs text-muted-foreground">Optional: registration certificate, licences, reference letters. Only you and WCBN reviewers can open them.</p>
-            <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm font-medium hover:border-primary/50">
-              {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}{uploading ? "Uploading…" : "Upload a document"}
-              <input type="file" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) addDocument(f); e.target.value = ""; }} />
-            </label>
-            <ul className="mt-4 space-y-2 text-sm">
-              {!data?.documents.length && <li className="text-xs text-muted-foreground">No documents uploaded yet.</li>}
-              {data?.documents.map((d) => (
-                <li key={d.id} className="flex items-center justify-between gap-2 rounded-xl border border-border px-3 py-2">
-                  <button className="truncate text-left text-xs hover:text-primary" onClick={() => openDocument(d.storage_path)}>{d.label}</button>
-                  <Button size="icon" variant="ghost" onClick={() => removeDocument(d.id)} aria-label="Remove document"><Trash2 className="size-4" /></Button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {application && (
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+        {application && (
+            <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Review tracker</h2>
               <ol className="mt-4 space-y-2 text-sm">
                 {STAGES.map((s, i) => {
@@ -303,9 +253,8 @@ function ApplicationPage() {
                 })}
               </ol>
               {application.decision_reason && <p className="mt-4 rounded-xl bg-muted p-3 text-xs">Decision note: {application.decision_reason}</p>}
-            </div>
-          )}
-        </aside>
+            </section>
+        )}
       </div>
     </MemberPage>
   );
