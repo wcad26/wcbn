@@ -46,6 +46,19 @@ function Index() {
 
   const featured = (stats?.businesses ?? []).slice(0, 3);
 
+  const { data: feed } = useQuery({
+    queryKey: ["public", "home-feed"],
+    queryFn: async () => {
+      const [events, posts] = await Promise.all([
+        supabase.from("wcbn_events").select("id, title, slug, summary, image_url, category, start_datetime, end_datetime, venue_name, city, country")
+          .eq("status", "published").eq("audience", "public").gte("start_datetime", new Date().toISOString()).order("start_datetime").limit(3),
+        supabase.from("wcbn_posts").select("id, title, slug, summary, image_url, post_type, published_at, created_at")
+          .eq("status", "published").eq("audience", "public").order("is_pinned", { ascending: false }).order("published_at", { ascending: false, nullsFirst: false }).limit(3),
+      ]);
+      return { events: events.data ?? [], posts: posts.data ?? [] };
+    },
+  });
+
   return (
     <PageShell><main>
       <section className="relative flex min-h-[92svh] items-end overflow-hidden pt-20">
