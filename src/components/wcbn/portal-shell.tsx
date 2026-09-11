@@ -4,7 +4,7 @@ import {
   BadgeCheck, BarChart3, BriefcaseBusiness, CircleDollarSign, ClipboardCheck, FileText,
   LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, ShieldCheck, UserRound, Users, X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
