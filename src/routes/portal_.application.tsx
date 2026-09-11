@@ -15,12 +15,15 @@ import { COUNTRIES, SDGS, SECTORS, STAGES, documentUrl, ensureWcbnMember, upload
 export const Route = createFileRoute("/portal_/application")({ component: ApplicationPage });
 
 type Answers = {
-  business_name: string; sector: string; country: string; cities: string; years_operating: string; employees: string;
+  business_name: string; sector: string; country: string; cities: string; founding_year: string; employees: string;
   business_summary: string; testimony: string; leadership: string; impact_statement: string;
   sdgs: number[]; references: string; documents: string;
 };
 
-const EMPTY: Answers = { business_name: "", sector: "", country: "", cities: "", years_operating: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
+const EMPTY: Answers = { business_name: "", sector: "", country: "", cities: "", founding_year: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
+
+const CURRENT_YEAR = new Date().getFullYear();
+const FOUNDING_YEARS = Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => String(CURRENT_YEAR - i));
 
 const STEPS = ["Business", "Impact & SDGs", "Review & submit"] as const;
 const LAST = STEPS.length - 1;
@@ -188,7 +191,14 @@ function ApplicationPage() {
                     </Select>
                   </Field>
                   <Field label="Cities of operation"><Input value={answers.cities} onChange={(e) => set("cities", e.target.value)} placeholder="e.g. Douala, Yaoundé" /></Field>
-                  <Field label="Years operating"><Input type="number" value={answers.years_operating} onChange={(e) => set("years_operating", e.target.value)} /></Field>
+                  <Field label="Founding year">
+                    <Select value={answers.founding_year} onValueChange={(v) => set("founding_year", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select founding year" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {FOUNDING_YEARS.map((y) => <SelectItem key={y} value={y}>{y}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </Field>
                   <Field label="Team size"><Input type="number" value={answers.employees} onChange={(e) => set("employees", e.target.value)} /></Field>
                   <Field label="Registration / licence references (optional)" className="md:col-span-2"><Input value={answers.documents} onChange={(e) => set("documents", e.target.value)} placeholder="Registration number, licence numbers" /></Field>
                   <Field label="What does the business do?" className="md:col-span-2"><Textarea rows={5} value={answers.business_summary} onChange={(e) => set("business_summary", e.target.value)} /></Field>
@@ -218,6 +228,7 @@ function ApplicationPage() {
                   <Row label="Sector" value={answers.sector || "—"} />
                   <Row label="Country" value={answers.country || "—"} />
                   <Row label="Cities" value={answers.cities || "—"} />
+                  <Row label="Founding year" value={answers.founding_year || "—"} />
                   <Row label="SDGs" value={answers.sdgs.length ? answers.sdgs.join(", ") : "—"} />
                   <Row label="Documents attached" value={String(data?.documents.length ?? 0)} />
                   {[0, 1].some((i) => missing(i).length > 0) && (
