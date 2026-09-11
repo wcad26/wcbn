@@ -24,7 +24,9 @@ import { Route as AdminApplicationsRouteImport } from './routes/admin_.applicati
 import { Route as AdminBusinessesRouteImport } from './routes/admin_.businesses'
 import { Route as AdminContributionsRouteImport } from './routes/admin_.contributions'
 import { Route as AdminCriteriaRouteImport } from './routes/admin_.criteria'
+import { Route as AdminEventsRouteImport } from './routes/admin_.events'
 import { Route as AdminMembersRouteImport } from './routes/admin_.members'
+import { Route as AdminNewsRouteImport } from './routes/admin_.news'
 import { Route as AdminRolesRouteImport } from './routes/admin_.roles'
 import { Route as AuthAdminRouteImport } from './routes/auth_.admin'
 import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
@@ -116,9 +118,19 @@ const AdminCriteriaRoute = AdminCriteriaRouteImport.update({
   path: '/admin/criteria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/admin_/events',
+  path: '/admin/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminMembersRoute = AdminMembersRouteImport.update({
   id: '/admin_/members',
   path: '/admin/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNewsRoute = AdminNewsRouteImport.update({
+  id: '/admin_/news',
+  path: '/admin/news',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRolesRoute = AdminRolesRouteImport.update({
@@ -213,7 +225,9 @@ export interface FileRoutesByFullPath {
   '/admin/businesses': typeof AdminBusinessesRoute
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/events': typeof AdminEventsRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/news': typeof AdminNewsRoute
   '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
@@ -246,7 +260,9 @@ export interface FileRoutesByTo {
   '/admin/businesses': typeof AdminBusinessesRoute
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/events': typeof AdminEventsRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/news': typeof AdminNewsRoute
   '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
@@ -280,7 +296,9 @@ export interface FileRoutesById {
   '/admin_/businesses': typeof AdminBusinessesRoute
   '/admin_/contributions': typeof AdminContributionsRoute
   '/admin_/criteria': typeof AdminCriteriaRoute
+  '/admin_/events': typeof AdminEventsRoute
   '/admin_/members': typeof AdminMembersRoute
+  '/admin_/news': typeof AdminNewsRoute
   '/admin_/roles': typeof AdminRolesRoute
   '/auth_/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
@@ -315,7 +333,9 @@ export interface FileRouteTypes {
     | '/admin/businesses'
     | '/admin/contributions'
     | '/admin/criteria'
+    | '/admin/events'
     | '/admin/members'
+    | '/admin/news'
     | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
@@ -348,7 +368,9 @@ export interface FileRouteTypes {
     | '/admin/businesses'
     | '/admin/contributions'
     | '/admin/criteria'
+    | '/admin/events'
     | '/admin/members'
+    | '/admin/news'
     | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
@@ -381,7 +403,9 @@ export interface FileRouteTypes {
     | '/admin_/businesses'
     | '/admin_/contributions'
     | '/admin_/criteria'
+    | '/admin_/events'
     | '/admin_/members'
+    | '/admin_/news'
     | '/admin_/roles'
     | '/auth_/admin'
     | '/businesses/$slug'
@@ -415,7 +439,9 @@ export interface RootRouteChildren {
   AdminBusinessesRoute: typeof AdminBusinessesRoute
   AdminContributionsRoute: typeof AdminContributionsRoute
   AdminCriteriaRoute: typeof AdminCriteriaRoute
+  AdminEventsRoute: typeof AdminEventsRoute
   AdminMembersRoute: typeof AdminMembersRoute
+  AdminNewsRoute: typeof AdminNewsRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AuthAdminRoute: typeof AuthAdminRoute
   EventsSlugRoute: typeof EventsSlugRoute
@@ -539,11 +565,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCriteriaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/events': {
+      id: '/admin_/events'
+      path: '/admin/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/members': {
       id: '/admin_/members'
       path: '/admin/members'
       fullPath: '/admin/members'
       preLoaderRoute: typeof AdminMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin_/news': {
+      id: '/admin_/news'
+      path: '/admin/news'
+      fullPath: '/admin/news'
+      preLoaderRoute: typeof AdminNewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin_/roles': {
@@ -682,7 +722,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminBusinessesRoute: AdminBusinessesRoute,
   AdminContributionsRoute: AdminContributionsRoute,
   AdminCriteriaRoute: AdminCriteriaRoute,
+  AdminEventsRoute: AdminEventsRoute,
   AdminMembersRoute: AdminMembersRoute,
+  AdminNewsRoute: AdminNewsRoute,
   AdminRolesRoute: AdminRolesRoute,
   AuthAdminRoute: AuthAdminRoute,
   EventsSlugRoute: EventsSlugRoute,
