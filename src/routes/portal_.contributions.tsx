@@ -59,7 +59,7 @@ function ContributionsPage() {
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Payment declared. Finance will confirm it shortly."); setAmount(""); setReference(""); setNotes(""); setProof(null);
+    onSuccess: () => { toast.success("Payment declared. Finance will confirm it shortly."); setAmount(""); setReference(""); setNotes(""); setProof(null); setDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["portal", "contributions"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
