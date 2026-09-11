@@ -170,22 +170,30 @@ function ApplicationPage() {
               {step === 0 && (
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Business or practice name"><Input value={answers.business_name} onChange={(e) => set("business_name", e.target.value)} /></Field>
-                  <Field label="Sector"><Input value={answers.sector} onChange={(e) => set("sector", e.target.value)} placeholder="e.g. Agribusiness" /></Field>
-                  <Field label="Country of operation"><Input value={answers.country} onChange={(e) => set("country", e.target.value)} /></Field>
+                  <Field label="Sector">
+                    <Select value={answers.sector} onValueChange={(v) => set("sector", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select a sector" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {SECTORS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Country of operation">
+                    <Select value={answers.country} onValueChange={(v) => set("country", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Cities of operation"><Input value={answers.cities} onChange={(e) => set("cities", e.target.value)} placeholder="e.g. Douala, Yaoundé" /></Field>
                   <Field label="Years operating"><Input type="number" value={answers.years_operating} onChange={(e) => set("years_operating", e.target.value)} /></Field>
                   <Field label="Team size"><Input type="number" value={answers.employees} onChange={(e) => set("employees", e.target.value)} /></Field>
-                  <Field label="Registration / licence references" className="md:col-span-2"><Input value={answers.documents} onChange={(e) => set("documents", e.target.value)} placeholder="Registration number, licence numbers" /></Field>
+                  <Field label="Registration / licence references (optional)" className="md:col-span-2"><Input value={answers.documents} onChange={(e) => set("documents", e.target.value)} placeholder="Registration number, licence numbers" /></Field>
                   <Field label="What does the business do?" className="md:col-span-2"><Textarea rows={5} value={answers.business_summary} onChange={(e) => set("business_summary", e.target.value)} /></Field>
                 </div>
               )}
               {step === 1 && (
-                <div className="grid gap-4">
-                  <Field label="Your walk of faith and Christian conduct in business"><Textarea rows={6} value={answers.testimony} onChange={(e) => set("testimony", e.target.value)} /></Field>
-                  <Field label="Leadership and influence — who are you developing?"><Textarea rows={5} value={answers.leadership} onChange={(e) => set("leadership", e.target.value)} /></Field>
-                  <Field label="WCA leaders who can speak for you"><Input value={answers.references} onChange={(e) => set("references", e.target.value)} placeholder="Names and roles" /></Field>
-                </div>
-              )}
-              {step === 2 && (
                 <div className="grid gap-4">
                   <Field label="Your 3–5 year impact commitment"><Textarea rows={5} value={answers.impact_statement} onChange={(e) => set("impact_statement", e.target.value)} /></Field>
                   <div>
@@ -199,17 +207,20 @@ function ApplicationPage() {
                   </div>
                 </div>
               )}
-              {step === 3 && (
+              {step === 2 && (
                 <div className="space-y-4 text-sm">
                   <Row label="Applicant" value={identity?.fullName ?? "—"} />
                   <Row label="WCA member ID" value={identity?.member?.member_id ?? "—"} />
                   <Row label="Region" value={identity?.regionName ?? "—"} />
                   <Row label="DCG" value={identity?.dcgName ?? "—"} />
                   <Row label="Business" value={answers.business_name || "—"} />
+                  <Row label="Sector" value={answers.sector || "—"} />
+                  <Row label="Country" value={answers.country || "—"} />
+                  <Row label="Cities" value={answers.cities || "—"} />
                   <Row label="SDGs" value={answers.sdgs.length ? answers.sdgs.join(", ") : "—"} />
                   <Row label="Documents attached" value={String(data?.documents.length ?? 0)} />
-                  {[0, 1, 2].some((i) => missing(i).length > 0) && (
-                    <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Some required answers are still empty. Complete steps 1–3 before submitting.</p>
+                  {[0, 1].some((i) => missing(i).length > 0) && (
+                    <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Some required answers are still empty. Complete steps 1–2 before submitting.</p>
                   )}
                   <p className="text-muted-foreground">By submitting you confirm the information is accurate and agree to the WCBN validation process and Covenant.</p>
                 </div>
@@ -219,9 +230,9 @@ function ApplicationPage() {
               <div className="mt-8 flex flex-wrap gap-3">
                 {step > 0 && <Button variant="ghost" onClick={() => setStep(step - 1)}>Back</Button>}
                 <Button variant="outline" disabled={save.isPending || submitted} onClick={() => save.mutate(false)}><Save />Save progress</Button>
-                {step < 3
+                {step < LAST
                   ? <Button onClick={() => { const m = missing(step); if (m.length && !submitted) { toast.error("Please complete the required answers on this step first."); return; } setStep(step + 1); }}>Next step</Button>
-                  : <Button disabled={save.isPending || !eligible || submitted || [0, 1, 2].some((i) => missing(i).length > 0)} onClick={() => save.mutate(true)}>{save.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit application</Button>}
+                  : <Button disabled={save.isPending || !eligible || submitted || [0, 1].some((i) => missing(i).length > 0)} onClick={() => save.mutate(true)}>{save.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit application</Button>}
               </div>
             </>
           )}
