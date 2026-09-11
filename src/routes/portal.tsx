@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useIdentity } from "@/lib/wcbn";
+import { eventDate, eventPlace, postDate, postTypeLabel } from "@/lib/wcbn-content";
 
 export const Route = createFileRoute("/portal")({ component: PortalHome });
 
