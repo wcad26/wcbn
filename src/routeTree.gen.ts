@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BusinessesRouteImport } from './routes/businesses'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as MembershipRouteImport } from './routes/membership'
 import { Route as PortalRouteImport } from './routes/portal'
@@ -61,6 +62,11 @@ const BusinessesRoute = BusinessesRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImpactRoute = ImpactRouteImport.update({
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
+  '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
   '/portal': typeof PortalRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
+  '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
   '/portal': typeof PortalRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
+  '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
   '/portal': typeof PortalRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/businesses'
     | '/contact'
+    | '/events'
     | '/impact'
     | '/membership'
     | '/portal'
@@ -259,6 +269,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/businesses'
     | '/contact'
+    | '/events'
     | '/impact'
     | '/membership'
     | '/portal'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/businesses'
     | '/contact'
+    | '/events'
     | '/impact'
     | '/membership'
     | '/portal'
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BusinessesRoute: typeof BusinessesRouteWithChildren
   ContactRoute: typeof ContactRoute
+  EventsRoute: typeof EventsRoute
   ImpactRoute: typeof ImpactRoute
   MembershipRoute: typeof MembershipRoute
   PortalRoute: typeof PortalRoute
@@ -370,6 +383,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/impact': {
@@ -513,6 +533,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BusinessesRoute: BusinessesRouteWithChildren,
   ContactRoute: ContactRoute,
+  EventsRoute: EventsRoute,
   ImpactRoute: ImpactRoute,
   MembershipRoute: MembershipRoute,
   PortalRoute: PortalRoute,
