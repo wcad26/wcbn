@@ -60,7 +60,7 @@ function BusinessPage() {
 
   useEffect(() => {
     if (!businesses?.length) return;
-    setSelectedId((cur) => (cur && businesses.some((b) => b.id === cur) ? cur : businesses[0].id));
+    setSelectedId((cur) => (cur && businesses.some((b) => b.id === cur) ? cur : businesses[0]!.id));
   }, [businesses]);
 
   const current = useMemo(() => businesses?.find((b) => b.id === selectedId) ?? null, [businesses, selectedId]);
@@ -336,7 +336,7 @@ function Panel({ title, icon: Icon, children }: { title: string; icon: React.Com
   );
 }
 
-function Detail({ icon: Icon, label, value, href }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | null; href?: string }) {
+function Detail({ icon: Icon, label, value, href }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string | null; href?: string | undefined }) {
   return (
     <li className="flex items-start gap-3">
       <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
