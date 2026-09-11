@@ -38,6 +38,28 @@ export const SDGS = [
   "Life on land", "Peace, justice & institutions", "Partnerships for the goals",
 ];
 
+export const SECTORS = [
+  "Agribusiness & Agriculture", "Automotive & Transport", "Banking & Financial Services", "Construction & Real Estate",
+  "Consulting & Professional Services", "Creative Arts, Media & Entertainment", "Education & Training",
+  "Energy & Utilities", "Engineering & Manufacturing", "Fashion & Beauty", "Food & Beverage", "Healthcare & Wellness",
+  "Hospitality & Tourism", "Information Technology & Software", "Insurance", "Legal Services", "Logistics & Supply Chain",
+  "Mining & Natural Resources", "Ministry & Faith-Based Services", "Non-Profit & Social Enterprise",
+  "Retail & Trade", "Security Services", "Sports & Recreation", "Telecommunications", "Other",
+] as const;
+
+export const COUNTRIES = [
+  "Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon",
+  "Central African Republic", "Chad", "Comoros", "Congo (Brazzaville)", "Congo (DRC)", "Côte d'Ivoire", "Djibouti",
+  "Egypt", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea",
+  "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius",
+  "Morocco", "Mozambique", "Namibia", "Niger", "Nigeria", "Rwanda", "São Tomé and Príncipe", "Senegal", "Seychelles",
+  "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sudan", "Tanzania", "Togo", "Tunisia", "Uganda",
+  "Zambia", "Zimbabwe",
+  "Australia", "Belgium", "Brazil", "Canada", "China", "Denmark", "France", "Germany", "India", "Ireland", "Italy",
+  "Japan", "Netherlands", "New Zealand", "Norway", "Portugal", "Qatar", "Saudi Arabia", "Singapore", "Spain",
+  "Sweden", "Switzerland", "Turkey", "United Arab Emirates", "United Kingdom", "United States", "Other",
+] as const;
+
 export function money(amount: number, currency = "XAF") {
   return new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
 }
