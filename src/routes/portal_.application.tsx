@@ -16,11 +16,12 @@ export const Route = createFileRoute("/portal_/application")({ component: Applic
 
 type Answers = {
   business_name: string; sector: string; country: string; cities: string; founding_year: string; employees: string;
+  business_phone: string; business_email: string;
   business_summary: string; testimony: string; leadership: string; impact_statement: string;
   sdgs: number[]; references: string; documents: string;
 };
 
-const EMPTY: Answers = { business_name: "", sector: "", country: "", cities: "", founding_year: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
+const EMPTY: Answers = { business_name: "", sector: "", country: "", cities: "", founding_year: "", employees: "", business_phone: "", business_email: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
 
 const CURRENT_YEAR = new Date().getFullYear();
 const FOUNDING_YEARS = Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => String(CURRENT_YEAR - i));
@@ -200,6 +201,8 @@ function ApplicationPage() {
                     </Select>
                   </Field>
                   <Field label="Team size"><Input type="number" value={answers.employees} onChange={(e) => set("employees", e.target.value)} /></Field>
+                  <Field label="Business phone number"><Input type="tel" value={answers.business_phone} onChange={(e) => set("business_phone", e.target.value)} placeholder="e.g. +237 6 00 00 00 00" /></Field>
+                  <Field label="Business email"><Input type="email" value={answers.business_email} onChange={(e) => set("business_email", e.target.value)} placeholder="e.g. info@yourbusiness.com" /></Field>
                   <Field label="Registration / licence references (optional)" className="md:col-span-2"><Input value={answers.documents} onChange={(e) => set("documents", e.target.value)} placeholder="Registration number, licence numbers" /></Field>
                   <Field label="What does the business do?" className="md:col-span-2"><Textarea rows={5} value={answers.business_summary} onChange={(e) => set("business_summary", e.target.value)} /></Field>
                 </div>
@@ -229,6 +232,8 @@ function ApplicationPage() {
                   <Row label="Country" value={answers.country || "—"} />
                   <Row label="Cities" value={answers.cities || "—"} />
                   <Row label="Founding year" value={answers.founding_year || "—"} />
+                  <Row label="Business phone" value={answers.business_phone || "—"} />
+                  <Row label="Business email" value={answers.business_email || "—"} />
                   <Row label="SDGs" value={answers.sdgs.length ? answers.sdgs.join(", ") : "—"} />
                   <Row label="Documents attached" value={String(data?.documents.length ?? 0)} />
                   {[0, 1].some((i) => missing(i).length > 0) && (
