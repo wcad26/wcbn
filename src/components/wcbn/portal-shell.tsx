@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  BadgeCheck, BarChart3, BriefcaseBusiness, CircleDollarSign, ClipboardCheck, FileText,
+  BadgeCheck, BarChart3, BriefcaseBusiness, CalendarDays, CircleDollarSign, ClipboardCheck, FileText, Newspaper,
   LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, ShieldCheck, UserRound, Users, X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -15,6 +15,8 @@ const memberLinks = [
   ["Overview", "/portal", BarChart3],
   ["My application", "/portal/application", ClipboardCheck],
   ["My business", "/portal/business", BriefcaseBusiness],
+  ["Events", "/portal/events", CalendarDays],
+  ["News", "/portal/news", Newspaper],
   ["Contributions", "/portal/contributions", CircleDollarSign],
   ["Impact", "/portal/impact", FileText],
   ["Covenant", "/portal/covenant", ScrollText],
@@ -26,6 +28,8 @@ const adminLinks = [
   ["Applications", "/admin/applications", ClipboardCheck],
   ["Members", "/admin/members", Users],
   ["Businesses", "/admin/businesses", BriefcaseBusiness],
+  ["Events", "/admin/events", CalendarDays],
+  ["News", "/admin/news", Newspaper],
   ["Contributions", "/admin/contributions", CircleDollarSign],
   ["Criteria", "/admin/criteria", Settings2],
   ["Roles & access", "/admin/roles", ShieldCheck],
