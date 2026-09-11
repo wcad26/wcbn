@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, useIdentity } from "@/lib/wcbn";
 import { AUDIENCES, POST_FIELDS, POST_TYPES, postDate, postTypeLabel, uploadCover, type WcbnPost } from "@/lib/wcbn-content";
-import { Field, Native } from "./admin_.events";
+import { Field, Native } from "@/components/wcbn/form-field";
 
 export const Route = createFileRoute("/admin_/news")({ component: AdminNews });
 

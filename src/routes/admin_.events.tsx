@@ -7,10 +7,10 @@ import { AdminPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Field, Native } from "@/components/wcbn/form-field";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify, useIdentity } from "@/lib/wcbn";
 import { AUDIENCES, EVENT_CATEGORIES, EVENT_FIELDS, EVENT_STATUSES, eventDate, eventPlace, uploadCover, type WcbnEvent } from "@/lib/wcbn-content";
@@ -236,17 +236,5 @@ function RegistrationsDialog({ event }: { event: WcbnEvent }) {
         </table>
       ) : <p className="text-sm text-muted-foreground">No one has registered yet.</p>}
     </DialogContent>
-  );
-}
-
-export function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
-  return <div className={className}><Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</Label><div className="mt-1.5">{children}</div></div>;
-}
-
-export function Native({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: [string, string][] }) {
-  return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm capitalize shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-      {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-    </select>
   );
 }
