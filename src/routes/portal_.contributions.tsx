@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleDollarSign, FileUp, Loader2, Receipt, Send, TriangleAlert } from "lucide-react";
+import { CircleDollarSign, FileUp, Loader2, Plus, Receipt, Send, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { MetricCard } from "@/components/wcbn/metric-card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
