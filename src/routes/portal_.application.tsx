@@ -14,20 +14,20 @@ import { SDGS, STAGES, documentUrl, ensureWcbnMember, uploadDocument, useIdentit
 export const Route = createFileRoute("/portal_/application")({ component: ApplicationPage });
 
 type Answers = {
-  business_name: string; sector: string; country: string; years_operating: string; employees: string;
+  business_name: string; sector: string; country: string; cities: string; years_operating: string; employees: string;
   business_summary: string; testimony: string; leadership: string; impact_statement: string;
   sdgs: number[]; references: string; documents: string;
 };
 
-const EMPTY: Answers = { business_name: "", sector: "", country: "", years_operating: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
+const EMPTY: Answers = { business_name: "", sector: "", country: "", cities: "", years_operating: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
 
-const STEPS = ["Business", "Character & leadership", "Impact & SDGs", "Review & submit"] as const;
+const STEPS = ["Business", "Impact & SDGs", "Review & submit"] as const;
+const LAST = STEPS.length - 1;
 
 const REQUIRED: Record<number, (keyof Answers)[]> = {
-  0: ["business_name", "sector", "country", "business_summary"],
-  1: ["testimony", "leadership", "references"],
-  2: ["impact_statement"],
-  3: [],
+  0: ["business_name", "sector", "country", "cities", "business_summary"],
+  1: ["impact_statement"],
+  2: [],
 };
 
 function ApplicationPage() {
