@@ -49,6 +49,19 @@ function PortalHome() {
     },
   });
 
+  const { data: feed } = useQuery({
+    queryKey: ["portal", "overview-feed"],
+    queryFn: async () => {
+      const [events, posts] = await Promise.all([
+        supabase.from("wcbn_events").select("id, title, slug, start_datetime, end_datetime, venue_name, city, country")
+          .eq("status", "published").gte("start_datetime", new Date().toISOString()).order("start_datetime").limit(2),
+        supabase.from("wcbn_posts").select("id, title, slug, post_type, published_at, created_at")
+          .eq("status", "published").order("is_pinned", { ascending: false }).order("published_at", { ascending: false, nullsFirst: false }).limit(3),
+      ]);
+      return { events: events.data ?? [], posts: posts.data ?? [] };
+    },
+  });
+
   const invoices = data?.invoices ?? [];
   const businesses = data?.businesses ?? [];
   const reviews = data?.reviews ?? [];
