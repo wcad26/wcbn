@@ -127,6 +127,63 @@ function Index() {
         ) : <p className="py-16 text-center text-muted-foreground">Approved businesses will appear here as WCBN leadership activates them.</p>}
       </section>
 
+      {(feed?.events.length || feed?.posts.length) ? (
+        <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8">
+          <div className="grid gap-14 lg:grid-cols-2">
+            {feed?.events.length ? (
+              <div>
+                <div className="flex items-end justify-between gap-4 border-b border-border pb-6">
+                  <SectionHeading eyebrow="Diary" title="Upcoming events" />
+                  <Button asChild variant="outline"><Link to="/events">All events <ArrowRight /></Link></Button>
+                </div>
+                <ul className="mt-8 space-y-4">
+                  {feed.events.map((e) => (
+                    <li key={e.id}>
+                      <Link to="/events/$slug" params={{ slug: e.slug }} className="flex gap-4 rounded-2xl border border-border p-4 transition hover:bg-muted">
+                        <div className="h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-secondary">
+                          {e.image_url ? <img src={e.image_url} alt="" loading="lazy" className="size-full object-cover" /> : <div className="size-full gradient-brand opacity-80" />}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">{e.category}</p>
+                          <h3 className="mt-1 font-bold leading-snug">{e.title}</h3>
+                          <p className="mt-1 text-xs text-muted-foreground">{eventDate(e)} · {eventPlace(e)}</p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {feed?.posts.length ? (
+              <div>
+                <div className="flex items-end justify-between gap-4 border-b border-border pb-6">
+                  <SectionHeading eyebrow="Newsroom" title="Latest news" />
+                  <Button asChild variant="outline"><Link to="/news">All news <ArrowRight /></Link></Button>
+                </div>
+                <ul className="mt-8 space-y-4">
+                  {feed.posts.map((p) => (
+                    <li key={p.id}>
+                      <Link to="/news/$slug" params={{ slug: p.slug }} className="flex gap-4 rounded-2xl border border-border p-4 transition hover:bg-muted">
+                        <div className="h-20 w-28 shrink-0 overflow-hidden rounded-xl bg-secondary">
+                          {p.image_url ? <img src={p.image_url} alt="" loading="lazy" className="size-full object-cover" /> : <div className="size-full gradient-brand opacity-80" />}
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">{postTypeLabel(p.post_type)}</p>
+                          <h3 className="mt-1 font-bold leading-snug">{p.title}</h3>
+                          <p className="mt-1 text-xs text-muted-foreground">{postDate(p)}</p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+
       <section className="relative overflow-hidden">
         <img src={networkImage} alt="World Changers members networking at a business gathering" className="absolute inset-0 size-full object-cover" loading="lazy" />
         <div className="absolute inset-0 gradient-brand opacity-90" />
