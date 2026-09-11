@@ -47,11 +47,12 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
   const activated = identity?.wcbnMember?.status === "active";
   const professional = identity?.wcbnMember?.member_type === "professional";
   const memberNav = activated
-    ? memberLinks
-        .filter(([, to]) => to !== "/portal/application")
-        .map((l) => (l[1] === "/portal/business" && professional ? (["My professional profile", l[1], UserRound] as const) : l))
+    ? memberLinks.filter(([, to]) => to !== "/portal/application")
     : ([["My application", "/portal/application", ClipboardCheck]] as const);
   const links = admin ? adminLinks : memberNav;
+  // Professionals do not own a business listing — the same page is presented as their professional profile.
+  const labelFor = (label: string, to: string) =>
+    professional && to === "/portal/business" ? "My professional profile" : label;
   const current = [...links].find(([, to]) => to === path)?.[0] ?? (admin ? "Leadership" : "Member portal");
 
   useEffect(() => {
