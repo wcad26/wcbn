@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PageShell } from "@/components/wcbn/page-shell";
 import { SectionHeading } from "@/components/wcbn/section-heading";
 import { supabase } from "@/integrations/supabase/client";
+import { eventDate, eventPlace, postDate, postTypeLabel } from "@/lib/wcbn-content";
 import heroImage from "@/assets/wcbn-hero.jpg";
 import enterpriseImage from "@/assets/wcbn-enterprise.jpg";
 import leadershipImage from "@/assets/wcbn-leadership.jpg";
