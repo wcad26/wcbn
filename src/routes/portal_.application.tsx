@@ -9,25 +9,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
-import { SDGS, STAGES, documentUrl, ensureWcbnMember, uploadDocument, useIdentity, useInvalidateIdentity } from "@/lib/wcbn";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { COUNTRIES, SDGS, SECTORS, STAGES, documentUrl, ensureWcbnMember, uploadDocument, useIdentity, useInvalidateIdentity } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/portal_/application")({ component: ApplicationPage });
 
 type Answers = {
-  business_name: string; sector: string; country: string; years_operating: string; employees: string;
+  business_name: string; sector: string; country: string; cities: string; years_operating: string; employees: string;
   business_summary: string; testimony: string; leadership: string; impact_statement: string;
   sdgs: number[]; references: string; documents: string;
 };
 
-const EMPTY: Answers = { business_name: "", sector: "", country: "", years_operating: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
+const EMPTY: Answers = { business_name: "", sector: "", country: "", cities: "", years_operating: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
 
-const STEPS = ["Business", "Character & leadership", "Impact & SDGs", "Review & submit"] as const;
+const STEPS = ["Business", "Impact & SDGs", "Review & submit"] as const;
+const LAST = STEPS.length - 1;
 
 const REQUIRED: Record<number, (keyof Answers)[]> = {
-  0: ["business_name", "sector", "country", "business_summary"],
-  1: ["testimony", "leadership", "references"],
-  2: ["impact_statement"],
-  3: [],
+  0: ["business_name", "sector", "country", "cities", "business_summary"],
+  1: ["impact_statement"],
+  2: [],
 };
 
 function ApplicationPage() {
@@ -63,7 +64,7 @@ function ApplicationPage() {
   const stageIndex = STAGES.findIndex((s) => s.code === application?.current_stage);
 
   const completion = useMemo(() => {
-    const fields = [...REQUIRED[0]!, ...REQUIRED[1]!, ...REQUIRED[2]!];
+    const fields = [...REQUIRED[0]!, ...REQUIRED[1]!];
     const done = fields.filter((f) => String(answers[f] ?? "").trim().length > 0).length;
     return Math.round((done / fields.length) * 100);
   }, [answers]);
@@ -170,22 +171,30 @@ function ApplicationPage() {
               {step === 0 && (
                 <div className="grid gap-4 md:grid-cols-2">
                   <Field label="Business or practice name"><Input value={answers.business_name} onChange={(e) => set("business_name", e.target.value)} /></Field>
-                  <Field label="Sector"><Input value={answers.sector} onChange={(e) => set("sector", e.target.value)} placeholder="e.g. Agribusiness" /></Field>
-                  <Field label="Country of operation"><Input value={answers.country} onChange={(e) => set("country", e.target.value)} /></Field>
+                  <Field label="Sector">
+                    <Select value={answers.sector} onValueChange={(v) => set("sector", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select a sector" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {SECTORS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Country of operation">
+                    <Select value={answers.country} onValueChange={(v) => set("country", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select a country" /></SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field label="Cities of operation"><Input value={answers.cities} onChange={(e) => set("cities", e.target.value)} placeholder="e.g. Douala, Yaoundé" /></Field>
                   <Field label="Years operating"><Input type="number" value={answers.years_operating} onChange={(e) => set("years_operating", e.target.value)} /></Field>
                   <Field label="Team size"><Input type="number" value={answers.employees} onChange={(e) => set("employees", e.target.value)} /></Field>
-                  <Field label="Registration / licence references" className="md:col-span-2"><Input value={answers.documents} onChange={(e) => set("documents", e.target.value)} placeholder="Registration number, licence numbers" /></Field>
+                  <Field label="Registration / licence references (optional)" className="md:col-span-2"><Input value={answers.documents} onChange={(e) => set("documents", e.target.value)} placeholder="Registration number, licence numbers" /></Field>
                   <Field label="What does the business do?" className="md:col-span-2"><Textarea rows={5} value={answers.business_summary} onChange={(e) => set("business_summary", e.target.value)} /></Field>
                 </div>
               )}
               {step === 1 && (
-                <div className="grid gap-4">
-                  <Field label="Your walk of faith and Christian conduct in business"><Textarea rows={6} value={answers.testimony} onChange={(e) => set("testimony", e.target.value)} /></Field>
-                  <Field label="Leadership and influence — who are you developing?"><Textarea rows={5} value={answers.leadership} onChange={(e) => set("leadership", e.target.value)} /></Field>
-                  <Field label="WCA leaders who can speak for you"><Input value={answers.references} onChange={(e) => set("references", e.target.value)} placeholder="Names and roles" /></Field>
-                </div>
-              )}
-              {step === 2 && (
                 <div className="grid gap-4">
                   <Field label="Your 3–5 year impact commitment"><Textarea rows={5} value={answers.impact_statement} onChange={(e) => set("impact_statement", e.target.value)} /></Field>
                   <div>
@@ -199,17 +208,20 @@ function ApplicationPage() {
                   </div>
                 </div>
               )}
-              {step === 3 && (
+              {step === 2 && (
                 <div className="space-y-4 text-sm">
                   <Row label="Applicant" value={identity?.fullName ?? "—"} />
                   <Row label="WCA member ID" value={identity?.member?.member_id ?? "—"} />
                   <Row label="Region" value={identity?.regionName ?? "—"} />
                   <Row label="DCG" value={identity?.dcgName ?? "—"} />
                   <Row label="Business" value={answers.business_name || "—"} />
+                  <Row label="Sector" value={answers.sector || "—"} />
+                  <Row label="Country" value={answers.country || "—"} />
+                  <Row label="Cities" value={answers.cities || "—"} />
                   <Row label="SDGs" value={answers.sdgs.length ? answers.sdgs.join(", ") : "—"} />
                   <Row label="Documents attached" value={String(data?.documents.length ?? 0)} />
-                  {[0, 1, 2].some((i) => missing(i).length > 0) && (
-                    <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Some required answers are still empty. Complete steps 1–3 before submitting.</p>
+                  {[0, 1].some((i) => missing(i).length > 0) && (
+                    <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Some required answers are still empty. Complete steps 1–2 before submitting.</p>
                   )}
                   <p className="text-muted-foreground">By submitting you confirm the information is accurate and agree to the WCBN validation process and Covenant.</p>
                 </div>
@@ -219,9 +231,9 @@ function ApplicationPage() {
               <div className="mt-8 flex flex-wrap gap-3">
                 {step > 0 && <Button variant="ghost" onClick={() => setStep(step - 1)}>Back</Button>}
                 <Button variant="outline" disabled={save.isPending || submitted} onClick={() => save.mutate(false)}><Save />Save progress</Button>
-                {step < 3
+                {step < LAST
                   ? <Button onClick={() => { const m = missing(step); if (m.length && !submitted) { toast.error("Please complete the required answers on this step first."); return; } setStep(step + 1); }}>Next step</Button>
-                  : <Button disabled={save.isPending || !eligible || submitted || [0, 1, 2].some((i) => missing(i).length > 0)} onClick={() => save.mutate(true)}>{save.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit application</Button>}
+                  : <Button disabled={save.isPending || !eligible || submitted || [0, 1].some((i) => missing(i).length > 0)} onClick={() => save.mutate(true)}>{save.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit application</Button>}
               </div>
             </>
           )}
@@ -238,8 +250,8 @@ function ApplicationPage() {
           </div>
 
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Supporting documents</h2>
-            <p className="mt-2 text-xs text-muted-foreground">Registration certificate, licences, reference letters. Only you and WCBN reviewers can open them.</p>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Supporting documents (optional)</h2>
+            <p className="mt-2 text-xs text-muted-foreground">Optional: registration certificate, licences, reference letters. Only you and WCBN reviewers can open them.</p>
             <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm font-medium hover:border-primary/50">
               {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}{uploading ? "Uploading…" : "Upload a document"}
               <input type="file" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) addDocument(f); e.target.value = ""; }} />
