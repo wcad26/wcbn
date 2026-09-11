@@ -63,7 +63,7 @@ function ApplicationPage() {
   const stageIndex = STAGES.findIndex((s) => s.code === application?.current_stage);
 
   const completion = useMemo(() => {
-    const fields = [...REQUIRED[0]!, ...REQUIRED[1]!, ...REQUIRED[2]!];
+    const fields = [...REQUIRED[0]!, ...REQUIRED[1]!];
     const done = fields.filter((f) => String(answers[f] ?? "").trim().length > 0).length;
     return Math.round((done / fields.length) * 100);
   }, [answers]);
