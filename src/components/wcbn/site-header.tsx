@@ -42,10 +42,8 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="hidden items-center gap-2 lg:flex">
-          {signedIn ? (
+          {signedIn && (
             <Button asChild variant="ghost" className="rounded-full"><Link to="/portal">My portal</Link></Button>
-          ) : (
-            <Button asChild variant="ghost" className="rounded-full"><Link to="/auth">Member sign in</Link></Button>
           )}
           <Button asChild className="rounded-full gradient-brand shadow-soft"><Link to="/membership">Apply to WCBN</Link></Button>
         </div>
