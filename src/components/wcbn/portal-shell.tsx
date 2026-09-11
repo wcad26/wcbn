@@ -78,10 +78,10 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition hover:bg-sidebar-accent hover:text-sidebar-foreground ${collapsed ? "lg:justify-center lg:px-2" : ""}`}
           activeProps={{ className: "bg-primary !text-white hover:bg-primary hover:!text-white" }}
           activeOptions={{ exact: to === "/admin" || to === "/portal" }}
-          title={label}
+          title={labelFor(label, to)}
         >
           <Icon className="size-4 shrink-0" />
-          <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
+          <span className={collapsed ? "lg:hidden" : ""}>{labelFor(label, to)}</span>
         </Link>
       ))}
     </nav>
@@ -115,7 +115,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
           <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/90 px-4 backdrop-blur lg:px-6">
             <div className="flex items-center gap-2">
               <Button size="icon" variant="ghost" className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu"><Menu /></Button>
-              <h2 className="text-base font-semibold">{current}</h2>
+              <h2 className="text-base font-semibold">{labelFor(current, path)}</h2>
             </div>
             <div className="flex items-center gap-3">
               {identity?.wcbnMember && (
