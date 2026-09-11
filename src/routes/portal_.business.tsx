@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { COUNTRIES, SDGS, SECTORS, ensureWcbnMember, slugify, useIdentity } from "@/lib/wcbn";
+import { COUNTRIES, PRACTICE_FIELDS, SDGS, SECTORS, ensureWcbnMember, slugify, useIdentity } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/portal_/business")({ component: BusinessPage });
 
@@ -46,6 +46,19 @@ function BusinessPage() {
   const { data: identity } = useIdentity();
   const queryClient = useQueryClient();
   const wcbnId = identity?.wcbnMember?.id;
+  // Professionals use the same listing machinery, presented as a personal professional profile.
+  const pro = identity?.wcbnMember?.member_type === "professional";
+  const t = {
+    entity: pro ? "professional profile" : "business profile",
+    Entity: pro ? "Professional profile" : "Business profile",
+    name: pro ? "Full name as it should appear" : "Business name",
+    sector: pro ? "Field of practice" : "Sector",
+    about: pro ? "About my practice" : "About the business",
+    story: pro ? "Services, expertise and experience" : "Full story, products and services",
+    years: pro ? "Years of experience" : "Years operating",
+    cover: pro ? "Photo or cover image link" : "Cover image link",
+    logo: pro ? "Profile photo link" : "Logo image link",
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -86,7 +99,7 @@ function BusinessPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Business profile removed");
+      toast.success(`${t.Entity} removed`);
       setSelectedId(null);
       queryClient.invalidateQueries({ queryKey: ["portal", "businesses"] });
     },
@@ -110,6 +123,7 @@ function BusinessPage() {
         years_operating: form.years_operating ? Number(form.years_operating) : null,
         employee_count: form.employee_count ? Number(form.employee_count) : null,
         registration_number: form.registration_number || null,
+        listing_type: pro ? "professional" : "business",
         ...(editing?.vetting_status === "approved" ? {} : { vetting_status: "pending" }),
       };
       let businessId = editingId;
@@ -129,7 +143,7 @@ function BusinessPage() {
       return businessId!;
     },
     onSuccess: (id) => {
-      toast.success("Business profile updated. Leadership vets changes before they appear publicly.");
+      toast.success(`${t.Entity} updated. Leadership vets changes before it appears publicly.`);
       setDialogOpen(false);
       setSelectedId(id);
       queryClient.invalidateQueries({ queryKey: ["portal", "businesses"] });
@@ -142,9 +156,11 @@ function BusinessPage() {
 
   return (
     <MemberPage
-      title="My business"
-      description="Your business profile as the network sees it. Keep it current — leadership vets every change before it appears in the public catalog."
-      action={businesses?.length ? <Button variant="outline" onClick={() => openEditor(null)}><Plus />Add another business</Button> : undefined}
+      title={pro ? "My professional profile" : "My business"}
+      description={pro
+        ? "Your professional profile as the network sees it. Keep it current — leadership vets every change before it appears in the public directory."
+        : "Your business profile as the network sees it. Keep it current — leadership vets every change before it appears in the public catalog."}
+      action={businesses?.length && !pro ? <Button variant="outline" onClick={() => openEditor(null)}><Plus />Add another business</Button> : undefined}
     >
       {isLoading && (
         <div className="space-y-6">
@@ -156,11 +172,11 @@ function BusinessPage() {
       {!isLoading && !businesses?.length && (
         <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center shadow-card">
           <div className="mx-auto flex size-14 items-center justify-center rounded-2xl gradient-brand text-white"><Building2 /></div>
-          <h2 className="mt-5 text-xl font-semibold">No business profile yet</h2>
+          <h2 className="mt-5 text-xl font-semibold">No {t.entity} yet</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Create your profile so the network, partners and buyers can discover what you do. Once leadership vets it, it appears in the public WCBN catalog.
+            Create your profile so the network, partners and clients can discover what you do. Once leadership vets it, it appears in the public WCBN directory.
           </p>
-          <Button className="mt-6" onClick={() => openEditor(null)}><Plus />Create business profile</Button>
+          <Button className="mt-6" onClick={() => openEditor(null)}><Plus />Create {t.entity}</Button>
         </div>
       )}
 
@@ -215,15 +231,15 @@ function BusinessPage() {
 
           {/* Key facts */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat icon={CalendarDays} label="Years operating" value={current.years_operating ? `${current.years_operating}` : "—"} />
-            <Stat icon={Users} label="Team size" value={current.employee_count ? `${current.employee_count}` : "—"} />
+            <Stat icon={CalendarDays} label={t.years} value={current.years_operating ? `${current.years_operating}` : "—"} />
+            {!pro && <Stat icon={Users} label="Team size" value={current.employee_count ? `${current.employee_count}` : "—"} />}
             <Stat icon={Target} label="SDGs committed" value={String(sdgNumbers.length)} />
             <Stat icon={CheckCircle2} label="Catalog status" value={current.is_active ? "Published" : statusMeta(current).label} />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
             <div className="space-y-6">
-              <Panel title="About the business" icon={Building2}>
+              <Panel title={t.about} icon={Building2}>
                 {current.description
                   ? <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{current.description}</p>
                   : <Empty text="No story added yet. Edit the profile to describe your products, services and journey." onEdit={() => openEditor(current)} />}
@@ -249,10 +265,10 @@ function BusinessPage() {
                   <Detail icon={MapPin} label="Location" value={[current.city, current.country].filter(Boolean).join(", ") || null} />
                 </ul>
               </Panel>
-              <Panel title="Registration" icon={ShieldCheck}>
+              <Panel title={pro ? "Credentials" : "Registration"} icon={ShieldCheck}>
                 <ul className="space-y-3 text-sm">
-                  <Detail icon={Building2} label="Legal name" value={current.legal_name} />
-                  <Detail icon={ShieldCheck} label="Registration number" value={current.registration_number} />
+                  {!pro && <Detail icon={Building2} label="Legal name" value={current.legal_name} />}
+                  <Detail icon={ShieldCheck} label={pro ? "Licence / professional body" : "Registration number"} value={current.registration_number} />
                   <Detail icon={CalendarDays} label="Profile created" value={new Date(current.created_at).toLocaleDateString()} />
                 </ul>
               </Panel>
@@ -265,16 +281,16 @@ function BusinessPage() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit business profile" : "Create business profile"}</DialogTitle>
-            <DialogDescription>Changes are reviewed by WCBN leadership before they show in the public catalog.</DialogDescription>
+            <DialogTitle>{editingId ? `Edit ${t.entity}` : `Create ${t.entity}`}</DialogTitle>
+            <DialogDescription>Changes are reviewed by WCBN leadership before they show in the public directory.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 md:grid-cols-2">
-            <F label="Business name"><Input value={form.display_name} onChange={(e) => set("display_name", e.target.value)} /></F>
-            <F label="Registered legal name"><Input value={form.legal_name} onChange={(e) => set("legal_name", e.target.value)} /></F>
-            <F label="Sector">
+            <F label={t.name}><Input value={form.display_name} onChange={(e) => set("display_name", e.target.value)} /></F>
+            {!pro && <F label="Registered legal name"><Input value={form.legal_name} onChange={(e) => set("legal_name", e.target.value)} /></F>}
+            <F label={t.sector}>
               <Select value={form.sector} onValueChange={(v) => set("sector", v)}>
-                <SelectTrigger><SelectValue placeholder="Select sector" /></SelectTrigger>
-                <SelectContent className="max-h-72">{SECTORS.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectTrigger><SelectValue placeholder={pro ? "Select field" : "Select sector"} /></SelectTrigger>
+                <SelectContent className="max-h-72">{(pro ? PRACTICE_FIELDS : SECTORS).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
               </Select>
             </F>
             <F label="Country">
@@ -284,16 +300,16 @@ function BusinessPage() {
               </Select>
             </F>
             <F label="City"><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></F>
-            <F label="Registration number (optional)"><Input value={form.registration_number} onChange={(e) => set("registration_number", e.target.value)} /></F>
-            <F label="Years operating"><Input type="number" value={form.years_operating} onChange={(e) => set("years_operating", e.target.value)} /></F>
-            <F label="Team size"><Input type="number" value={form.employee_count} onChange={(e) => set("employee_count", e.target.value)} /></F>
-            <F label="Website"><Input value={form.website_url} onChange={(e) => set("website_url", e.target.value)} placeholder="https://" /></F>
+            <F label={pro ? "Licence / professional body reference (optional)" : "Registration number (optional)"}><Input value={form.registration_number} onChange={(e) => set("registration_number", e.target.value)} /></F>
+            <F label={t.years}><Input type="number" value={form.years_operating} onChange={(e) => set("years_operating", e.target.value)} /></F>
+            {!pro && <F label="Team size"><Input type="number" value={form.employee_count} onChange={(e) => set("employee_count", e.target.value)} /></F>}
+            <F label={pro ? "Website or portfolio" : "Website"}><Input value={form.website_url} onChange={(e) => set("website_url", e.target.value)} placeholder="https://" /></F>
             <F label="Contact email"><Input value={form.email} onChange={(e) => set("email", e.target.value)} /></F>
             <F label="Phone"><Input value={form.phone} onChange={(e) => set("phone", e.target.value)} /></F>
-            <F label="Logo image link"><Input value={form.logo_url} onChange={(e) => set("logo_url", e.target.value)} placeholder="https://" /></F>
-            <F label="Cover image link" className="md:col-span-2"><Input value={form.cover_url} onChange={(e) => set("cover_url", e.target.value)} placeholder="https://" /></F>
+            <F label={t.logo}><Input value={form.logo_url} onChange={(e) => set("logo_url", e.target.value)} placeholder="https://" /></F>
+            <F label={t.cover} className="md:col-span-2"><Input value={form.cover_url} onChange={(e) => set("cover_url", e.target.value)} placeholder="https://" /></F>
             <F label="Short summary" className="md:col-span-2"><Input value={form.summary} onChange={(e) => set("summary", e.target.value)} maxLength={160} /></F>
-            <F label="Full story, products and services" className="md:col-span-2"><Textarea rows={6} value={form.description} onChange={(e) => set("description", e.target.value)} /></F>
+            <F label={t.story} className="md:col-span-2"><Textarea rows={6} value={form.description} onChange={(e) => set("description", e.target.value)} /></F>
             <div className="md:col-span-2">
               <Label className="mb-3 block">SDG contributions</Label>
               <div className="flex flex-wrap gap-2">
