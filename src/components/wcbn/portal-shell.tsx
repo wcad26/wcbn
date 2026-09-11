@@ -4,7 +4,7 @@ import {
   BadgeCheck, BarChart3, BriefcaseBusiness, CircleDollarSign, ClipboardCheck, FileText,
   LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, ShieldCheck, UserRound, Users, X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,10 +36,22 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: identity } = useIdentity();
-  const links = admin ? adminLinks : memberLinks;
+  const { data: identity, isLoading: identityLoading } = useIdentity();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const current = links.find(([, to]) => to === path)?.[0] ?? (admin ? "Leadership" : "Member portal");
+
+  // A member only sees the full portal once leadership has validated and activated them.
+  const activated = identity?.wcbnMember?.status === "active";
+  const memberNav = activated
+    ? memberLinks.filter(([, to]) => to !== "/portal/application")
+    : ([["My application", "/portal/application", ClipboardCheck]] as const);
+  const links = admin ? adminLinks : memberNav;
+  const current = [...links].find(([, to]) => to === path)?.[0] ?? (admin ? "Leadership" : "Member portal");
+
+  useEffect(() => {
+    if (admin || identityLoading || !identity) return;
+    if (!activated && path !== "/portal/application") navigate({ to: "/portal/application", replace: true });
+    if (activated && path === "/portal/application") navigate({ to: "/portal", replace: true });
+  }, [admin, identity, identityLoading, activated, path, navigate]);
 
   async function signOut() {
     await queryClient.cancelQueries();
