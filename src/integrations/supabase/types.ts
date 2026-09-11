@@ -3325,6 +3325,141 @@ export type Database = {
           },
         ]
       }
+      wcbn_event_registrations: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          note: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          wcbn_member_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          wcbn_member_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          note?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          wcbn_member_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wcbn_event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wcbn_event_registrations_wcbn_member_id_fkey"
+            columns: ["wcbn_member_id"]
+            isOneToOne: false
+            referencedRelation: "wcbn_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wcbn_events: {
+        Row: {
+          address: string | null
+          audience: string
+          capacity: number | null
+          category: string
+          city: string | null
+          cost: number | null
+          cost_currency_code: string | null
+          country: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_datetime: string | null
+          id: string
+          image_url: string | null
+          is_featured: boolean
+          organizer_email: string | null
+          organizer_name: string | null
+          organizer_phone: string | null
+          requires_registration: boolean
+          slug: string
+          start_datetime: string
+          status: string
+          summary: string | null
+          title: string
+          updated_at: string
+          venue_name: string | null
+        }
+        Insert: {
+          address?: string | null
+          audience?: string
+          capacity?: number | null
+          category?: string
+          city?: string | null
+          cost?: number | null
+          cost_currency_code?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_datetime?: string | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean
+          organizer_email?: string | null
+          organizer_name?: string | null
+          organizer_phone?: string | null
+          requires_registration?: boolean
+          slug: string
+          start_datetime: string
+          status?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+          venue_name?: string | null
+        }
+        Update: {
+          address?: string | null
+          audience?: string
+          capacity?: number | null
+          category?: string
+          city?: string | null
+          cost?: number | null
+          cost_currency_code?: string | null
+          country?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_datetime?: string | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean
+          organizer_email?: string | null
+          organizer_name?: string | null
+          organizer_phone?: string | null
+          requires_registration?: boolean
+          slug?: string
+          start_datetime?: string
+          status?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          venue_name?: string | null
+        }
+        Relationships: []
+      }
       wcbn_impact_commitments: {
         Row: {
           created_at: string
@@ -3619,6 +3754,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wcbn_posts: {
+        Row: {
+          audience: string
+          body: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          is_pinned: boolean
+          post_type: string
+          published_at: string | null
+          slug: string
+          status: string
+          summary: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean
+          post_type?: string
+          published_at?: string | null
+          slug: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean
+          post_type?: string
+          published_at?: string | null
+          slug?: string
+          status?: string
+          summary?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       wcbn_roles: {
         Row: {
