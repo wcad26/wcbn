@@ -9,3 +9,5 @@
 - [ ] Supabase security items — blocked: OTP expiry, leaked-password protection and Postgres upgrade must be changed in the Supabase dashboard
 - [x] Events and news/announcements: admin creation, public pages, member portal pages with RSVP
 - [ ] Content management for leadership bios
+
+- [x] Two membership tracks: business owner vs professional (application, member portal, admin validation, public directory)

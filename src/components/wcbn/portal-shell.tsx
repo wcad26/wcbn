@@ -45,10 +45,14 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
 
   // A member only sees the full portal once leadership has validated and activated them.
   const activated = identity?.wcbnMember?.status === "active";
+  const professional = identity?.wcbnMember?.member_type === "professional";
   const memberNav = activated
     ? memberLinks.filter(([, to]) => to !== "/portal/application")
     : ([["My application", "/portal/application", ClipboardCheck]] as const);
   const links = admin ? adminLinks : memberNav;
+  // Professionals do not own a business listing — the same page is presented as their professional profile.
+  const labelFor = (label: string, to: string) =>
+    professional && to === "/portal/business" ? "My professional profile" : label;
   const current = [...links].find(([, to]) => to === path)?.[0] ?? (admin ? "Leadership" : "Member portal");
 
   useEffect(() => {
@@ -74,10 +78,10 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition hover:bg-sidebar-accent hover:text-sidebar-foreground ${collapsed ? "lg:justify-center lg:px-2" : ""}`}
           activeProps={{ className: "bg-primary !text-white hover:bg-primary hover:!text-white" }}
           activeOptions={{ exact: to === "/admin" || to === "/portal" }}
-          title={label}
+          title={labelFor(label, to)}
         >
           <Icon className="size-4 shrink-0" />
-          <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
+          <span className={collapsed ? "lg:hidden" : ""}>{labelFor(label, to)}</span>
         </Link>
       ))}
     </nav>
@@ -111,7 +115,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
           <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/90 px-4 backdrop-blur lg:px-6">
             <div className="flex items-center gap-2">
               <Button size="icon" variant="ghost" className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu"><Menu /></Button>
-              <h2 className="text-base font-semibold">{current}</h2>
+              <h2 className="text-base font-semibold">{labelFor(current, path)}</h2>
             </div>
             <div className="flex items-center gap-3">
               {identity?.wcbnMember && (
