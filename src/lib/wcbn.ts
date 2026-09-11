@@ -11,18 +11,43 @@ export type Identity = {
   dcgName: string | null;
   dcgActive: boolean;
   wcaActive: boolean;
-  wcbnMember: { id: string; category: string; status: string; inducted_at: string | null; next_review_date: string | null; covenant_accepted_at: string | null } | null;
+  wcbnMember: { id: string; category: string; status: string; member_type: string; inducted_at: string | null; next_review_date: string | null; covenant_accepted_at: string | null } | null;
   permissions: string[];
   isStaff: boolean;
 };
 
 export const CATEGORIES = ["Associate", "Member", "Leader", "Impact Partner", "Fellow"] as const;
 
+export type Track = "business" | "professional";
+
+export const TRACKS: { value: Track; label: string; blurb: string }[] = [
+  { value: "business", label: "Business owner", blurb: "I own or co-own a registered business." },
+  { value: "professional", label: "Professional", blurb: "I practise a profession or trade without a registered business." },
+];
+
+export function trackLabel(track: string | null | undefined) {
+  return track === "professional" ? "Professional" : "Business owner";
+}
+
+export const PRACTICE_TYPES = ["Employed", "Self-employed", "Consultant / freelance", "Public service", "Ministry / non-profit", "Student / early career", "Other"] as const;
+
+export const PRACTICE_FIELDS = [
+  "Accounting & Finance", "Administration & Operations", "Agriculture & Agronomy", "Architecture & Design",
+  "Arts, Media & Communication", "Aviation & Maritime", "Coaching & Training", "Construction & Trades",
+  "Consulting & Strategy", "Education & Academia", "Engineering", "Healthcare & Medicine", "Hospitality & Culinary",
+  "Human Resources", "Information Technology & Software", "Law & Legal Practice", "Marketing & Sales",
+  "Ministry & Chaplaincy", "Psychology & Counselling", "Public Service & Governance", "Research & Data",
+  "Science & Laboratory", "Security & Defence", "Social Work & Community Development", "Sports & Fitness", "Other",
+] as const;
+
+export const EXPERIENCE_BANDS = ["Less than 2 years", "2–5 years", "6–10 years", "11–20 years", "More than 20 years"] as const;
+
 export const STAGES = [
   { code: "applied", label: "Applied" },
   { code: "wca_verified", label: "WCA verified" },
   { code: "character_review", label: "Character review" },
   { code: "business_review", label: "Business review" },
+  { code: "practice_review", label: "Professional practice review" },
   { code: "impact_review", label: "Impact & SDG review" },
   { code: "leadership_review", label: "Leadership review" },
   { code: "interview", label: "Interview" },
@@ -30,6 +55,14 @@ export const STAGES = [
   { code: "decision", label: "Decision" },
   { code: "inducted", label: "Inducted" },
 ] as const;
+
+/** Review stages differ per track: businesses are vetted as enterprises, professionals as practitioners. */
+export function stagesFor(track: string | null | undefined) {
+  const isPro = track === "professional";
+  return STAGES.filter((s) => (isPro ? s.code !== "business_review" : s.code !== "practice_review")).map((s) =>
+    isPro && s.code === "impact_review" ? { code: s.code, label: "Service & impact review" } : { code: s.code, label: s.label },
+  );
+}
 
 export const SDGS = [
   "No poverty", "Zero hunger", "Good health & well-being", "Quality education", "Gender equality",
@@ -94,7 +127,7 @@ async function fetchIdentity(): Promise<Identity | null> {
     dcgActive = !!dcgRow?.is_active && !!dcg?.is_active;
   }
 
-  const { data: wcbnMember } = await supabase.from("wcbn_members").select("id, category, status, inducted_at, next_review_date, covenant_accepted_at").eq("profile_id", user.id).maybeSingle();
+  const { data: wcbnMember } = await supabase.from("wcbn_members").select("id, category, status, member_type, inducted_at, next_review_date, covenant_accepted_at").eq("profile_id", user.id).maybeSingle();
 
   const permissions = (roleRows ?? []).flatMap((r) => {
     const role = r.wcbn_roles as { permissions: unknown; is_active: boolean } | null;
@@ -135,12 +168,12 @@ export function can(identity: Identity | null | undefined, permission: string) {
 }
 
 /** Creates the WCBN membership record for the signed-in member on first use. */
-export async function ensureWcbnMember(identity: Identity) {
+export async function ensureWcbnMember(identity: Identity, memberType: Track = "business") {
   if (identity.wcbnMember) return identity.wcbnMember.id;
   if (!identity.member) throw new Error("No active World Changers Association member record was found for your account.");
   const { data, error } = await supabase
     .from("wcbn_members")
-    .insert({ profile_id: identity.userId, member_id: identity.member.id, category: "Associate", status: "prospect" })
+    .insert({ profile_id: identity.userId, member_id: identity.member.id, category: "Associate", status: "prospect", member_type: memberType })
     .select("id")
     .single();
   if (error) throw error;
