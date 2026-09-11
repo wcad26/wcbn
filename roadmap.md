@@ -7,4 +7,5 @@
 - [x] Contributions: dues plans, invoicing, declared payments and confirmation
 - [ ] Online payment checkout — blocked: awaiting choice of payment rails (mobile money vs card)
 - [ ] Supabase security items — blocked: OTP expiry, leaked-password protection and Postgres upgrade must be changed in the Supabase dashboard
-- [ ] Content management for news/events/leadership bios
+- [x] Events and news/announcements: admin creation, public pages, member portal pages with RSVP
+- [ ] Content management for leadership bios

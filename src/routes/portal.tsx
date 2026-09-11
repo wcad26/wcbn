@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { money, useIdentity } from "@/lib/wcbn";
+import { eventDate, eventPlace, postDate, postTypeLabel } from "@/lib/wcbn-content";
 
 export const Route = createFileRoute("/portal")({ component: PortalHome });
 
@@ -46,6 +47,19 @@ function PortalHome() {
         networkJobs: (networkImpact.data ?? []).reduce((s, r) => s + Number(r.jobs_created ?? 0), 0),
         networkTrained: (networkImpact.data ?? []).reduce((s, r) => s + Number(r.people_trained ?? 0), 0),
       };
+    },
+  });
+
+  const { data: feed } = useQuery({
+    queryKey: ["portal", "overview-feed"],
+    queryFn: async () => {
+      const [events, posts] = await Promise.all([
+        supabase.from("wcbn_events").select("id, title, slug, start_datetime, end_datetime, venue_name, city, country")
+          .eq("status", "published").gte("start_datetime", new Date().toISOString()).order("start_datetime").limit(2),
+        supabase.from("wcbn_posts").select("id, title, slug, post_type, published_at, created_at")
+          .eq("status", "published").order("is_pinned", { ascending: false }).order("published_at", { ascending: false, nullsFirst: false }).limit(3),
+      ]);
+      return { events: events.data ?? [], posts: posts.data ?? [] };
     },
   });
 
@@ -234,6 +248,45 @@ function PortalHome() {
               <Pulse icon={Target} label="People trained" value={data?.networkTrained ?? 0} />
             </dl>
           </div>
+
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">Upcoming events</h2>
+              <Button asChild variant="ghost" size="sm"><Link to="/portal/events">All events</Link></Button>
+            </div>
+            {feed?.events.length ? (
+              <ul className="mt-3 space-y-2">
+                {feed.events.map((e) => (
+                  <li key={e.id}>
+                    <Link to="/portal/events/$slug" params={{ slug: e.slug }} className="block rounded-xl border border-border px-4 py-3 text-sm transition hover:bg-muted">
+                      <span className="font-medium">{e.title}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{eventDate(e)} · {eventPlace(e)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="mt-3 text-sm text-muted-foreground">No events scheduled right now.</p>}
+          </div>
+
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">Latest announcements</h2>
+              <Button asChild variant="ghost" size="sm"><Link to="/portal/news">All news</Link></Button>
+            </div>
+            {feed?.posts.length ? (
+              <ul className="mt-3 space-y-2">
+                {feed.posts.map((p) => (
+                  <li key={p.id}>
+                    <Link to="/portal/news/$slug" params={{ slug: p.slug }} className="block rounded-xl border border-border px-4 py-3 text-sm transition hover:bg-muted">
+                      <span className="font-medium">{p.title}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{postTypeLabel(p.post_type)} · {postDate(p)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="mt-3 text-sm text-muted-foreground">No announcements yet.</p>}
+          </div>
+
 
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
             <h2 className="text-lg font-semibold">Quick actions</h2>

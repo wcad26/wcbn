@@ -15,23 +15,33 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BusinessesRouteImport } from './routes/businesses'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as MembershipRouteImport } from './routes/membership'
+import { Route as NewsRouteImport } from './routes/news'
 import { Route as PortalRouteImport } from './routes/portal'
 import { Route as AdminApplicationsRouteImport } from './routes/admin_.applications'
 import { Route as AdminBusinessesRouteImport } from './routes/admin_.businesses'
 import { Route as AdminContributionsRouteImport } from './routes/admin_.contributions'
 import { Route as AdminCriteriaRouteImport } from './routes/admin_.criteria'
+import { Route as AdminEventsRouteImport } from './routes/admin_.events'
 import { Route as AdminMembersRouteImport } from './routes/admin_.members'
+import { Route as AdminNewsRouteImport } from './routes/admin_.news'
 import { Route as AdminRolesRouteImport } from './routes/admin_.roles'
 import { Route as AuthAdminRouteImport } from './routes/auth_.admin'
 import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
+import { Route as EventsSlugRouteImport } from './routes/events_.$slug'
+import { Route as NewsSlugRouteImport } from './routes/news_.$slug'
 import { Route as PortalApplicationRouteImport } from './routes/portal_.application'
 import { Route as PortalBusinessRouteImport } from './routes/portal_.business'
 import { Route as PortalContributionsRouteImport } from './routes/portal_.contributions'
 import { Route as PortalCovenantRouteImport } from './routes/portal_.covenant'
+import { Route as PortalEventsRouteImport } from './routes/portal_.events'
 import { Route as PortalImpactRouteImport } from './routes/portal_.impact'
+import { Route as PortalNewsRouteImport } from './routes/portal_.news'
 import { Route as PortalProfileRouteImport } from './routes/portal_.profile'
+import { Route as PortalEventsSlugRouteImport } from './routes/portal_.events_.$slug'
+import { Route as PortalNewsSlugRouteImport } from './routes/portal_.news_.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,6 +73,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImpactRoute = ImpactRouteImport.update({
   id: '/impact',
   path: '/impact',
@@ -71,6 +86,11 @@ const ImpactRoute = ImpactRouteImport.update({
 const MembershipRoute = MembershipRouteImport.update({
   id: '/membership',
   path: '/membership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsRoute = NewsRouteImport.update({
+  id: '/news',
+  path: '/news',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortalRoute = PortalRouteImport.update({
@@ -98,9 +118,19 @@ const AdminCriteriaRoute = AdminCriteriaRouteImport.update({
   path: '/admin/criteria',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/admin_/events',
+  path: '/admin/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminMembersRoute = AdminMembersRouteImport.update({
   id: '/admin_/members',
   path: '/admin/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNewsRoute = AdminNewsRouteImport.update({
+  id: '/admin_/news',
+  path: '/admin/news',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRolesRoute = AdminRolesRouteImport.update({
@@ -117,6 +147,16 @@ const BusinessesSlugRoute = BusinessesSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
   getParentRoute: () => BusinessesRoute,
+} as any)
+const EventsSlugRoute = EventsSlugRouteImport.update({
+  id: '/events_/$slug',
+  path: '/events/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsSlugRoute = NewsSlugRouteImport.update({
+  id: '/news_/$slug',
+  path: '/news/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PortalApplicationRoute = PortalApplicationRouteImport.update({
   id: '/portal_/application',
@@ -138,14 +178,34 @@ const PortalCovenantRoute = PortalCovenantRouteImport.update({
   path: '/portal/covenant',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalEventsRoute = PortalEventsRouteImport.update({
+  id: '/portal_/events',
+  path: '/portal/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalImpactRoute = PortalImpactRouteImport.update({
   id: '/portal_/impact',
   path: '/portal/impact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalNewsRoute = PortalNewsRouteImport.update({
+  id: '/portal_/news',
+  path: '/portal/news',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalProfileRoute = PortalProfileRouteImport.update({
   id: '/portal_/profile',
   path: '/portal/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalEventsSlugRoute = PortalEventsSlugRouteImport.update({
+  id: '/portal_/events_/$slug',
+  path: '/portal/events/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalNewsSlugRoute = PortalNewsSlugRouteImport.update({
+  id: '/portal_/news_/$slug',
+  path: '/portal/news/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -156,23 +216,33 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
+  '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
+  '/news': typeof NewsRoute
   '/portal': typeof PortalRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/businesses': typeof AdminBusinessesRoute
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/events': typeof AdminEventsRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/news': typeof AdminNewsRoute
   '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
+  '/events/$slug': typeof EventsSlugRoute
+  '/news/$slug': typeof NewsSlugRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
   '/portal/covenant': typeof PortalCovenantRoute
+  '/portal/events': typeof PortalEventsRoute
   '/portal/impact': typeof PortalImpactRoute
+  '/portal/news': typeof PortalNewsRoute
   '/portal/profile': typeof PortalProfileRoute
+  '/portal/events/$slug': typeof PortalEventsSlugRoute
+  '/portal/news/$slug': typeof PortalNewsSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -181,23 +251,33 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
+  '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
+  '/news': typeof NewsRoute
   '/portal': typeof PortalRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/businesses': typeof AdminBusinessesRoute
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/events': typeof AdminEventsRoute
   '/admin/members': typeof AdminMembersRoute
+  '/admin/news': typeof AdminNewsRoute
   '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
+  '/events/$slug': typeof EventsSlugRoute
+  '/news/$slug': typeof NewsSlugRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
   '/portal/contributions': typeof PortalContributionsRoute
   '/portal/covenant': typeof PortalCovenantRoute
+  '/portal/events': typeof PortalEventsRoute
   '/portal/impact': typeof PortalImpactRoute
+  '/portal/news': typeof PortalNewsRoute
   '/portal/profile': typeof PortalProfileRoute
+  '/portal/events/$slug': typeof PortalEventsSlugRoute
+  '/portal/news/$slug': typeof PortalNewsSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -207,23 +287,33 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
+  '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
   '/membership': typeof MembershipRoute
+  '/news': typeof NewsRoute
   '/portal': typeof PortalRoute
   '/admin_/applications': typeof AdminApplicationsRoute
   '/admin_/businesses': typeof AdminBusinessesRoute
   '/admin_/contributions': typeof AdminContributionsRoute
   '/admin_/criteria': typeof AdminCriteriaRoute
+  '/admin_/events': typeof AdminEventsRoute
   '/admin_/members': typeof AdminMembersRoute
+  '/admin_/news': typeof AdminNewsRoute
   '/admin_/roles': typeof AdminRolesRoute
   '/auth_/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
+  '/events_/$slug': typeof EventsSlugRoute
+  '/news_/$slug': typeof NewsSlugRoute
   '/portal_/application': typeof PortalApplicationRoute
   '/portal_/business': typeof PortalBusinessRoute
   '/portal_/contributions': typeof PortalContributionsRoute
   '/portal_/covenant': typeof PortalCovenantRoute
+  '/portal_/events': typeof PortalEventsRoute
   '/portal_/impact': typeof PortalImpactRoute
+  '/portal_/news': typeof PortalNewsRoute
   '/portal_/profile': typeof PortalProfileRoute
+  '/portal_/events_/$slug': typeof PortalEventsSlugRoute
+  '/portal_/news_/$slug': typeof PortalNewsSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -234,23 +324,33 @@ export interface FileRouteTypes {
     | '/auth'
     | '/businesses'
     | '/contact'
+    | '/events'
     | '/impact'
     | '/membership'
+    | '/news'
     | '/portal'
     | '/admin/applications'
     | '/admin/businesses'
     | '/admin/contributions'
     | '/admin/criteria'
+    | '/admin/events'
     | '/admin/members'
+    | '/admin/news'
     | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
+    | '/events/$slug'
+    | '/news/$slug'
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
     | '/portal/covenant'
+    | '/portal/events'
     | '/portal/impact'
+    | '/portal/news'
     | '/portal/profile'
+    | '/portal/events/$slug'
+    | '/portal/news/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -259,23 +359,33 @@ export interface FileRouteTypes {
     | '/auth'
     | '/businesses'
     | '/contact'
+    | '/events'
     | '/impact'
     | '/membership'
+    | '/news'
     | '/portal'
     | '/admin/applications'
     | '/admin/businesses'
     | '/admin/contributions'
     | '/admin/criteria'
+    | '/admin/events'
     | '/admin/members'
+    | '/admin/news'
     | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
+    | '/events/$slug'
+    | '/news/$slug'
     | '/portal/application'
     | '/portal/business'
     | '/portal/contributions'
     | '/portal/covenant'
+    | '/portal/events'
     | '/portal/impact'
+    | '/portal/news'
     | '/portal/profile'
+    | '/portal/events/$slug'
+    | '/portal/news/$slug'
   id:
     | '__root__'
     | '/'
@@ -284,23 +394,33 @@ export interface FileRouteTypes {
     | '/auth'
     | '/businesses'
     | '/contact'
+    | '/events'
     | '/impact'
     | '/membership'
+    | '/news'
     | '/portal'
     | '/admin_/applications'
     | '/admin_/businesses'
     | '/admin_/contributions'
     | '/admin_/criteria'
+    | '/admin_/events'
     | '/admin_/members'
+    | '/admin_/news'
     | '/admin_/roles'
     | '/auth_/admin'
     | '/businesses/$slug'
+    | '/events_/$slug'
+    | '/news_/$slug'
     | '/portal_/application'
     | '/portal_/business'
     | '/portal_/contributions'
     | '/portal_/covenant'
+    | '/portal_/events'
     | '/portal_/impact'
+    | '/portal_/news'
     | '/portal_/profile'
+    | '/portal_/events_/$slug'
+    | '/portal_/news_/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -310,22 +430,32 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BusinessesRoute: typeof BusinessesRouteWithChildren
   ContactRoute: typeof ContactRoute
+  EventsRoute: typeof EventsRoute
   ImpactRoute: typeof ImpactRoute
   MembershipRoute: typeof MembershipRoute
+  NewsRoute: typeof NewsRoute
   PortalRoute: typeof PortalRoute
   AdminApplicationsRoute: typeof AdminApplicationsRoute
   AdminBusinessesRoute: typeof AdminBusinessesRoute
   AdminContributionsRoute: typeof AdminContributionsRoute
   AdminCriteriaRoute: typeof AdminCriteriaRoute
+  AdminEventsRoute: typeof AdminEventsRoute
   AdminMembersRoute: typeof AdminMembersRoute
+  AdminNewsRoute: typeof AdminNewsRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AuthAdminRoute: typeof AuthAdminRoute
+  EventsSlugRoute: typeof EventsSlugRoute
+  NewsSlugRoute: typeof NewsSlugRoute
   PortalApplicationRoute: typeof PortalApplicationRoute
   PortalBusinessRoute: typeof PortalBusinessRoute
   PortalContributionsRoute: typeof PortalContributionsRoute
   PortalCovenantRoute: typeof PortalCovenantRoute
+  PortalEventsRoute: typeof PortalEventsRoute
   PortalImpactRoute: typeof PortalImpactRoute
+  PortalNewsRoute: typeof PortalNewsRoute
   PortalProfileRoute: typeof PortalProfileRoute
+  PortalEventsSlugRoute: typeof PortalEventsSlugRoute
+  PortalNewsSlugRoute: typeof PortalNewsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -372,6 +502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/impact': {
       id: '/impact'
       path: '/impact'
@@ -384,6 +521,13 @@ declare module '@tanstack/react-router' {
       path: '/membership'
       fullPath: '/membership'
       preLoaderRoute: typeof MembershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news': {
+      id: '/news'
+      path: '/news'
+      fullPath: '/news'
+      preLoaderRoute: typeof NewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portal': {
@@ -421,11 +565,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCriteriaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin_/events': {
+      id: '/admin_/events'
+      path: '/admin/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/members': {
       id: '/admin_/members'
       path: '/admin/members'
       fullPath: '/admin/members'
       preLoaderRoute: typeof AdminMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin_/news': {
+      id: '/admin_/news'
+      path: '/admin/news'
+      fullPath: '/admin/news'
+      preLoaderRoute: typeof AdminNewsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin_/roles': {
@@ -448,6 +606,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/businesses/$slug'
       preLoaderRoute: typeof BusinessesSlugRouteImport
       parentRoute: typeof BusinessesRoute
+    }
+    '/events_/$slug': {
+      id: '/events_/$slug'
+      path: '/events/$slug'
+      fullPath: '/events/$slug'
+      preLoaderRoute: typeof EventsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news_/$slug': {
+      id: '/news_/$slug'
+      path: '/news/$slug'
+      fullPath: '/news/$slug'
+      preLoaderRoute: typeof NewsSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/portal_/application': {
       id: '/portal_/application'
@@ -477,6 +649,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalCovenantRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal_/events': {
+      id: '/portal_/events'
+      path: '/portal/events'
+      fullPath: '/portal/events'
+      preLoaderRoute: typeof PortalEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal_/impact': {
       id: '/portal_/impact'
       path: '/portal/impact'
@@ -484,11 +663,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalImpactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/portal_/news': {
+      id: '/portal_/news'
+      path: '/portal/news'
+      fullPath: '/portal/news'
+      preLoaderRoute: typeof PortalNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/portal_/profile': {
       id: '/portal_/profile'
       path: '/portal/profile'
       fullPath: '/portal/profile'
       preLoaderRoute: typeof PortalProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal_/events_/$slug': {
+      id: '/portal_/events_/$slug'
+      path: '/portal/events/$slug'
+      fullPath: '/portal/events/$slug'
+      preLoaderRoute: typeof PortalEventsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal_/news_/$slug': {
+      id: '/portal_/news_/$slug'
+      path: '/portal/news/$slug'
+      fullPath: '/portal/news/$slug'
+      preLoaderRoute: typeof PortalNewsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -513,22 +713,32 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BusinessesRoute: BusinessesRouteWithChildren,
   ContactRoute: ContactRoute,
+  EventsRoute: EventsRoute,
   ImpactRoute: ImpactRoute,
   MembershipRoute: MembershipRoute,
+  NewsRoute: NewsRoute,
   PortalRoute: PortalRoute,
   AdminApplicationsRoute: AdminApplicationsRoute,
   AdminBusinessesRoute: AdminBusinessesRoute,
   AdminContributionsRoute: AdminContributionsRoute,
   AdminCriteriaRoute: AdminCriteriaRoute,
+  AdminEventsRoute: AdminEventsRoute,
   AdminMembersRoute: AdminMembersRoute,
+  AdminNewsRoute: AdminNewsRoute,
   AdminRolesRoute: AdminRolesRoute,
   AuthAdminRoute: AuthAdminRoute,
+  EventsSlugRoute: EventsSlugRoute,
+  NewsSlugRoute: NewsSlugRoute,
   PortalApplicationRoute: PortalApplicationRoute,
   PortalBusinessRoute: PortalBusinessRoute,
   PortalContributionsRoute: PortalContributionsRoute,
   PortalCovenantRoute: PortalCovenantRoute,
+  PortalEventsRoute: PortalEventsRoute,
   PortalImpactRoute: PortalImpactRoute,
+  PortalNewsRoute: PortalNewsRoute,
   PortalProfileRoute: PortalProfileRoute,
+  PortalEventsSlugRoute: PortalEventsSlugRoute,
+  PortalNewsSlugRoute: PortalNewsSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
