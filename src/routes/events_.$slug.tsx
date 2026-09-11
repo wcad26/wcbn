@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EVENT_FIELDS, eventDate, eventPlace, type WcbnEvent } from "@/lib/wcbn-content";
 import { money } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/events/$slug")({ component: EventDetail });
+export const Route = createFileRoute("/events_/$slug")({ component: EventDetail });
 
 function EventDetail() {
   const { slug } = Route.useParams();

@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { POST_FIELDS, postDate, postTypeLabel, type WcbnPost } from "@/lib/wcbn-content";
 
-export const Route = createFileRoute("/news/$slug")({ component: PostDetail });
+export const Route = createFileRoute("/news_/$slug")({ component: PostDetail });
 
 function PostDetail() {
   const { slug } = Route.useParams();
