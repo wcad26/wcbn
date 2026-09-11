@@ -249,6 +249,45 @@ function PortalHome() {
           </div>
 
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">Upcoming events</h2>
+              <Button asChild variant="ghost" size="sm"><Link to="/portal/events">All events</Link></Button>
+            </div>
+            {feed?.events.length ? (
+              <ul className="mt-3 space-y-2">
+                {feed.events.map((e) => (
+                  <li key={e.id}>
+                    <Link to="/portal/events/$slug" params={{ slug: e.slug }} className="block rounded-xl border border-border px-4 py-3 text-sm transition hover:bg-muted">
+                      <span className="font-medium">{e.title}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{eventDate(e)} · {eventPlace(e)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="mt-3 text-sm text-muted-foreground">No events scheduled right now.</p>}
+          </div>
+
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">Latest announcements</h2>
+              <Button asChild variant="ghost" size="sm"><Link to="/portal/news">All news</Link></Button>
+            </div>
+            {feed?.posts.length ? (
+              <ul className="mt-3 space-y-2">
+                {feed.posts.map((p) => (
+                  <li key={p.id}>
+                    <Link to="/portal/news/$slug" params={{ slug: p.slug }} className="block rounded-xl border border-border px-4 py-3 text-sm transition hover:bg-muted">
+                      <span className="font-medium">{p.title}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">{postTypeLabel(p.post_type)} · {postDate(p)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="mt-3 text-sm text-muted-foreground">No announcements yet.</p>}
+          </div>
+
+
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
             <h2 className="text-lg font-semibold">Quick actions</h2>
             <div className="mt-4 grid gap-2">
               <Button asChild variant="outline" className="justify-start"><Link to="/portal/contributions"><CircleDollarSign />Declare a payment</Link></Button>
