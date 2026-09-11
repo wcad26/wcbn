@@ -33,7 +33,7 @@ export function SiteHeader() {
           <span className="grid size-10 place-items-center rounded-xl gradient-brand text-lg font-bold text-primary-foreground">W</span>
           <span>
             <strong className="block text-lg font-bold leading-none text-gradient-brand">WCBN</strong>
-            <small className="mt-1 block text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Business Network</small>
+            <small className="mt-1 block text-[10px] uppercase tracking-[0.16em] text-muted-foreground">WORLD CHANGERS BUSINESS NETWORK</small>
           </span>
         </Link>
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Main navigation">
