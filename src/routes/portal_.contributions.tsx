@@ -19,6 +19,7 @@ function ContributionsPage() {
   const { data: identity } = useIdentity();
   const queryClient = useQueryClient();
   const wcbnId = identity?.wcbnMember?.id;
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [invoiceId, setInvoiceId] = useState("");
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("mobile_money");
