@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Eye, Star, XCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/admin_/businesses")({ component: Business
 function BusinessVetting() {
   const queryClient = useQueryClient();
   const { data: identity } = useIdentity();
+  const [listing, setListing] = useState<"all" | "business" | "professional">("all");
 
   const { data: businesses, isLoading } = useQuery({
     queryKey: ["admin", "businesses"],
@@ -29,11 +31,19 @@ function BusinessVetting() {
   });
 
   return (
-    <AdminPage title="Businesses" description="Vet submitted enterprises, flag risk, and activate listings so they appear in the public catalog.">
+    <AdminPage title="Businesses & professionals" description="Vet submitted enterprises and professional profiles, flag risk, and activate listings so they appear in the public directory.">
+      <div className="mb-6 flex flex-wrap gap-2">
+        {([["all", "All"], ["business", "Businesses"], ["professional", "Professionals"]] as const).map(([value, label]) => (
+          <button key={value} onClick={() => setListing(value)}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${listing === value ? "gradient-brand text-white" : "bg-muted text-muted-foreground hover:bg-secondary"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
       {isLoading && <p className="text-sm text-muted-foreground">Loading businesses…</p>}
       {!isLoading && businesses?.length === 0 && <p className="text-sm text-muted-foreground">No businesses have been submitted yet.</p>}
       <div className="grid gap-4 xl:grid-cols-2">
-        {businesses?.map((b) => (
+        {businesses?.filter((b) => listing === "all" || (b.listing_type ?? "business") === listing).map((b) => (
           <article key={b.id} className="rounded-3xl border border-border bg-card p-6 shadow-card">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -41,6 +51,7 @@ function BusinessVetting() {
                 <p className="text-sm text-muted-foreground">{b.sector} · {[b.city, b.country].filter(Boolean).join(", ")}</p>
               </div>
               <div className="flex flex-wrap justify-end gap-1.5 text-[11px]">
+                <span className="rounded-full bg-secondary px-2.5 py-1 font-medium">{b.listing_type === "professional" ? "Professional" : "Business"}</span>
                 <span className="rounded-full bg-muted px-2.5 py-1 capitalize">{b.vetting_status}</span>
                 <span className={`rounded-full px-2.5 py-1 ${b.is_active ? "bg-primary/10 text-primary" : "bg-muted"}`}>{b.is_active ? "live" : "hidden"}</span>
                 <span className={`rounded-full px-2.5 py-1 capitalize ${b.risk_level === "red" ? "bg-destructive/10 text-destructive" : "bg-muted"}`}>risk: {b.risk_level}</span>
