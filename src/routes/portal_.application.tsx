@@ -15,12 +15,15 @@ import { COUNTRIES, SDGS, SECTORS, STAGES, documentUrl, ensureWcbnMember, upload
 export const Route = createFileRoute("/portal_/application")({ component: ApplicationPage });
 
 type Answers = {
-  business_name: string; sector: string; country: string; cities: string; years_operating: string; employees: string;
+  business_name: string; sector: string; country: string; cities: string; founding_year: string; employees: string;
   business_summary: string; testimony: string; leadership: string; impact_statement: string;
   sdgs: number[]; references: string; documents: string;
 };
 
-const EMPTY: Answers = { business_name: "", sector: "", country: "", cities: "", years_operating: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
+const EMPTY: Answers = { business_name: "", sector: "", country: "", cities: "", founding_year: "", employees: "", business_summary: "", testimony: "", leadership: "", impact_statement: "", sdgs: [], references: "", documents: "" };
+
+const CURRENT_YEAR = new Date().getFullYear();
+const FOUNDING_YEARS = Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => String(CURRENT_YEAR - i));
 
 const STEPS = ["Business", "Impact & SDGs", "Review & submit"] as const;
 const LAST = STEPS.length - 1;
