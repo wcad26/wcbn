@@ -228,6 +228,7 @@ function ApplicationPage() {
                   <Row label="Sector" value={answers.sector || "—"} />
                   <Row label="Country" value={answers.country || "—"} />
                   <Row label="Cities" value={answers.cities || "—"} />
+                  <Row label="Founding year" value={answers.founding_year || "—"} />
                   <Row label="SDGs" value={answers.sdgs.length ? answers.sdgs.join(", ") : "—"} />
                   <Row label="Documents attached" value={String(data?.documents.length ?? 0)} />
                   {[0, 1].some((i) => missing(i).length > 0) && (
