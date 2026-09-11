@@ -250,8 +250,8 @@ function ApplicationPage() {
           </div>
 
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Supporting documents</h2>
-            <p className="mt-2 text-xs text-muted-foreground">Registration certificate, licences, reference letters. Only you and WCBN reviewers can open them.</p>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Supporting documents (optional)</h2>
+            <p className="mt-2 text-xs text-muted-foreground">Optional: registration certificate, licences, reference letters. Only you and WCBN reviewers can open them.</p>
             <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm font-medium hover:border-primary/50">
               {uploading ? <Loader2 className="size-4 animate-spin" /> : <FileUp className="size-4" />}{uploading ? "Uploading…" : "Upload a document"}
               <input type="file" className="hidden" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) addDocument(f); e.target.value = ""; }} />
