@@ -340,10 +340,6 @@ function ApplicationPage() {
 
         {submitted && application && (
           <>
-            <div className="rounded-2xl bg-primary/10 p-4 text-sm font-medium text-primary">
-              Your application is being processed{application.submitted_at ? ` since ${new Date(application.submitted_at).toLocaleDateString()}` : ""}.
-            </div>
-
             <Accordion type="single" collapsible defaultValue="tracker" className="rounded-3xl border border-border bg-card px-6 shadow-card">
               <AccordionItem value="tracker" className="border-0">
                 <AccordionTrigger className="py-6 hover:no-underline">
