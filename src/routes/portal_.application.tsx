@@ -5,6 +5,7 @@ import { Briefcase, CheckCircle2, Loader2, Save, Send, UserRound, XCircle } from
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -136,9 +137,9 @@ function ApplicationPage() {
   const busy = identityLoading || isLoading;
 
   return (
-    <MemberPage title="My application" description="Complete the form below to apply.">
+    <MemberPage title="My application" description={submitted ? "Your application is being processed." : "Complete the form below to apply."}>
       <div className="space-y-6">
-        <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
+        {!busy && !submitted && <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Verified from WCA</h2>
           <ul className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <li className="flex items-center gap-2">{identity?.wcaActive ? <CheckCircle2 className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active WCA membership</li>
@@ -167,9 +168,9 @@ function ApplicationPage() {
             })}
           </div>
           <p className="mt-3 text-xs text-muted-foreground">{submitted ? "Your track is locked while your application is under review." : "Pick the one that fits you — the questions and review criteria differ."}</p>
-        </section>
+        </section>}
 
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+        {!busy && !submitted && <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <div className="mb-6">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Application completeness</span>
@@ -190,11 +191,6 @@ function ApplicationPage() {
 
           {busy ? <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" />Loading your application…</p> : (
             <>
-              {submitted && (
-                <div className="mb-6 rounded-2xl bg-primary/10 p-4 text-sm text-primary">
-                  Your application was submitted{application?.submitted_at ? ` on ${new Date(application.submitted_at).toLocaleDateString()}` : ""} and is now with WCBN reviewers. It can no longer be edited.
-                </div>
-              )}
               <fieldset disabled={submitted} className="contents">
               {step === 0 && track === "business" && (
                 <div className="grid gap-4 md:grid-cols-2">
@@ -340,9 +336,100 @@ function ApplicationPage() {
               </div>
             </>
           )}
-        </div>
+        </div>}
 
-        {application && (
+        {submitted && application && (
+          <>
+            <div className="rounded-2xl bg-primary/10 p-4 text-sm font-medium text-primary">
+              Your application is being processed{application.submitted_at ? ` since ${new Date(application.submitted_at).toLocaleDateString()}` : ""}.
+            </div>
+
+            <Accordion type="single" collapsible defaultValue="tracker" className="rounded-3xl border border-border bg-card px-6 shadow-card">
+              <AccordionItem value="tracker" className="border-0">
+                <AccordionTrigger className="py-6 hover:no-underline">
+                  <span>
+                    <span className="block text-left text-sm font-semibold uppercase tracking-wide text-muted-foreground">Review tracker</span>
+                    <span className="mt-1 block text-left text-xs font-normal text-muted-foreground">Current stage: {trackStages[Math.max(stageIndex, 0)]?.label ?? "Applied"}</span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-6">
+                  <ol className="space-y-2 text-sm">
+                    {trackStages.map((s, i) => {
+                      const record = data?.stages.find((r) => r.stage_code === s.code);
+                      const done = stageIndex > i || record?.status === "completed";
+                      const current = stageIndex === i;
+                      return (
+                        <li key={s.code} className="flex items-start gap-3">
+                          <span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-bold ${current ? "gradient-brand text-white" : done ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{i + 1}</span>
+                          <span>
+                            <span className={current ? "font-semibold" : done ? "" : "text-muted-foreground"}>{s.label}</span>
+                            {record?.notes && <span className="block text-xs text-muted-foreground">{record.notes}</span>}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                  {application.decision_reason && <p className="mt-4 rounded-xl bg-muted p-3 text-xs">Decision note: {application.decision_reason}</p>}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            <Accordion type="single" collapsible className="rounded-3xl border border-border bg-card px-6 shadow-card">
+              <AccordionItem value="summary" className="border-0">
+                <AccordionTrigger className="py-6 hover:no-underline">
+                  <span>
+                    <span className="block text-left text-sm font-semibold uppercase tracking-wide text-muted-foreground">Application summary</span>
+                    <span className="mt-1 block text-left text-xs font-normal text-muted-foreground">View the information you submitted</span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-6">
+                  <div className="text-sm">
+                    <Row label="Applicant" value={identity?.fullName ?? "—"} />
+                    <Row label="Applying as" value={track === "professional" ? "Professional" : "Business owner"} />
+                    <Row label="WCA member ID" value={identity?.member?.member_id ?? "—"} />
+                    <Row label="Region" value={identity?.regionName ?? "—"} />
+                    <Row label="DCG" value={identity?.dcgName ?? "—"} />
+                    {track === "business" ? (
+                      <>
+                        <Row label="Business" value={answers.business_name || "—"} />
+                        <Row label="Sector" value={answers.sector || "—"} />
+                        <Row label="Country" value={answers.country || "—"} />
+                        <Row label="Cities" value={answers.cities || "—"} />
+                        <Row label="Founding year" value={answers.founding_year || "—"} />
+                        <Row label="Team size" value={answers.employees || "—"} />
+                        <Row label="Business phone" value={answers.business_phone || "—"} />
+                        <Row label="Business email" value={answers.business_email || "—"} />
+                        <Row label="Registration / licence references" value={answers.documents || "—"} />
+                        <Row label="Business summary" value={answers.business_summary || "—"} />
+                      </>
+                    ) : (
+                      <>
+                        <Row label="Profession" value={answers.profession || "—"} />
+                        <Row label="Field of practice" value={answers.practice_field || "—"} />
+                        <Row label="Work status" value={answers.practice_type || "—"} />
+                        <Row label="Employer or practice" value={answers.employer || "—"} />
+                        <Row label="Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
+                        <Row label="Experience" value={answers.experience || "—"} />
+                        <Row label="Qualifications" value={answers.qualifications || "—"} />
+                        <Row label="Professional body / licence" value={answers.licence_reference || "—"} />
+                        <Row label="Work phone" value={answers.work_phone || "—"} />
+                        <Row label="Work email" value={answers.work_email || "—"} />
+                        <Row label="Portfolio or LinkedIn" value={answers.portfolio_url || "—"} />
+                        <Row label="Practice summary" value={answers.practice_summary || "—"} />
+                        <Row label="Service and values" value={answers.service_values || "—"} />
+                        <Row label="Career and service goals" value={answers.career_goals || "—"} />
+                      </>
+                    )}
+                    <Row label="Impact commitment" value={answers.impact_statement || "—"} />
+                    <Row label="SDGs" value={answers.sdgs.length ? answers.sdgs.join(", ") : "—"} />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </>
+        )}
+
+        {!submitted && application && (
             <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Review tracker</h2>
               <ol className="mt-4 space-y-2 text-sm">
