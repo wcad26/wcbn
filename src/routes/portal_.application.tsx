@@ -136,6 +136,17 @@ function ApplicationPage() {
 
   const busy = identityLoading || isLoading;
 
+  if (busy) {
+    return (
+      <MemberPage title="My application" description="Loading your application…">
+        <div className="space-y-6">
+          <div className="h-32 animate-pulse rounded-3xl border border-border bg-card shadow-card" />
+          <div className="h-64 animate-pulse rounded-3xl border border-border bg-card shadow-card" />
+        </div>
+      </MemberPage>
+    );
+  }
+
   return (
     <MemberPage title="My application" description={submitted ? "Your application is being processed." : "Complete the form below to apply."}>
       <div className="space-y-6">
@@ -147,6 +158,7 @@ function ApplicationPage() {
           </ul>
           {!eligible && <p className="mt-4 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Both are required to submit. Contact your regional WCA office for help.</p>}
         </section>
+
 
         {!busy && !submitted && <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">How are you applying?</h2>
