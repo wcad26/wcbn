@@ -139,7 +139,7 @@ function ApplicationPage() {
   return (
     <MemberPage title="My application" description={submitted ? "Your application is being processed." : "Complete the form below to apply."}>
       <div className="space-y-6">
-        {!busy && !submitted && <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Verified from WCA</h2>
           <ul className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
             <li className="flex items-center gap-2">{identity?.wcaActive ? <CheckCircle2 className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active WCA membership</li>
@@ -148,7 +148,7 @@ function ApplicationPage() {
           {!eligible && <p className="mt-4 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Both are required to submit. Contact your regional WCA office for help.</p>}
         </section>
 
-        <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
+        {!busy && !submitted && <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">How are you applying?</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {TRACKS.map((t) => {
