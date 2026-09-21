@@ -4,7 +4,7 @@ import {
   BadgeCheck, BarChart3, BriefcaseBusiness, CalendarDays, CircleDollarSign, ClipboardCheck, FileText, Newspaper,
   LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, ShieldCheck, UserRound, Users, X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +40,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: identity, isLoading: identityLoading } = useIdentity();
+  const { data: identity } = useIdentity();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   // A member only sees the full portal once leadership has validated and activated them.
@@ -55,18 +55,6 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     professional && to === "/portal/business" ? "My professional profile" : label;
   const current = [...links].find(([, to]) => to === path)?.[0] ?? (admin ? "Leadership" : "Member portal");
 
-  useEffect(() => {
-    if (admin || identityLoading || !identity) return;
-    if (!activated && path !== "/portal/application") navigate({ to: "/portal/application", replace: true });
-    if (activated && path === "/portal/application") navigate({ to: "/portal", replace: true });
-  }, [admin, identity, identityLoading, activated, path, navigate]);
-
-  // Hold the page on a loading state until we know who the member is and which
-  // page they belong on, so they never see the wrong portal page flash first.
-  const redirectPending =
-    !admin && !!identity && ((!activated && path !== "/portal/application") || (activated && path === "/portal/application"));
-  const resolving = !admin && (identityLoading || !identity || redirectPending);
-
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -74,11 +62,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     navigate({ to: admin ? "/auth/admin" : "/auth", replace: true });
   }
 
-  const nav = resolving ? (
-    <nav className="mt-6 space-y-2 px-4">
-      {[0, 1, 2].map((i) => <div key={i} className="h-9 animate-pulse rounded-xl bg-sidebar-accent/60" />)}
-    </nav>
-  ) : (
+  const nav = (
     <nav className="mt-6 space-y-1 px-2">
       {links.map(([label, to, Icon]) => (
         <Link
@@ -125,7 +109,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
           <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/90 px-4 backdrop-blur lg:px-6">
             <div className="flex items-center gap-2">
               <Button size="icon" variant="ghost" className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu"><Menu /></Button>
-              {resolving ? <div className="h-4 w-32 animate-pulse rounded bg-muted" /> : <h2 className="text-base font-semibold">{labelFor(current, path)}</h2>}
+              <h2 className="text-base font-semibold">{labelFor(current, path)}</h2>
             </div>
             <div className="flex items-center gap-3">
               {identity?.wcbnMember && (
@@ -140,17 +124,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
             </div>
           </header>
           <main className="mx-auto w-full max-w-[1500px] flex-1 p-4 lg:p-6">
-            {resolving ? (
-              <div className="space-y-6">
-                <div className="h-10 w-72 animate-pulse rounded-xl bg-muted" />
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  {[0, 1, 2, 3].map((i) => <div key={i} className="h-36 animate-pulse rounded-2xl bg-muted" />)}
-                </div>
-                <div className="h-80 animate-pulse rounded-3xl bg-muted" />
-              </div>
-            ) : (
-              children
-            )}
+            {children}
           </main>
         </div>
       </div>

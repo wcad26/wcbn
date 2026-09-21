@@ -19,7 +19,7 @@ export function AdminPage({ title, description, action, children }: { title: str
 
 export function MemberPage({ title, description, action, children }: { title: string; description: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <PortalShell>
+    <>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Member portal</p>
@@ -29,6 +29,6 @@ export function MemberPage({ title, description, action, children }: { title: st
         {action}
       </div>
       <div className="mt-8">{children}</div>
-    </PortalShell>
+    </>
   );
 }

@@ -121,8 +121,9 @@ function RootComponent() {
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
+      queryClient.removeQueries({ queryKey: ["wcbn", "identity"] });
       router.invalidate();
-      if (session) queryClient.invalidateQueries();
+      if (session) queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== "wcbn" || query.queryKey[1] !== "identity" });
     });
     return () => data.subscription.unsubscribe();
   }, [queryClient, router]);

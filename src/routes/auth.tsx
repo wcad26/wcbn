@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import heroImage from "@/assets/wcbn-network.jpg";
+import { identityQueryOptions } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [
@@ -21,6 +23,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -28,16 +31,25 @@ function AuthPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => { if (data.user) navigate({ to: "/portal", replace: true }); });
-  }, [navigate]);
+    let active = true;
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!active || !data.user) return;
+      queryClient.removeQueries({ queryKey: identityQueryOptions.queryKey });
+      const identity = await queryClient.fetchQuery(identityQueryOptions);
+      if (active) navigate({ to: identity?.wcbnMember?.status === "active" ? "/portal" : "/portal/application", replace: true });
+    });
+    return () => { active = false; };
+  }, [navigate, queryClient]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError(null);
     const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (signInError) { setBusy(false); setError(signInError.message); return; }
+    queryClient.removeQueries({ queryKey: identityQueryOptions.queryKey });
+    const identity = await queryClient.fetchQuery(identityQueryOptions);
     setBusy(false);
-    if (signInError) { setError(signInError.message); return; }
-    navigate({ to: "/portal", replace: true });
+    navigate({ to: identity?.wcbnMember?.status === "active" ? "/portal" : "/portal/application", replace: true });
   }
 
   return (
