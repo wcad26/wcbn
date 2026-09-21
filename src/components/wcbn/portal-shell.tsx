@@ -125,7 +125,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
           <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/90 px-4 backdrop-blur lg:px-6">
             <div className="flex items-center gap-2">
               <Button size="icon" variant="ghost" className="lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu"><Menu /></Button>
-              <h2 className="text-base font-semibold">{labelFor(current, path)}</h2>
+              {resolving ? <div className="h-4 w-32 animate-pulse rounded bg-muted" /> : <h2 className="text-base font-semibold">{labelFor(current, path)}</h2>}
             </div>
             <div className="flex items-center gap-3">
               {identity?.wcbnMember && (
