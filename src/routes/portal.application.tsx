@@ -16,7 +16,7 @@ import {
   ensureWcbnMember, stagesFor, useIdentity, useInvalidateIdentity,
 } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal_/application")({ component: ApplicationPage });
+export const Route = createFileRoute("/portal/application")({ component: ApplicationPage });
 
 type Answers = {
   // Business track

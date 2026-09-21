@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money, useIdentity } from "@/lib/wcbn";
 import { EVENT_FIELDS, eventDate, eventPlace, type WcbnEvent } from "@/lib/wcbn-content";
 
-export const Route = createFileRoute("/portal_/events_/$slug")({ component: PortalEventDetail });
+export const Route = createFileRoute("/portal/events/$slug")({ component: PortalEventDetail });
 
 function PortalEventDetail() {
   const { slug } = Route.useParams();

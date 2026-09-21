@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { COUNTRIES, PRACTICE_FIELDS, SDGS, SECTORS, ensureWcbnMember, slugify, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal_/business")({ component: BusinessPage });
+export const Route = createFileRoute("/portal/business")({ component: BusinessPage });
 
 type Form = {
   display_name: string; legal_name: string; sector: string; country: string; city: string;

@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { money, useIdentity } from "@/lib/wcbn";
 import { eventDate, eventPlace, postDate, postTypeLabel } from "@/lib/wcbn-content";
 
-export const Route = createFileRoute("/portal")({ component: PortalHome });
+export const Route = createFileRoute("/portal/")({ component: PortalHome });
 
 type Invoice = { id: string; invoice_number: string; amount: number; paid_amount: number; currency_code: string; status: string; due_date: string; wcbn_payments: Payment[] | null };
 type Payment = { id: string; amount: number; status: string; method: string | null; reference: string | null; paid_at: string | null; created_at: string };
