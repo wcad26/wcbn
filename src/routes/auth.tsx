@@ -77,9 +77,6 @@ function AuthPage() {
               {busy ? <Loader2 className="animate-spin" /> : <LogIn />}Sign in
             </Button>
           </form>
-          <p className="mt-6 text-sm text-muted-foreground">
-            WCBN leadership? <Link to="/auth/admin" className="font-medium text-primary underline-offset-4 hover:underline">Use the leadership portal</Link>
-          </p>
         </div>
       </div>
     </main>
