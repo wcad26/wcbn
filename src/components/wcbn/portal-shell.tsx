@@ -61,6 +61,12 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     if (activated && path === "/portal/application") navigate({ to: "/portal", replace: true });
   }, [admin, identity, identityLoading, activated, path, navigate]);
 
+  // Hold the page on a loading state until we know who the member is and which
+  // page they belong on, so they never see the wrong portal page flash first.
+  const redirectPending =
+    !admin && !!identity && ((!activated && path !== "/portal/application") || (activated && path === "/portal/application"));
+  const resolving = !admin && (identityLoading || !identity || redirectPending);
+
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
