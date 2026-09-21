@@ -4043,6 +4043,10 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: string
       }
+      can_manage_regional_access: {
+        Args: { _region_id: string; _user_id: string }
+        Returns: boolean
+      }
       generate_member_id: { Args: { _region_id: string }; Returns: string }
       get_attendance_summary: {
         Args: { p_region_id: string }
