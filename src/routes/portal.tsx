@@ -1,27 +1,31 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { PortalShell } from "@/components/wcbn/portal-shell";
-import { identityQueryOptions } from "@/lib/wcbn";
+import { useIdentity } from "@/lib/wcbn";
 
 export const Route = createFileRoute("/portal")({
-  ssr: false,
-  beforeLoad: async ({ context, location }) => {
-    const identity = await context.queryClient.fetchQuery(identityQueryOptions);
-    if (!identity) throw redirect({ to: "/auth", replace: true });
-
-    const activated = identity.wcbnMember?.status === "active";
-    const onApplication = location.pathname === "/portal/application";
-    if (!activated && !onApplication) throw redirect({ to: "/portal/application", replace: true });
-    if (activated && onApplication) throw redirect({ to: "/portal", replace: true });
-
-    return { identity };
-  },
-  pendingMs: 0,
-  pendingMinMs: 250,
-  pendingComponent: PortalLoading,
-  component: PortalLayout,
+  component: PortalGate,
 });
 
-function PortalLayout() {
+function PortalGate() {
+  const navigate = useNavigate();
+  const path = useRouterState({ select: (state) => state.location.pathname });
+  const { data: identity, isPending, isFetching } = useIdentity();
+  const activated = identity?.wcbnMember?.status === "active";
+  const onApplication = path === "/portal/application";
+  const correctDestination = !!identity && ((activated && !onApplication) || (!activated && onApplication));
+
+  useEffect(() => {
+    if (isPending || isFetching) return;
+    if (!identity) {
+      navigate({ to: "/auth", replace: true });
+      return;
+    }
+    if (!activated && !onApplication) navigate({ to: "/portal/application", replace: true });
+    if (activated && onApplication) navigate({ to: "/portal", replace: true });
+  }, [activated, identity, isFetching, isPending, navigate, onApplication]);
+
+  if (isPending || isFetching || !correctDestination) return <PortalLoading />;
   return <PortalShell><Outlet /></PortalShell>;
 }
 
