@@ -1068,6 +1068,9 @@ export type Database = {
           dietary_notes: string | null
           email: string
           event_id: string
+          fee_is_group: boolean
+          fee_paid_at: string | null
+          fee_status: string
           group_id: string | null
           has_children: boolean
           id: string
@@ -1080,6 +1083,8 @@ export type Database = {
           pledge_amount: number | null
           pledge_currency_code: string | null
           pledge_status: string | null
+          registration_fee_amount: number | null
+          registration_fee_category: string | null
           registration_type: string
         }
         Insert: {
@@ -1090,6 +1095,9 @@ export type Database = {
           dietary_notes?: string | null
           email: string
           event_id: string
+          fee_is_group?: boolean
+          fee_paid_at?: string | null
+          fee_status?: string
           group_id?: string | null
           has_children?: boolean
           id?: string
@@ -1102,6 +1110,8 @@ export type Database = {
           pledge_amount?: number | null
           pledge_currency_code?: string | null
           pledge_status?: string | null
+          registration_fee_amount?: number | null
+          registration_fee_category?: string | null
           registration_type: string
         }
         Update: {
@@ -1112,6 +1122,9 @@ export type Database = {
           dietary_notes?: string | null
           email?: string
           event_id?: string
+          fee_is_group?: boolean
+          fee_paid_at?: string | null
+          fee_status?: string
           group_id?: string | null
           has_children?: boolean
           id?: string
@@ -1124,6 +1137,8 @@ export type Database = {
           pledge_amount?: number | null
           pledge_currency_code?: string | null
           pledge_status?: string | null
+          registration_fee_amount?: number | null
+          registration_fee_category?: string | null
           registration_type?: string
         }
         Relationships: [
@@ -1219,6 +1234,57 @@ export type Database = {
           {
             foreignKeyName: "event_recurrence_rules_template_event_id_fkey"
             columns: ["template_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_registration_fees: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          currency_code: string | null
+          event_id: string
+          id: string
+          label: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string
+          currency_code?: string | null
+          event_id: string
+          id?: string
+          label?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          currency_code?: string | null
+          event_id?: string
+          id?: string
+          label?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registration_fees_currency_code_fkey"
+            columns: ["currency_code"]
+            isOneToOne: false
+            referencedRelation: "currencies"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "event_registration_fees_event_id_fkey"
+            columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
