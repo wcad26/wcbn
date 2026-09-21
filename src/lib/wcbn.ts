@@ -161,7 +161,7 @@ export async function fetchIdentity(): Promise<Identity | null> {
 export const identityQueryOptions = queryOptions({
   queryKey: ["wcbn", "identity"],
   queryFn: fetchIdentity,
-  staleTime: 0,
+  staleTime: 15_000,
   gcTime: 30 * 60_000,
 });
 

@@ -81,9 +81,8 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     </nav>
   );
 
-  return (
-    <AccessGuard admin={admin}>
-      <div className="flex min-h-svh w-full bg-muted/40">
+  const shell = (
+    <div className="flex min-h-svh w-full bg-muted/40">
         <aside className={`fixed inset-y-0 left-0 z-50 flex ${collapsed ? "w-64 lg:w-[76px]" : "w-64"} flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-200 lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex h-16 items-center justify-between gap-2 px-4">
             <Link to={admin ? "/admin" : "/portal"} className={`flex items-center gap-2 ${collapsed ? "lg:hidden" : ""}`}>
@@ -127,7 +126,8 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
             {children}
           </main>
         </div>
-      </div>
-    </AccessGuard>
+    </div>
   );
+
+  return admin ? <AccessGuard admin>{shell}</AccessGuard> : shell;
 }

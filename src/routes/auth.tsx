@@ -44,12 +44,17 @@ function AuthPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError(null);
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-    if (signInError) { setBusy(false); setError(signInError.message); return; }
-    queryClient.removeQueries({ queryKey: identityQueryOptions.queryKey });
-    const identity = await queryClient.fetchQuery(identityQueryOptions);
-    setBusy(false);
-    navigate({ to: identity?.wcbnMember?.status === "active" ? "/portal" : "/portal/application", replace: true });
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (signInError) throw signInError;
+      queryClient.removeQueries({ queryKey: identityQueryOptions.queryKey });
+      const identity = await queryClient.fetchQuery(identityQueryOptions);
+      navigate({ to: identity?.wcbnMember?.status === "active" ? "/portal" : "/portal/application", replace: true });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Sign in could not be completed.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
