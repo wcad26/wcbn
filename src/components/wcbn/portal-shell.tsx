@@ -74,7 +74,11 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
     navigate({ to: admin ? "/auth/admin" : "/auth", replace: true });
   }
 
-  const nav = (
+  const nav = resolving ? (
+    <nav className="mt-6 space-y-2 px-4">
+      {[0, 1, 2].map((i) => <div key={i} className="h-9 animate-pulse rounded-xl bg-sidebar-accent/60" />)}
+    </nav>
+  ) : (
     <nav className="mt-6 space-y-1 px-2">
       {links.map(([label, to, Icon]) => (
         <Link
