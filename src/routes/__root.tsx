@@ -121,8 +121,14 @@ function RootComponent() {
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
+      if (!session) {
+        queryClient.clear();
+        router.invalidate();
+        return;
+      }
+      queryClient.removeQueries({ queryKey: ["wcbn", "identity"] });
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] === "portal" || query.queryKey[0] === "admin" });
       router.invalidate();
-      if (session) queryClient.invalidateQueries();
     });
     return () => data.subscription.unsubscribe();
   }, [queryClient, router]);

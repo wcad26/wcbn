@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureWcbnMember, useIdentity, useInvalidateIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal_/covenant")({ component: CovenantPage });
+export const Route = createFileRoute("/portal/covenant")({ component: CovenantPage });
 
 const CLAUSES = [
   ["Christ at the centre", "I will lead my enterprise as a steward, honouring Christ in every decision, contract and relationship."],

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentity, useInvalidateIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal_/profile")({ component: ProfilePage });
+export const Route = createFileRoute("/portal/profile")({ component: ProfilePage });
 
 function ProfilePage() {
   const { data: identity, isLoading } = useIdentity();

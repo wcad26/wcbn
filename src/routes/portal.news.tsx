@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { POST_FIELDS, postDate, postTypeLabel, type WcbnPost } from "@/lib/wcbn-content";
 
-export const Route = createFileRoute("/portal_/news")({ component: PortalNews });
+export const Route = createFileRoute("/portal/news")({ component: PortalNews });
 
 function PortalNews() {
   const { data: posts = [], isLoading } = useQuery({

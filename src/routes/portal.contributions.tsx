@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { money, uploadDocument, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal_/contributions")({ component: ContributionsPage });
+export const Route = createFileRoute("/portal/contributions")({ component: ContributionsPage });
 
 function ContributionsPage() {
   const { data: identity } = useIdentity();

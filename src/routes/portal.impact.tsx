@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { SDGS, ensureWcbnMember, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/portal_/impact")({ component: ImpactPage });
+export const Route = createFileRoute("/portal/impact")({ component: ImpactPage });
 
 function ImpactPage() {
   const { data: identity } = useIdentity();

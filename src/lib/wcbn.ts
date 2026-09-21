@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type Identity = {
@@ -101,7 +101,7 @@ export function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 }
 
-async function fetchIdentity(): Promise<Identity | null> {
+export async function fetchIdentity(): Promise<Identity | null> {
   const { data: sessionData } = await supabase.auth.getSession();
   const user = sessionData.session?.user;
   if (!user) return null;
@@ -158,8 +158,15 @@ async function fetchIdentity(): Promise<Identity | null> {
   };
 }
 
+export const identityQueryOptions = queryOptions({
+  queryKey: ["wcbn", "identity"],
+  queryFn: fetchIdentity,
+  staleTime: 15_000,
+  gcTime: 30 * 60_000,
+});
+
 export function useIdentity() {
-  return useQuery({ queryKey: ["wcbn", "identity"], queryFn: fetchIdentity, staleTime: 30_000 });
+  return useQuery(identityQueryOptions);
 }
 
 export function can(identity: Identity | null | undefined, permission: string) {
