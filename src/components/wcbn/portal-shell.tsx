@@ -139,7 +139,19 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
               </span>
             </div>
           </header>
-          <main className="mx-auto w-full max-w-[1500px] flex-1 p-4 lg:p-6">{children}</main>
+          <main className="mx-auto w-full max-w-[1500px] flex-1 p-4 lg:p-6">
+            {resolving ? (
+              <div className="space-y-6">
+                <div className="h-10 w-72 animate-pulse rounded-xl bg-muted" />
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  {[0, 1, 2, 3].map((i) => <div key={i} className="h-36 animate-pulse rounded-2xl bg-muted" />)}
+                </div>
+                <div className="h-80 animate-pulse rounded-3xl bg-muted" />
+              </div>
+            ) : (
+              children
+            )}
+          </main>
         </div>
       </div>
     </AccessGuard>
