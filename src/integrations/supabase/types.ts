@@ -1473,6 +1473,8 @@ export type Database = {
           description_fr: string | null
           detached_from_series: boolean
           end_datetime: string | null
+          expectations: string | null
+          expectations_fr: string | null
           id: string
           image_url: string | null
           image_url_fr: string | null
@@ -1518,6 +1520,8 @@ export type Database = {
           description_fr?: string | null
           detached_from_series?: boolean
           end_datetime?: string | null
+          expectations?: string | null
+          expectations_fr?: string | null
           id?: string
           image_url?: string | null
           image_url_fr?: string | null
@@ -1563,6 +1567,8 @@ export type Database = {
           description_fr?: string | null
           detached_from_series?: boolean
           end_datetime?: string | null
+          expectations?: string | null
+          expectations_fr?: string | null
           id?: string
           image_url?: string | null
           image_url_fr?: string | null
@@ -4095,6 +4101,19 @@ export type Database = {
           event_name: string
           is_today: boolean
           is_upcoming: boolean
+        }[]
+      }
+      get_public_region_dcgs: {
+        Args: { _region_id: string }
+        Returns: {
+          description: string
+          id: string
+          leader_name: string
+          location: string
+          meeting_day: string
+          meeting_time: string
+          member_count: number
+          name: string
         }[]
       }
       get_region_from_dcg: { Args: { _dcg_id: string }; Returns: string }
