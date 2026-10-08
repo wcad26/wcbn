@@ -20,7 +20,7 @@ export const startOnboardingPayment = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (data.method === "bank_transfer") return { invoiceId: invoiceId as string, link: null as string | null };
 
-    const secret = process.env.FLUTTERWAVE_SECRET_KEY;
+    const secret = process.env['FLUTTERWAVE_SECRET_KEY'];
     if (!secret) throw new Error("Online payments are not configured yet. Please choose bank transfer or try later.");
     const { data: settings } = await supabase.from("wcbn_payment_settings").select("flutterwave_enabled, mobile_money_enabled, card_enabled").eq("id", 1).maybeSingle();
     if (!settings?.flutterwave_enabled) throw new Error("Online payments are currently disabled.");
@@ -59,7 +59,7 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ transactionId: z.string().min(1).max(40), txRef: z.string().min(1).max(80) }).parse(d))
   .handler(async ({ data, context }) => {
-    const secret = process.env.FLUTTERWAVE_SECRET_KEY;
+    const secret = process.env['FLUTTERWAVE_SECRET_KEY'];
     if (!secret) throw new Error("Online payments are not configured.");
     // Invoice must belong to the caller (RLS applies to this read).
     const { data: invoice } = await context.supabase.from("wcbn_invoices").select("id, amount, currency_code, status, payment_method").eq("invoice_number", data.txRef).maybeSingle();
@@ -85,4 +85,4 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
 /** Tells leadership whether the Flutterwave secret key is configured (never returns the key). */
 export const flutterwaveKeyStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => ({ configured: !!process.env.FLUTTERWAVE_SECRET_KEY }));
+  .handler(async () => ({ configured: !!process.env['FLUTTERWAVE_SECRET_KEY'] }));
