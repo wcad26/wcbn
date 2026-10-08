@@ -31,8 +31,6 @@ const adminLinks = [
   ["Events", "/admin/events", CalendarDays],
   ["News", "/admin/news", Newspaper],
   ["Fees & invoices", "/admin/contributions", CircleDollarSign],
-  ["Member categories", "/admin/categories", Users],
-  ["Payment settings", "/admin/payment-settings", Settings2],
   ["Criteria", "/admin/criteria", Settings2],
   ["Roles & access", "/admin/roles", ShieldCheck],
 ] as const;

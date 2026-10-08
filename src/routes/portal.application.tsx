@@ -603,7 +603,7 @@ function ApplicationPage() {
           </>
         )}
 
-        {false && application && (
+        {false && application != null && (
             <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Review tracker</h2>
               <ol className="mt-4 space-y-2 text-sm">

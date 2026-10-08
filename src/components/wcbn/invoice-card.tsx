@@ -18,7 +18,7 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 export function InvoiceCard({ invoice, memberName, bankAccounts, note, showBank = true }: {
-  invoice: InvoiceRow; memberName?: string; bankAccounts?: BankAccount[]; note?: string | null; showBank?: boolean;
+  invoice: InvoiceRow; memberName?: string | undefined; bankAccounts?: BankAccount[] | undefined; note?: string | null | undefined; showBank?: boolean;
 }) {
   const cycle = CYCLES.find((c) => c.value === invoice.billing_cycle);
   const unpaid = Number(invoice.paid_amount) < Number(invoice.amount);
