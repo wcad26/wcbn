@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Briefcase, CheckCircle2, Loader2, Save, Send, UserRound, XCircle } from "lucide-react";
+import { Briefcase, CheckCircle2, CreditCard, FileUp, Landmark, Loader2, Save, Send, Smartphone, UserRound, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   COUNTRIES, EXPERIENCE_BANDS, PRACTICE_FIELDS, PRACTICE_TYPES, SDGS, SECTORS, TRACKS, type Track,
   ensureWcbnMember, stagesFor, useIdentity, useInvalidateIdentity,
+  money, uploadDocument,
 } from "@/lib/wcbn";
+import { CYCLES, METHOD_LABELS, annualFee, fetchCategories, fetchPaymentSettings, instalment, type BillingCycle, type PaymentMethod } from "@/lib/fees";
+import { startOnboardingPayment, verifyFlutterwavePayment } from "@/lib/payments.functions";
+import { InvoiceCard, type InvoiceRow } from "@/components/wcbn/invoice-card";
 
 export const Route = createFileRoute("/portal/application")({ component: ApplicationPage });
 
@@ -42,13 +46,13 @@ const CURRENT_YEAR = new Date().getFullYear();
 const FOUNDING_YEARS = Array.from({ length: CURRENT_YEAR - 1900 + 1 }, (_, i) => String(CURRENT_YEAR - i));
 
 const STEP_LABELS: Record<Track, readonly string[]> = {
-  business: ["Business", "Impact & SDGs", "Review & submit"],
-  professional: ["Practice", "Service & SDGs", "Review & submit"],
+  business: ["Business", "Impact & SDGs", "Membership & fee", "Review & pay"],
+  professional: ["Practice", "Service & SDGs", "Membership & fee", "Review & pay"],
 };
 
 const REQUIRED: Record<Track, Record<number, (keyof Answers)[]>> = {
-  business: { 0: ["business_name", "sector", "country", "cities", "business_summary"], 1: ["impact_statement"], 2: [] },
-  professional: { 0: ["profession", "practice_field", "practice_type", "country", "city", "practice_summary"], 1: ["service_values", "impact_statement"], 2: [] },
+  business: { 0: ["business_name", "sector", "country", "cities", "business_summary"], 1: ["impact_statement"], 2: [], 3: [] },
+  professional: { 0: ["profession", "practice_field", "practice_type", "country", "city", "practice_summary"], 1: ["service_values", "impact_statement"], 2: [], 3: [] },
 };
 
 function ApplicationPage() {
@@ -59,6 +63,15 @@ function ApplicationPage() {
   const [answers, setAnswers] = useState<Answers>(EMPTY);
   const [track, setTrack] = useState<Track>("business");
   const wcbnId = identity?.wcbnMember?.id;
+  const [categoryId, setCategoryId] = useState("");
+  const [cycle, setCycle] = useState<BillingCycle>("annual");
+  const [method, setMethod] = useState<PaymentMethod | "">("");
+  const [transferRef, setTransferRef] = useState("");
+  const [transferProof, setTransferProof] = useState<File | null>(null);
+  const currency = identity?.regionCurrency ?? "XAF";
+
+  const { data: categories = [] } = useQuery({ queryKey: ["wcbn", "categories"], queryFn: () => fetchCategories() });
+  const { data: settings } = useQuery({ queryKey: ["wcbn", "payment-settings"], queryFn: fetchPaymentSettings });
 
   const { data, isLoading } = useQuery({
     queryKey: ["portal", "application", wcbnId],
@@ -68,7 +81,10 @@ function ApplicationPage() {
       const stages = application
         ? await supabase.from("wcbn_application_stages").select("*").eq("application_id", application.id).order("created_at")
         : { data: [] };
-      return { application, stages: stages.data ?? [] };
+      const invoices = application
+        ? await supabase.from("wcbn_invoices").select("*, wcbn_membership_categories(name), wcbn_payments(id, status, reference, created_at)").eq("application_id", application.id).order("installment_number")
+        : { data: [] };
+      return { application, stages: stages.data ?? [], invoices: (invoices.data ?? []) as (InvoiceRow & { wcbn_payments: { id: string; status: string; reference: string | null }[] | null })[] };
     },
   });
 
@@ -77,10 +93,42 @@ function ApplicationPage() {
   useEffect(() => {
     if (application?.applicant_data) setAnswers({ ...EMPTY, ...(application.applicant_data as Partial<Answers>) });
     if (application?.applicant_type) setTrack(application.applicant_type as Track);
+    const d = (application?.applicant_data ?? {}) as { category_id?: string; billing_cycle?: BillingCycle; payment_method?: PaymentMethod };
+    if (d.category_id) setCategoryId(d.category_id);
+    if (d.billing_cycle) setCycle(d.billing_cycle);
+    if (d.payment_method) setMethod(d.payment_method);
   }, [application]);
 
+  // Returning from Flutterwave checkout: verify the transaction, then activate.
+  const verify = useMutation({
+    mutationFn: (v: { transactionId: string; txRef: string }) => verifyFlutterwavePayment({ data: v }),
+    onSuccess: () => { toast.success("Payment confirmed — welcome to WCBN!"); refreshIdentity(); queryClient.invalidateQueries({ queryKey: ["portal"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const status = q.get("status"); const txRef = q.get("tx_ref"); const transactionId = q.get("transaction_id");
+    if (!status) return;
+    window.history.replaceState({}, "", window.location.pathname);
+    if ((status === "successful" || status === "completed") && txRef && transactionId) verify.mutate({ txRef, transactionId });
+    else toast.error("The payment was cancelled. You can try again.");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const trackCategories = categories.filter((c) => c.applicant_type === "any" || c.applicant_type === track);
+  const category = trackCategories.find((c) => c.id === categoryId);
+  const fee = category ? annualFee(category, currency) : null;
+  const onlineOn = !!settings?.flutterwave_enabled;
+  const methods: { value: PaymentMethod; icon: typeof Smartphone; on: boolean; hint: string }[] = [
+    { value: "mobile_money", icon: Smartphone, on: onlineOn && !!settings?.mobile_money_enabled, hint: "Instant activation" },
+    { value: "card", icon: CreditCard, on: onlineOn && !!settings?.card_enabled, hint: "Instant activation" },
+    { value: "bank_transfer", icon: Landmark, on: !!settings?.bank_transfer_enabled, hint: "Activated once finance confirms" },
+  ];
+  const paymentReady = !!category && !!method && (cycle === "annual" || category.allow_installments);
+
   const eligible = !!identity?.wcaActive && !!identity?.dcgActive;
-  const submitted = !!application?.status && application.status !== "draft";
+  const awaitingPayment = application?.status === "awaiting_payment";
+  const submitted = !!application?.status && application.status !== "draft" && !awaitingPayment;
   const trackStages = stagesFor(track);
   const stageIndex = trackStages.findIndex((s) => s.code === application?.current_stage);
   const steps = STEP_LABELS[track];
@@ -120,21 +168,48 @@ function ApplicationPage() {
         applicationId = created.id;
       }
       if (submit) {
-        const { error } = await supabase.rpc("wcbn_submit_application", { _application_id: applicationId! });
-        if (error) throw error;
+        if (!categoryId || !method) throw new Error("Choose a membership category and payment method.");
+        const res = await startOnboardingPayment({ data: { applicationId: applicationId!, categoryId, cycle, method, origin: window.location.origin } });
+        if (res.link) { window.location.href = res.link; return "redirect"; }
+        return "invoice";
       }
+      return "saved";
     },
-    onSuccess: (_d, submit) => {
-      toast.success(submit ? "Application submitted for review" : "Progress saved");
+    onSuccess: (result) => {
+      if (result === "redirect") { toast.message("Redirecting to secure payment…"); return; }
+      toast.success(result === "invoice" ? "Invoice generated. Complete your bank transfer to activate." : "Progress saved");
       refreshIdentity();
       queryClient.invalidateQueries({ queryKey: ["portal"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const firstInvoice = data?.invoices?.[0];
+  const declared = (firstInvoice?.wcbn_payments ?? []).some((p) => p.status === "pending");
+  const declareTransfer = useMutation({
+    mutationFn: async () => {
+      if (!identity || !firstInvoice) throw new Error("No invoice found");
+      const proofPath = transferProof ? await uploadDocument(identity.userId, "payments", transferProof) : null;
+      const { error } = await supabase.from("wcbn_payments").insert({
+        invoice_id: firstInvoice.id, amount: Number(firstInvoice.amount), currency_code: firstInvoice.currency_code, method: "bank_transfer",
+        provider: "bank", reference: transferRef || null, proof_url: proofPath, status: "pending", submitted_by: identity.userId, paid_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("Transfer details sent. You'll be activated once finance confirms."); queryClient.invalidateQueries({ queryKey: ["portal"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const payOnline = useMutation({
+    mutationFn: async (m: PaymentMethod) => {
+      const res = await startOnboardingPayment({ data: { applicationId: application!.id, categoryId, cycle, method: m, origin: window.location.origin } });
+      if (res.link) window.location.href = res.link;
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const set = <K extends keyof Answers>(key: K, value: Answers[K]) => setAnswers((a) => ({ ...a, [key]: value }));
 
-  const busy = identityLoading || isLoading;
+  const busy = identityLoading || isLoading || verify.isPending;
 
   if (busy) {
     return (
@@ -148,7 +223,7 @@ function ApplicationPage() {
   }
 
   return (
-    <MemberPage title="My application" description={submitted ? "Your application is being processed." : "Complete the form below to apply."}>
+    <MemberPage title="My application" description={verify.isPending ? "Confirming your payment…" : awaitingPayment ? "Complete your payment to activate your membership." : submitted ? "Your application is being processed." : "Complete the form and pay your fee to join."}>
       <div className="space-y-6">
         <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Verified from WCA</h2>
@@ -160,7 +235,36 @@ function ApplicationPage() {
         </section>
 
 
-        {!busy && !submitted && <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
+        {awaitingPayment && firstInvoice && (
+          <>
+            <InvoiceCard invoice={firstInvoice} memberName={identity?.fullName} bankAccounts={settings?.bank_accounts} note={settings?.invoice_note} />
+            <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
+              {declared ? (
+                <p className="flex items-center gap-2 text-sm"><CheckCircle2 className="size-4 text-primary" />Transfer details received. Finance will confirm and activate your membership.</p>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                  <Field label="Bank transfer reference"><Input value={transferRef} onChange={(e) => setTransferRef(e.target.value)} placeholder="Reference on your bank slip" /></Field>
+                  <Field label="Receipt (optional)">
+                    <label className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-dashed border-border px-3 text-sm hover:border-primary/50">
+                      <FileUp className="size-4" /><span className="truncate">{transferProof ? transferProof.name : "Attach receipt"}</span>
+                      <input type="file" className="hidden" onChange={(e) => setTransferProof(e.target.files?.[0] ?? null)} />
+                    </label>
+                  </Field>
+                  <Button disabled={declareTransfer.isPending || !transferRef} onClick={() => declareTransfer.mutate()}>{declareTransfer.isPending ? <Loader2 className="animate-spin" /> : <Send />}I have paid</Button>
+                </div>
+              )}
+              {onlineOn && !declared && (
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4 text-sm">
+                  <span className="text-muted-foreground">Prefer to pay instantly?</span>
+                  {settings?.mobile_money_enabled && <Button size="sm" variant="outline" disabled={payOnline.isPending} onClick={() => payOnline.mutate("mobile_money")}><Smartphone className="size-4" />Mobile money</Button>}
+                  {settings?.card_enabled && <Button size="sm" variant="outline" disabled={payOnline.isPending} onClick={() => payOnline.mutate("card")}><CreditCard className="size-4" />Bank card</Button>}
+                </div>
+              )}
+            </section>
+          </>
+        )}
+
+        {!busy && !submitted && !awaitingPayment && <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">How are you applying?</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {TRACKS.map((t) => {
@@ -182,7 +286,7 @@ function ApplicationPage() {
           <p className="mt-3 text-xs text-muted-foreground">{submitted ? "Your track is locked while your application is under review." : "Pick the one that fits you — the questions and review criteria differ."}</p>
         </section>}
 
-        {!busy && !submitted && <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+        {!busy && !submitted && !awaitingPayment && <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
           <div className="mb-6">
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Application completeness</span>
@@ -302,6 +406,63 @@ function ApplicationPage() {
               )}
 
               {step === 2 && (
+                <div className="space-y-6">
+                  <div>
+                    <Label className="mb-3 block">Membership category <span className="font-normal text-muted-foreground">· fees in {currency} ({identity?.regionName ?? "your WCA region"})</span></Label>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {trackCategories.map((c) => {
+                        const on = c.id === categoryId; const f = annualFee(c, currency);
+                        return (
+                          <button type="button" key={c.id} onClick={() => { setCategoryId(c.id); if (!c.allow_installments) setCycle("annual"); }}
+                            className={`rounded-2xl border p-4 text-left transition ${on ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                            <span className="flex items-start justify-between gap-3">
+                              <span className="text-sm font-semibold">{c.name}</span>
+                              <span className="shrink-0 text-sm font-bold text-gradient-brand">{f != null ? `${money(f, currency)}/yr` : "Converted at checkout"}</span>
+                            </span>
+                            {c.description && <span className="mt-1 block text-xs text-muted-foreground">{c.description}</span>}
+                          </button>
+                        );
+                      })}
+                      {!trackCategories.length && <p className="text-sm text-muted-foreground">No membership categories are open yet.</p>}
+                    </div>
+                  </div>
+                  {category && (
+                    <div>
+                      <Label className="mb-3 block">How would you like to pay?</Label>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        {CYCLES.filter((c) => c.value === "annual" || category.allow_installments).map((c) => {
+                          const on = cycle === c.value;
+                          return (
+                            <button type="button" key={c.value} onClick={() => setCycle(c.value)} className={`rounded-2xl border p-4 text-left transition ${on ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                              <span className="block text-sm font-semibold">{c.label}</span>
+                              <span className="block text-xs text-muted-foreground">{c.blurb}</span>
+                              {fee != null && <span className="mt-2 block text-sm font-bold">{money(instalment(fee, c.value, currency), currency)}{c.parts > 1 ? " now" : ""}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="mb-3 block">Payment method</Label>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {methods.filter((m) => m.on).map((m) => {
+                        const on = method === m.value; const Icon = m.icon;
+                        return (
+                          <button type="button" key={m.value} onClick={() => setMethod(m.value)} className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition ${on ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                            <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${on ? "gradient-brand text-primary-foreground" : "bg-muted text-muted-foreground"}`}><Icon className="size-4" /></span>
+                            <span><span className="block text-sm font-semibold">{METHOD_LABELS[m.value]}</span><span className="block text-xs text-muted-foreground">{m.hint}</span></span>
+                          </button>
+                        );
+                      })}
+                      {!methods.some((m) => m.on) && <p className="text-sm text-muted-foreground">Payments are not configured yet. Please check back soon.</p>}
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">An invoice is generated for every payment method.</p>
+                </div>
+              )}
+
+              {step === 3 && (
                 <div className="space-y-4 text-sm">
                   <Row label="Applicant" value={identity?.fullName ?? "—"} />
                   <Row label="Applying as" value={track === "professional" ? "Professional" : "Business owner"} />
@@ -331,10 +492,15 @@ function ApplicationPage() {
                     </>
                   )}
                   <Row label="SDGs" value={answers.sdgs.length ? answers.sdgs.join(", ") : "—"} />
+                  <Row label="Membership category" value={category?.name ?? "—"} />
+                  <Row label="Payment plan" value={CYCLES.find((c) => c.value === cycle)?.label ?? "—"} />
+                  <Row label="Payment method" value={method ? METHOD_LABELS[method] : "—"} />
+                  <Row label="Due now" value={fee != null ? money(instalment(fee, cycle, currency), currency) : "Calculated on your invoice"} />
+                  {!paymentReady && <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Choose a category, payment plan and method in step 3.</p>}
                   {[0, 1].some((i) => missing(i).length > 0) && (
                     <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">Some required answers are still empty. Complete steps 1–2 before submitting.</p>
                   )}
-                  <p className="text-muted-foreground">By submitting you confirm the information is accurate and agree to the WCBN validation process and Covenant.</p>
+                  <p className="text-muted-foreground">By paying you confirm the information is accurate and agree to the WCBN Covenant. Your membership activates as soon as payment is confirmed.</p>
                 </div>
               )}
               </fieldset>
@@ -343,8 +509,8 @@ function ApplicationPage() {
                 {step > 0 && <Button variant="ghost" onClick={() => setStep(step - 1)}>Back</Button>}
                 <Button variant="outline" disabled={save.isPending || submitted} onClick={() => save.mutate(false)}><Save />Save progress</Button>
                 {step < last
-                  ? <Button onClick={() => { const m = missing(step); if (m.length && !submitted) { toast.error("Please complete the required answers on this step first."); return; } setStep(step + 1); }}>Next step</Button>
-                  : <Button disabled={save.isPending || !eligible || submitted || [0, 1].some((i) => missing(i).length > 0)} onClick={() => save.mutate(true)}>{save.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit application</Button>}
+                  ? <Button onClick={() => { const m = missing(step); if (m.length && !submitted) { toast.error("Please complete the required answers on this step first."); return; } if (step === 2 && !paymentReady) { toast.error("Choose a category, payment plan and method."); return; } setStep(step + 1); }}>Next step</Button>
+                  : <Button disabled={save.isPending || !eligible || submitted || !paymentReady || [0, 1].some((i) => missing(i).length > 0)} onClick={() => save.mutate(true)}>{save.isPending ? <Loader2 className="animate-spin" /> : <Send />}{method === "bank_transfer" ? "Submit & get invoice" : "Submit & pay"}</Button>}
               </div>
             </>
           )}
@@ -437,7 +603,7 @@ function ApplicationPage() {
           </>
         )}
 
-        {!submitted && application && (
+        {false && application && (
             <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
               <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Review tracker</h2>
               <ol className="mt-4 space-y-2 text-sm">

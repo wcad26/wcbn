@@ -8,6 +8,7 @@ export type Identity = {
   profile: { id: string; first_name: string | null; last_name: string | null; email: string | null; phone: string | null; region_id: string | null } | null;
   member: { id: string; member_id: string; status: string | null; join_date: string | null; region_id: string } | null;
   regionName: string | null;
+  regionCurrency: string;
   dcgName: string | null;
   dcgActive: boolean;
   wcaActive: boolean;
@@ -94,7 +95,7 @@ export const COUNTRIES = [
 ] as const;
 
 export function money(amount: number, currency = "XAF") {
-  return new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
+  return new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: currency === "XAF" ? 0 : 2 }).format(amount);
 }
 
 export function slugify(value: string) {
@@ -113,9 +114,11 @@ export async function fetchIdentity(): Promise<Identity | null> {
   ]);
 
   let regionName: string | null = null;
+  let regionCurrency = "XAF";
   if (member?.region_id ?? profile?.region_id) {
-    const { data: region } = await supabase.from("regions").select("name").eq("id", (member?.region_id ?? profile?.region_id)!).maybeSingle();
+    const { data: region } = await supabase.from("regions").select("name, currency_code").eq("id", (member?.region_id ?? profile?.region_id)!).maybeSingle();
     regionName = region?.name ?? null;
+    regionCurrency = region?.currency_code ?? "XAF";
   }
 
   let dcgName: string | null = null;
@@ -149,6 +152,7 @@ export async function fetchIdentity(): Promise<Identity | null> {
     profile: profile ?? null,
     member: member ?? null,
     regionName,
+    regionCurrency,
     dcgName,
     dcgActive,
     wcaActive: member?.status === "active",
