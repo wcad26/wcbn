@@ -2,13 +2,40 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  CheckCircle2, Clock, Loader2, RotateCcw, Search, Sparkles,
-  Trash2, UserCheck, Users, Mail, Phone, MapPin
+  AlertCircle,
+  Briefcase,
+  CheckCircle2,
+  Clock,
+  Edit2,
+  Eye,
+  Loader2,
+  Mail,
+  MapPin,
+  MoreHorizontal,
+  Phone,
+  Power,
+  RotateCcw,
+  Search,
+  Trash2,
+  UserCheck,
+  UserX,
+  Users,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdminPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -18,360 +45,729 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import type { TablesUpdate } from "@/integrations/supabase/types";
+import { PeriodFilter, PeriodFilterState, isDateInPeriod } from "@/components/wcbn/period-filter";
 import { unregisterWcbnMembers } from "@/lib/payments.functions";
+import { getCategoryArchetype, type Category } from "@/lib/fees";
 
 export const Route = createFileRoute("/admin/members")({ component: MembersPage });
 
-const STATUSES = ["active", "prospect", "applicant", "suspended", "inactive"];
+interface MemberItem {
+  id: string;
+  category: string | null;
+  category_id: string | null;
+  status: string;
+  member_type: string | null;
+  created_at: string;
+  inducted_at: string | null;
+  profile_id: string;
+  profiles: {
+    first_name: string | null;
+    last_name: string | null;
+    email: string | null;
+    phone: string | null;
+    city?: string | null;
+    country?: string | null;
+  } | null;
+  members: {
+    member_id: string;
+    status: string | null;
+    join_date: string | null;
+  } | null;
+  wcbn_membership_categories: {
+    id: string;
+    name: string;
+    code: string;
+    applicant_type: string;
+  } | null;
+}
 
 function MembersPage() {
   const queryClient = useQueryClient();
+
+  // Search & Filters
   const [search, setSearch] = useState("");
   const [trackFilter, setTrackFilter] = useState<"all" | "business" | "professional">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [targetMember, setTargetMember] = useState<{ id: string; name: string } | null>(null);
+  const [period, setPeriod] = useState<PeriodFilterState>({ preset: "all" });
+
+  // Dialog States
+  const [viewingMember, setViewingMember] = useState<MemberItem | null>(null);
+  const [editingMember, setEditingMember] = useState<MemberItem | null>(null);
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editMemberType, setEditMemberType] = useState<"business" | "professional">("business");
+  const [deletingMember, setDeletingMember] = useState<MemberItem | null>(null);
   const [resetAllOpen, setResetAllOpen] = useState(false);
 
   const { data: members = [], isLoading } = useQuery({
-    queryKey: ["admin", "members"],
+    queryKey: ["admin", "members-streamlined"],
     queryFn: async () => {
       const { data } = await supabase
         .from("wcbn_members")
         .select(`
           *,
-          profiles (first_name, last_name, email, phone),
-          members (
-            id, member_id, status, region_id,
-            dcg_members (is_active, dcgs(name, is_active))
-          ),
+          profiles (first_name, last_name, email, phone, city, country),
+          members (member_id, status, join_date),
           wcbn_membership_categories (id, name, code, applicant_type)
         `)
         .order("created_at", { ascending: false });
-      return data ?? [];
+      return (data ?? []) as unknown as MemberItem[];
     },
   });
 
   const { data: categories = [] } = useQuery({
     queryKey: ["wcbn", "categories"],
     queryFn: async () => {
-      const { data } = await supabase.from("wcbn_membership_categories").select("id, name, code, applicant_type, is_active");
-      return data ?? [];
+      const { data } = await supabase
+        .from("wcbn_membership_categories")
+        .select("*")
+        .order("display_order");
+      return (data ?? []) as Category[];
     },
   });
 
-  const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: TablesUpdate<"wcbn_members"> }) => {
-      const { error } = await supabase.from("wcbn_members").update(patch).eq("id", id);
+  // Category map
+  const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
+
+  // Update Member Mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      id,
+      categoryId,
+      memberType,
+    }: {
+      id: string;
+      categoryId: string;
+      memberType: string;
+    }) => {
+      const catObj = categoryMap.get(categoryId);
+      const { error } = await supabase
+        .from("wcbn_members")
+        .update({
+          category_id: categoryId || null,
+          category: catObj?.name || null,
+          member_type: memberType,
+        })
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Member record updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "overview"] });
+      toast.success("Member updated successfully");
+      setEditingMember(null);
+      queryClient.invalidateQueries({ queryKey: ["admin", "members-streamlined"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "overview-modern"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const unregisterOne = useMutation({
+  // Activate / Deactivate Toggle Mutation
+  const toggleStatusMutation = useMutation({
+    mutationFn: async (m: MemberItem) => {
+      const newStatus = m.status === "active" ? "inactive" : "active";
+      const payload: Record<string, any> = { status: newStatus };
+      if (newStatus === "active" && !m.inducted_at) {
+        payload.inducted_at = new Date().toISOString();
+      }
+      const { error } = await supabase.from("wcbn_members").update(payload).eq("id", m.id);
+      if (error) throw error;
+      return newStatus;
+    },
+    onSuccess: (newStatus) => {
+      toast.success(`Member status set to ${newStatus}`);
+      queryClient.invalidateQueries({ queryKey: ["admin", "members-streamlined"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "overview-modern"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Delete / Unregister One Member Mutation
+  const deleteMemberMutation = useMutation({
     mutationFn: async (memberId: string) => {
       await unregisterWcbnMembers({ data: { memberId } });
     },
     onSuccess: () => {
-      toast.success("Member unregistered successfully. They can now restart the onboarding flow.");
-      setTargetMember(null);
-      queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "overview"] });
+      toast.success("Member deleted and removed from WCBN roster.");
+      setDeletingMember(null);
+      queryClient.invalidateQueries({ queryKey: ["admin", "members-streamlined"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "overview-modern"] });
     },
-    onError: (e: Error) => toast.error(`Failed to unregister member: ${e.message}`),
+    onError: (e: Error) => toast.error(`Failed to delete member: ${e.message}`),
   });
 
-  const unregisterAll = useMutation({
+  // Reset All Registrations (Test utility)
+  const resetAllMutation = useMutation({
     mutationFn: async () => {
       await unregisterWcbnMembers({ data: { all: true } });
     },
     onSuccess: () => {
       toast.success("All WCBN registrations have been reset successfully.");
       setResetAllOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "overview"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "members-streamlined"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "overview-modern"] });
     },
     onError: (e: Error) => toast.error(`Failed to reset members: ${e.message}`),
   });
 
+  // Filtered members
   const filteredMembers = useMemo(() => {
-    return (members ?? []).filter((m) => {
-      const isInvestor = m.member_type === "professional" || m.member_type === "investor_mentor";
-      const matchesTrack =
-        trackFilter === "all" ||
-        (trackFilter === "business" && !isInvestor) ||
-        (trackFilter === "professional" && isInvestor);
+    return members.filter((m) => {
+      // Track filter
+      const isInvestor =
+        m.member_type === "professional" ||
+        m.member_type === "investor" ||
+        m.member_type === "mentor" ||
+        m.member_type === "investor_mentor";
+      if (trackFilter === "business" && isInvestor) return false;
+      if (trackFilter === "professional" && !isInvestor) return false;
 
-      const matchesStatus = statusFilter === "all" || m.status === statusFilter;
+      // Status filter
+      if (statusFilter !== "all" && m.status !== statusFilter) return false;
 
-      const p = m.profiles as { first_name: string | null; last_name: string | null; email: string | null } | null;
-      const wca = m.members as { member_id: string } | null;
-      const text = `${p?.first_name ?? ""} ${p?.last_name ?? ""} ${p?.email ?? ""} ${wca?.member_id ?? ""}`.toLowerCase();
-      const matchesSearch = !search.trim() || text.includes(search.toLowerCase());
+      // Period filter
+      if (!isDateInPeriod(m.created_at, period)) return false;
 
-      return matchesTrack && matchesStatus && matchesSearch;
+      // Search query
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        const p = m.profiles;
+        const nameMatch = `${p?.first_name ?? ""} ${p?.last_name ?? ""}`.toLowerCase().includes(q);
+        const emailMatch = p?.email?.toLowerCase().includes(q);
+        const phoneMatch = p?.phone?.toLowerCase().includes(q);
+        const wcaMatch = m.members?.member_id?.toLowerCase().includes(q);
+        const catMatch = (m.category || m.wcbn_membership_categories?.name || "").toLowerCase().includes(q);
+
+        if (!nameMatch && !emailMatch && !phoneMatch && !wcaMatch && !catMatch) {
+          return false;
+        }
+      }
+
+      return true;
     });
-  }, [members, trackFilter, statusFilter, search]);
+  }, [members, trackFilter, statusFilter, period, search]);
+
+  // Overall counters
+  const totalCount = members.length;
+  const activeCount = members.filter((m) => m.status === "active").length;
+  const prospectCount = members.filter((m) => m.status === "prospect" || m.status === "applicant").length;
+  const inactiveCount = members.filter((m) => m.status === "inactive" || m.status === "suspended").length;
+
+  // Helper for Status Entry Badge
+  const renderStatusEntry = (status: string) => {
+    switch (status) {
+      case "active":
+        return (
+          <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 gap-1 font-semibold">
+            <CheckCircle2 className="size-3" /> Active
+          </Badge>
+        );
+      case "prospect":
+      case "applicant":
+        return (
+          <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 gap-1 font-semibold">
+            <Clock className="size-3" /> Prospect
+          </Badge>
+        );
+      case "suspended":
+        return (
+          <Badge className="bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30 gap-1 font-semibold">
+            <XCircle className="size-3" /> Suspended
+          </Badge>
+        );
+      default:
+        return (
+          <Badge variant="outline" className="border-border text-muted-foreground gap-1 font-medium">
+            <Power className="size-3" /> Inactive
+          </Badge>
+        );
+    }
+  };
 
   return (
     <AdminPage
       title="Member Directory"
-      description="The official WCBN roster of inducted and active members across Entrepreneur and Investor/Mentor tracks, linked to dynamic categories."
-      action={
-        <div className="flex flex-wrap items-center gap-2">
-          {members.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setResetAllOpen(true)}
-              className="text-destructive hover:bg-destructive/10 border-destructive/20 text-xs"
-            >
-              <RotateCcw className="size-3.5 mr-1" />
-              Reset All Registrations
-            </Button>
-          )}
-        </div>
-      }
+      description="The official WCBN roster of inducted and active members across Entrepreneur and Investor/Mentor categories."
     >
-      <div className="space-y-4">
-        {/* Filter & Search Bar */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            {([
-              ["all", "All Members"],
-              ["business", "🚀 Entrepreneurs"],
-              ["professional", "💎 Investors & Mentors"],
-            ] as const).map(([value, label]) => (
-              <button
-                key={value}
-                onClick={() => setTrackFilter(value)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                  trackFilter === value ? "gradient-brand text-white shadow-xs" : "bg-muted text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+      <div className="space-y-6">
+        {/* KPI Summary Cards */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Total Roster</span>
+              <Users className="size-4 text-muted-foreground" />
+            </div>
+            <p className="mt-2 text-2xl font-bold text-foreground">{totalCount}</p>
+            <p className="mt-1 text-xs text-muted-foreground">All registered members</p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 rounded-xl border border-input bg-background px-3 text-xs font-medium capitalize"
-            >
-              <option value="all">All Statuses</option>
-              {STATUSES.map((s) => (
-                <option key={s} value={s} className="capitalize">{s}</option>
-              ))}
-            </select>
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Active Members</span>
+              <CheckCircle2 className="size-4 text-emerald-500" />
+            </div>
+            <p className="mt-2 text-2xl font-bold text-emerald-600 dark:text-emerald-400">{activeCount}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Inducted & in good standing</p>
+          </div>
 
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 size-3.5 text-muted-foreground" />
-              <Input
-                placeholder="Search by name, email, WCA ID…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-9 w-60 pl-8 text-xs"
-              />
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Prospects / Applicants</span>
+              <Clock className="size-4 text-amber-500" />
+            </div>
+            <p className="mt-2 text-2xl font-bold text-amber-600 dark:text-amber-400">{prospectCount}</p>
+            <p className="mt-1 text-xs text-muted-foreground">In vetting or onboarding</p>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">Inactive / Suspended</span>
+              <Power className="size-4 text-muted-foreground" />
+            </div>
+            <p className="mt-2 text-2xl font-bold text-muted-foreground">{inactiveCount}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Dormant accounts</p>
+          </div>
+        </div>
+
+        {/* Master Members Table Section */}
+        <div className="rounded-3xl border border-border bg-card shadow-card overflow-hidden">
+          {/* Controls & Filter Bar */}
+          <div className="p-5 border-b border-border space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Search input */}
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, email, phone, WCA ID..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 h-9 text-xs"
+                />
+              </div>
+
+              {/* Period Filter */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">Period:</span>
+                <PeriodFilter value={period} onChange={setPeriod} />
+              </div>
+            </div>
+
+            {/* Track, Status Selectors, and Test Reset */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center rounded-xl bg-muted/60 p-1 border border-border text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setTrackFilter("all")}
+                    className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                      trackFilter === "all" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    All Members
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTrackFilter("business")}
+                    className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                      trackFilter === "business" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    🚀 Entrepreneurs
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTrackFilter("professional")}
+                    className={`rounded-lg px-2.5 py-1 font-semibold transition-all ${
+                      trackFilter === "professional" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    💎 Investors & Mentors
+                  </button>
+                </div>
+
+                {/* Status Filter */}
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="h-8 rounded-lg border border-input bg-background px-2.5 text-xs font-medium"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="active">Active Only</option>
+                  <option value="prospect">Prospect / Applicant</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="suspended">Suspended</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground mr-2">
+                  Showing <strong>{filteredMembers.length}</strong> of {members.length}
+                </span>
+
+                {/* Test utility: Reset registrations */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setResetAllOpen(true)}
+                  className="h-8 text-[11px] text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1"
+                >
+                  <RotateCcw className="size-3" /> Reset Test Registrations
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Member Directory Table */}
-        <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
+          {/* Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
                 <tr>
-                  <th className="p-4">Member Identity</th>
-                  <th className="p-4">Leadership Track</th>
-                  <th className="p-4">Membership Category</th>
-                  <th className="p-4">Destiny Care Group (DCG)</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Induction Date</th>
-                  <th className="p-4 text-right">Actions</th>
+                  <th className="p-4 font-semibold">Member Identity</th>
+                  <th className="p-4 font-semibold">Membership Category & Track</th>
+                  <th className="p-4 font-semibold text-center">Status</th>
+                  <th className="p-4 font-semibold">Induction Date</th>
+                  <th className="p-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {isLoading && (
+                {isLoading ? (
                   <tr>
-                    <td className="p-6 text-center text-muted-foreground" colSpan={7}>
-                      Loading WCBN member directory…
+                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                      <Loader2 className="size-5 animate-spin mx-auto mb-2" />
+                      Loading member directory...
                     </td>
                   </tr>
-                )}
-                {!isLoading && filteredMembers.length === 0 && (
+                ) : filteredMembers.length === 0 ? (
                   <tr>
-                    <td className="p-8 text-center text-muted-foreground" colSpan={7}>
+                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
                       No members match the current filter.
                     </td>
                   </tr>
-                )}
-                {filteredMembers.map((m) => {
-                  const p = m.profiles as { first_name: string | null; last_name: string | null; email: string | null; phone: string | null } | null;
-                  const wca = m.members as {
-                    member_id: string;
-                    status: string | null;
-                    dcg_members?: { is_active: boolean; dcgs?: { name: string; is_active: boolean } | null }[] | null;
-                  } | null;
-                  const fullName = [p?.first_name, p?.last_name].filter(Boolean).join(" ") || "WCBN Member";
-                  const isInvestor = m.member_type === "professional" || m.member_type === "investor_mentor";
+                ) : (
+                  filteredMembers.map((m) => {
+                    const p = m.profiles;
+                    const fullName = [p?.first_name, p?.last_name].filter(Boolean).join(" ") || p?.email || "Member";
+                    const isInvestor =
+                      m.member_type === "professional" ||
+                      m.member_type === "investor" ||
+                      m.member_type === "mentor" ||
+                      m.member_type === "investor_mentor";
+                    const catName = m.category || m.wcbn_membership_categories?.name || "General Member";
 
-                  // Extract DCG
-                  const dcgRow = wca?.dcg_members?.[0];
-                  const dcgName = dcgRow?.dcgs?.name;
-                  const dcgActive = !!dcgRow?.is_active && !!dcgRow?.dcgs?.is_active;
+                    return (
+                      <tr key={m.id} className="hover:bg-muted/20 transition-colors">
+                        {/* Member Identity */}
+                        <td className="p-4">
+                          <div className="font-bold text-foreground text-xs leading-tight">{fullName}</div>
+                          <div className="text-[11px] text-muted-foreground">{p?.email}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            {m.members?.member_id && (
+                              <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                WCA: {m.members.member_id}
+                              </span>
+                            )}
+                            {p?.phone && (
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                <Phone className="size-2.5" /> {p.phone}
+                              </span>
+                            )}
+                          </div>
+                        </td>
 
-                  return (
-                    <tr key={m.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="p-4">
-                        <span className="font-bold text-foreground block">{fullName}</span>
-                        <span className="block text-xs text-muted-foreground">{p?.email}</span>
-                        <span className="inline-block mt-1 font-mono text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
-                          WCA: {wca?.member_id ?? "—"}
-                        </span>
-                      </td>
-
-                      <td className="p-4">
-                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          isInvestor ? "bg-purple-500/10 text-purple-700 dark:text-purple-300" : "bg-primary/10 text-primary"
-                        }`}>
-                          {isInvestor ? "💎 Investor & Mentor" : "🚀 Entrepreneur"}
-                        </span>
-                      </td>
-
-                      <td className="p-4">
-                        <select
-                          value={m.category_id ?? ""}
-                          onChange={(e) => {
-                            const newCatId = e.target.value;
-                            const catObj = categories.find((c) => c.id === newCatId);
-                            update.mutate({
-                              id: m.id,
-                              patch: {
-                                category_id: newCatId || null,
-                                category: catObj?.name ?? m.category,
-                              },
-                            });
-                          }}
-                          className="h-8 rounded-lg border border-input bg-background px-2 text-xs font-medium"
-                        >
-                          <option value="">{m.category || "Select category…"}</option>
-                          {categories.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-
-                      <td className="p-4">
-                        <div className="flex items-center gap-1.5 text-xs">
-                          {dcgActive ? (
-                            <CheckCircle2 className="size-3.5 text-primary shrink-0" />
-                          ) : (
-                            <Clock className="size-3.5 text-amber-500 shrink-0" />
-                          )}
-                          <span className="font-medium text-foreground">
-                            {dcgName ?? (dcgActive ? "Active" : "Assignment in review")}
+                        {/* Combined Category & Track Column */}
+                        <td className="p-4">
+                          <div className="text-xs font-semibold text-foreground">{catName}</div>
+                          <span
+                            className={`inline-block mt-0.5 text-[10px] font-medium px-2 py-0.5 rounded ${
+                              isInvestor
+                                ? "text-purple-600 bg-purple-500/10"
+                                : "text-primary bg-primary/10"
+                            }`}
+                          >
+                            {isInvestor ? "💎 Investor & Mentor" : "🚀 Entrepreneur"}
                           </span>
-                        </div>
-                      </td>
+                        </td>
 
-                      <td className="p-4">
-                        <select
-                          value={m.status}
-                          onChange={(e) => update.mutate({ id: m.id, patch: { status: e.target.value } })}
-                          className={`h-8 rounded-lg border border-input bg-background px-2 text-xs font-semibold capitalize ${
-                            m.status === "active" ? "text-primary" : "text-muted-foreground"
-                          }`}
-                        >
-                          {STATUSES.map((s) => (
-                            <option key={s} value={s} className="capitalize">
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
+                        {/* Status Column as Entry (Read-only Badge) */}
+                        <td className="p-4 text-center whitespace-nowrap">
+                          {renderStatusEntry(m.status)}
+                        </td>
 
-                      <td className="p-4 text-xs text-muted-foreground">
-                        {m.inducted_at ? new Date(m.inducted_at).toLocaleDateString() : "—"}
-                      </td>
+                        {/* Induction Date */}
+                        <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">
+                          {m.inducted_at
+                            ? new Date(m.inducted_at).toLocaleDateString()
+                            : m.created_at
+                            ? `Registered: ${new Date(m.created_at).toLocaleDateString()}`
+                            : "—"}
+                        </td>
 
-                      <td className="p-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setTargetMember({ id: m.id, name: fullName })}
-                          className="text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
-                          title="Unregister member for testing"
-                        >
-                          <Trash2 className="size-4" />
-                          <span className="sr-only">Unregister</span>
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        {/* Action Column as Dropdown Menu */}
+                        <td className="p-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="size-8 p-0 text-muted-foreground hover:text-foreground">
+                                <MoreHorizontal className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 text-xs">
+                              <DropdownMenuLabel className="text-[11px] font-semibold text-muted-foreground">
+                                Member Options
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+
+                              {/* View Details */}
+                              <DropdownMenuItem
+                                onClick={() => setViewingMember(m)}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <Eye className="size-3.5 text-primary" /> View Details
+                              </DropdownMenuItem>
+
+                              {/* Edit Member */}
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingMember(m);
+                                  setEditCategoryId(m.category_id || "");
+                                  setEditMemberType(isInvestor ? "professional" : "business");
+                                }}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <Edit2 className="size-3.5 text-blue-600" /> Edit Member
+                              </DropdownMenuItem>
+
+                              {/* Activate / Deactivate Toggle */}
+                              <DropdownMenuItem
+                                onClick={() => toggleStatusMutation.mutate(m)}
+                                className="gap-2 cursor-pointer"
+                              >
+                                {m.status === "active" ? (
+                                  <>
+                                    <Power className="size-3.5 text-amber-600" /> Deactivate
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle2 className="size-3.5 text-emerald-600" /> Activate
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+
+                              <DropdownMenuSeparator />
+
+                              {/* Delete Member */}
+                              <DropdownMenuItem
+                                onClick={() => setDeletingMember(m)}
+                                className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+                              >
+                                <Trash2 className="size-3.5" /> Delete Member
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* Confirmation Dialog: Unregister Single Member */}
-      <Dialog open={!!targetMember} onOpenChange={(open) => !open && setTargetMember(null)}>
-        <DialogContent className="max-w-md rounded-3xl">
+      {/* View Member Details Dialog */}
+      <Dialog open={!!viewingMember} onOpenChange={(open) => !open && setViewingMember(null)}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Unregister Member</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="size-5 text-primary" /> Member Profile Details
+            </DialogTitle>
             <DialogDescription>
-              Are you sure you want to unregister <strong>{targetMember?.name}</strong> from WCBN?
+              Registered credentials and network classification.
             </DialogDescription>
           </DialogHeader>
-          <p className="text-xs text-muted-foreground leading-5">
-            This will remove their WCBN membership record, application dossier, and generated invoices. Their base World Changers Association account and credentials remain safe. They will be able to restart the onboarding process anew.
-          </p>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setTargetMember(null)}>Cancel</Button>
-            <Button
-              variant="destructive"
-              disabled={unregisterOne.isPending}
-              onClick={() => targetMember && unregisterOne.mutate(targetMember.id)}
-            >
-              {unregisterOne.isPending ? <Loader2 className="animate-spin" /> : <Trash2 className="size-4" />}
-              Unregister Member
+
+          {viewingMember && (
+            <div className="space-y-4 py-2 text-xs">
+              <div className="rounded-2xl border border-border bg-muted/30 p-4 space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground">
+                      {[viewingMember.profiles?.first_name, viewingMember.profiles?.last_name].filter(Boolean).join(" ") || "Member"}
+                    </h3>
+                    <p className="text-muted-foreground">{viewingMember.profiles?.email}</p>
+                  </div>
+                  {renderStatusEntry(viewingMember.status)}
+                </div>
+
+                <div className="pt-2 border-t border-border grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Phone:</span>
+                    <span className="font-medium text-foreground">{viewingMember.profiles?.phone || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">WCA ID:</span>
+                    <span className="font-mono font-medium text-foreground">{viewingMember.members?.member_id || "—"}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Location:</span>
+                    <span className="font-medium text-foreground">
+                      {[viewingMember.profiles?.city, viewingMember.profiles?.country].filter(Boolean).join(", ") || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[11px]">Induction Date:</span>
+                    <span className="font-medium text-foreground">
+                      {viewingMember.inducted_at ? new Date(viewingMember.inducted_at).toLocaleDateString() : "Pending"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border p-4 space-y-1.5">
+                <span className="text-muted-foreground block font-medium">Assigned Membership Category</span>
+                <p className="font-bold text-foreground text-sm">
+                  {viewingMember.category || viewingMember.wcbn_membership_categories?.name || "General Member"}
+                </p>
+                <Badge variant="outline" className="text-[10px]">
+                  {viewingMember.member_type === "professional" ? "💎 Investor & Mentor Track" : "🚀 Entrepreneur Track"}
+                </Badge>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button size="sm" onClick={() => setViewingMember(null)} className="text-xs">
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Confirmation Dialog: Reset All Registrations */}
-      <Dialog open={resetAllOpen} onOpenChange={setResetAllOpen}>
-        <DialogContent className="max-w-md rounded-3xl">
+      {/* Edit Member Dialog */}
+      <Dialog open={!!editingMember} onOpenChange={(open) => !open && setEditingMember(null)}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Reset All WCBN Registrations</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="size-5 text-blue-600" /> Edit Member
+            </DialogTitle>
             <DialogDescription>
-              Are you sure you want to unregister <strong>all {members.length} WCBN members</strong>?
+              Update leadership track or assign a different dynamic membership category.
             </DialogDescription>
           </DialogHeader>
-          <p className="text-xs text-muted-foreground leading-5">
-            This will clear all registered WCBN member records, applications, and onboarding fee schedules so the system can be tested completely fresh. Core WCA member profiles, roles, and church data are not affected.
-          </p>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setResetAllOpen(false)}>Cancel</Button>
+
+          {editingMember && (
+            <div className="space-y-4 py-2 text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Leadership Track</Label>
+                <select
+                  value={editMemberType}
+                  onChange={(e) => setEditMemberType(e.target.value as "business" | "professional")}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs"
+                >
+                  <option value="business">🚀 Entrepreneur Track</option>
+                  <option value="professional">💎 Investor & Mentor Track</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs">Membership Category</Label>
+                <select
+                  value={editCategoryId}
+                  onChange={(e) => setEditCategoryId(e.target.value)}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 text-xs"
+                >
+                  <option value="">Select Category...</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({getCategoryArchetype(c) === "investor_mentor" ? "Investor/Mentor" : "Entrepreneur"})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setEditingMember(null)} className="text-xs">
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              disabled={updateMutation.isPending}
+              onClick={() => {
+                if (editingMember) {
+                  updateMutation.mutate({
+                    id: editingMember.id,
+                    categoryId: editCategoryId,
+                    memberType: editMemberType,
+                  });
+                }
+              }}
+              className="text-xs gap-1.5"
+            >
+              {updateMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Member Confirmation Dialog */}
+      <Dialog open={!!deletingMember} onOpenChange={(open) => !open && setDeletingMember(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="size-5" /> Delete Member
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>
+                {[deletingMember?.profiles?.first_name, deletingMember?.profiles?.last_name].filter(Boolean).join(" ") || "this member"}
+              </strong>
+              ? This will remove their WCBN membership profile and reset their onboarding status.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setDeletingMember(null)} className="text-xs">
+              Cancel
+            </Button>
             <Button
               variant="destructive"
-              disabled={unregisterAll.isPending}
-              onClick={() => unregisterAll.mutate()}
+              size="sm"
+              disabled={deleteMemberMutation.isPending}
+              onClick={() => deletingMember && deleteMemberMutation.mutate(deletingMember.id)}
+              className="text-xs gap-1.5"
             >
-              {unregisterAll.isPending ? <Loader2 className="animate-spin" /> : <RotateCcw className="size-4" />}
-              Reset All Registrations
+              {deleteMemberMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+              Confirm Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset All Registrations Dialog */}
+      <Dialog open={resetAllOpen} onOpenChange={setResetAllOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="size-5" /> Reset All Registrations
+            </DialogTitle>
+            <DialogDescription>
+              This is a test utility that will remove all members, applications, and dues invoices so you can test onboarding from scratch.
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setResetAllOpen(false)} className="text-xs">
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={resetAllMutation.isPending}
+              onClick={() => resetAllMutation.mutate()}
+              className="text-xs gap-1.5"
+            >
+              {resetAllMutation.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <RotateCcw className="size-3.5" />}
+              Reset All Data
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -41,6 +41,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { documentUrl, money, useIdentity } from "@/lib/wcbn";
 import { getCategoryArchetype, type Category } from "@/lib/fees";
+import { PeriodFilter, PeriodFilterState, isDateInPeriod } from "@/components/wcbn/period-filter";
 
 export const Route = createFileRoute("/admin/contributions")({ component: ContributionsAdmin });
 
@@ -99,6 +100,7 @@ function ContributionsAdmin() {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "paid" | "partial">("all");
+  const [period, setPeriod] = useState<PeriodFilterState>({ preset: "all" });
 
   // Issue Invoice Modal State
   const [issueOpen, setIssueOpen] = useState(false);
@@ -339,6 +341,7 @@ function ContributionsAdmin() {
   // Filtered Invoices
   const filteredInvoices = invoices.filter((i) => {
     if (statusFilter !== "all" && i.status !== statusFilter) return false;
+    if (!isDateInPeriod(i.created_at, period)) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const numMatch = i.invoice_number?.toLowerCase().includes(q);
@@ -590,14 +593,21 @@ function ContributionsAdmin() {
 
           {/* Search & Status Filters */}
           <div className="p-4 bg-muted/30 border-b border-border flex flex-wrap items-center justify-between gap-3">
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input
-                placeholder="Search invoice #, member, email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-xs"
-              />
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search invoice #, member, email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 h-9 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-medium text-muted-foreground">Period:</span>
+                <PeriodFilter value={period} onChange={setPeriod} />
+              </div>
             </div>
 
             <div className="flex items-center gap-1.5 overflow-x-auto">
