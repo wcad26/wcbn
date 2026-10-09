@@ -8,8 +8,8 @@ export type PeriodPreset = "1M" | "3M" | "6M" | "12M" | "all" | "custom";
 
 export interface PeriodFilterState {
   preset: PeriodPreset;
-  startDate?: string; // YYYY-MM-DD
-  endDate?: string;   // YYYY-MM-DD
+  startDate?: string | undefined; // YYYY-MM-DD
+  endDate?: string | undefined;   // YYYY-MM-DD
 }
 
 interface PeriodFilterProps {

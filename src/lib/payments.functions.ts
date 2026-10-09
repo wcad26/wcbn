@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 
 const FLW = "https://api.flutterwave.com/v3";
 
@@ -185,13 +186,27 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { flutterwave_secret_key, supabase_service_role_key, ...dbFields } = data;
+    const payload: TablesUpdate<"wcbn_payment_settings"> = {
+      flutterwave_enabled: dbFields.flutterwave_enabled,
+      flutterwave_mode: dbFields.flutterwave_mode,
+      mobile_money_enabled: dbFields.mobile_money_enabled,
+      card_enabled: dbFields.card_enabled,
+      bank_transfer_enabled: dbFields.bank_transfer_enabled,
+      bank_accounts: dbFields.bank_accounts,
+    };
+    if (dbFields.flutterwave_public_key !== undefined) {
+      payload.flutterwave_public_key = dbFields.flutterwave_public_key;
+    }
+    if (dbFields.invoice_note !== undefined) {
+      payload.invoice_note = dbFields.invoice_note;
+    }
 
     let updateError: { message: string } | null = null;
-    const { error: userError } = await supabase.from("wcbn_payment_settings").update(dbFields).eq("id", 1);
+    const { error: userError } = await supabase.from("wcbn_payment_settings").update(payload).eq("id", 1);
     if (userError) {
       if (process.env['SUPABASE_SERVICE_ROLE_KEY']) {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(dbFields).eq("id", 1);
+        const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(payload).eq("id", 1);
         updateError = adminError;
       } else {
         updateError = userError;

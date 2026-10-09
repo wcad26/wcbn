@@ -5,14 +5,10 @@ import {
   Briefcase,
   Building2,
   CheckCircle2,
-  Clock,
-  ExternalLink,
   Gem,
   Landmark,
   Rocket,
-  ShieldCheck,
   TrendingUp,
-  UserCheck,
   Users,
 } from "lucide-react";
 import {
@@ -96,13 +92,10 @@ function AdminOverview() {
   });
 
   const allMembers = data?.members ?? [];
-  const allBusinesses = data?.businesses ?? [];
   const allApplications = data?.applications ?? [];
+  const allBusinesses = data?.businesses ?? [];
   const categories = data?.categories ?? [];
   const pendingPayments = data?.pendingPayments ?? [];
-  const pendingApplications = allApplications.filter((a) =>
-    ["draft", "submitted", "in_review", "applied"].includes(a.status)
-  );
 
   // Filter members and businesses based on selected date period
   const filteredMembers = useMemo(() => {
@@ -347,53 +340,26 @@ function AdminOverview() {
         </div>
 
         {/* High-priority Action Alerts Strip (Compact & Unobtrusive) */}
-        {(pendingPayments.length > 0 || pendingApplications.length > 0) && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {pendingPayments.length > 0 && (
-              <div className="flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-amber-900 dark:text-amber-200">
-                <div className="flex items-center gap-3">
-                  <div className="grid size-9 place-items-center rounded-xl bg-amber-500/20">
-                    <Landmark className="size-4 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold">
-                      {pendingPayments.length} Bank Transfer Slip{pendingPayments.length > 1 ? "s" : ""} Pending
-                    </h4>
-                    <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
-                      Payment proofs awaiting verification to induct members.
-                    </p>
-                  </div>
-                </div>
-                <Link to="/admin/contributions">
-                  <Button size="sm" variant="outline" className="h-7 text-xs border-amber-500/40 bg-card hover:bg-amber-500/20">
-                    Verify Slips
-                  </Button>
-                </Link>
+        {pendingPayments.length > 0 && (
+          <div className="flex items-center justify-between rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-amber-900 dark:text-amber-200">
+            <div className="flex items-center gap-3">
+              <div className="grid size-9 place-items-center rounded-xl bg-amber-500/20">
+                <Landmark className="size-4 text-amber-600 dark:text-amber-400" />
               </div>
-            )}
-
-            {pendingApplications.length > 0 && (
-              <div className="flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 p-3.5 text-primary-foreground">
-                <div className="flex items-center gap-3">
-                  <div className="grid size-9 place-items-center rounded-xl bg-primary/20">
-                    <Clock className="size-4 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-foreground">
-                      {pendingApplications.length} Application{pendingApplications.length > 1 ? "s" : ""} in Pipeline
-                    </h4>
-                    <p className="text-[11px] text-muted-foreground">
-                      Candidates awaiting review and leadership validation.
-                    </p>
-                  </div>
-                </div>
-                <Link to="/admin/applications">
-                  <Button size="sm" variant="outline" className="h-7 text-xs bg-card hover:bg-primary/20">
-                    Review Pipeline
-                  </Button>
-                </Link>
+              <div>
+                <h4 className="text-xs font-bold">
+                  {pendingPayments.length} Bank Transfer Slip{pendingPayments.length > 1 ? "s" : ""} Pending
+                </h4>
+                <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                  Payment proofs awaiting verification to induct members.
+                </p>
               </div>
-            )}
+            </div>
+            <Link to="/admin/contributions">
+              <Button size="sm" variant="outline" className="h-7 text-xs border-amber-500/40 bg-card hover:bg-amber-500/20">
+                Verify Slips
+              </Button>
+            </Link>
           </div>
         )}
 
@@ -577,53 +543,6 @@ function AdminOverview() {
           </div>
         </div>
 
-        {/* Quick Launchpad Navigation */}
-        <div className="grid gap-3 sm:grid-cols-3">
-          <Link to="/admin/applications" className="group block">
-            <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm hover:border-primary/50 transition-all">
-              <div className="flex items-center gap-3">
-                <div className="grid size-9 place-items-center rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
-                  <ShieldCheck className="size-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-foreground">Applications Table</h4>
-                  <p className="text-[11px] text-muted-foreground">Inspect and validate applicants</p>
-                </div>
-              </div>
-              <ExternalLink className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-          </Link>
-
-          <Link to="/admin/members" className="group block">
-            <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm hover:border-primary/50 transition-all">
-              <div className="flex items-center gap-3">
-                <div className="grid size-9 place-items-center rounded-xl bg-purple-500/10 text-purple-600 group-hover:scale-105 transition-transform">
-                  <UserCheck className="size-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-foreground">Member Directory</h4>
-                  <p className="text-[11px] text-muted-foreground">Manage active & prospect members</p>
-                </div>
-              </div>
-              <ExternalLink className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-          </Link>
-
-          <Link to="/admin/contributions" className="group block">
-            <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm hover:border-primary/50 transition-all">
-              <div className="flex items-center gap-3">
-                <div className="grid size-9 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 group-hover:scale-105 transition-transform">
-                  <Landmark className="size-4" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-foreground">Finance & Slips</h4>
-                  <p className="text-[11px] text-muted-foreground">Verify transfers and invoices</p>
-                </div>
-              </div>
-              <ExternalLink className="size-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-          </Link>
-        </div>
       </div>
     </AdminPage>
   );
