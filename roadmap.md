@@ -8,7 +8,7 @@
 - [ ] Online payment checkout — blocked: awaiting choice of payment rails (mobile money vs card)
 - [ ] Supabase security items — blocked: OTP expiry, leaked-password protection and Postgres upgrade must be changed in the Supabase dashboard
 - [x] Events and news/announcements: admin creation, public pages, member portal pages with RSVP
-- [ ] Remove the in-page title/description heading block from all admin pages (sidebar header already labels the page)
+- [x] Remove the in-page title/description heading block from all admin pages (sidebar header already labels the page)
 - [ ] Flutterwave secret key not yet stored — online payment (mobile money / card) stays disabled until it is added
 - [ ] Content management for leadership bios
 
