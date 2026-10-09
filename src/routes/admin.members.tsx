@@ -61,7 +61,7 @@ function MembersErrorComponent({ error, reset }: ErrorComponentProps) {
         <AlertCircle className="size-8 text-destructive mx-auto mb-3" />
         <h3 className="font-semibold text-foreground text-base">Unable to load Member Directory</h3>
         <p className="text-xs text-muted-foreground mt-1 mb-4">
-          {error?.message || "An unexpected error occurred while loading members."}
+          {message || "An unexpected error occurred while loading members."}
         </p>
         <Button size="sm" onClick={() => reset()} className="text-xs">
           Try Again
