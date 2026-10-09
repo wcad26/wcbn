@@ -29,11 +29,9 @@ const adminLinks = [
   ["Members", "/admin/members", Users],
   ["Ventures & Directory", "/admin/businesses", BriefcaseBusiness],
   ["Finance & Invoices", "/admin/contributions", CircleDollarSign],
-  ["Categories", "/admin/categories", Layers],
   ["Events", "/admin/events", CalendarDays],
   ["News", "/admin/news", Newspaper],
-  ["Payment Settings", "/admin/payments", Settings2],
-  ["Roles & Access", "/admin/roles", ShieldCheck],
+  ["Settings", "/admin/settings", Settings2],
 ] as const;
 
 export function PortalShell({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
