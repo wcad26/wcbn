@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { PeriodFilter, PeriodFilterState, isDateInPeriod } from "@/components/wcbn/period-filter";
-import { money, useIdentity } from "@/lib/wcbn";
+import { money, useIdentity, slugify } from "@/lib/wcbn";
 import { getCategoryArchetype, type Category } from "@/lib/fees";
 
 export const Route = createFileRoute("/admin/applications")({ component: ApplicationsPipeline });
@@ -126,19 +126,22 @@ function ApplicationsPipeline() {
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ["admin", "applications-table"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("wcbn_applications")
         .select(`
           *,
           wcbn_members (
             id, category, category_id, status, profile_id,
-            profiles (first_name, last_name, email, phone, city, country),
+            profiles (first_name, last_name, email, phone),
             members (member_id, status, join_date)
           ),
           wcbn_application_stages (id, stage_code, status, notes, created_at, reviewer_id),
           wcbn_invoices (id, invoice_number, amount, paid_amount, status, currency_code, billing_cycle)
         `)
         .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Error fetching applications:", error);
+      }
       return (data ?? []) as unknown as ApplicationRecord[];
     },
   });
@@ -202,6 +205,58 @@ function ApplicationsPipeline() {
             inducted_at: now,
           })
           .eq("id", app.wcbn_member_id);
+
+        // 4. If this is an entrepreneur application with a business name, ensure it is created in wcbn_businesses
+        const answers = (app.applicant_data ?? {}) as Record<string, any>;
+        if (answers.business_name) {
+          const bizSlug = slugify(answers.business_name) || `biz-${Date.now().toString().slice(-6)}`;
+          const { data: existingBiz } = await supabase
+            .from("wcbn_businesses")
+            .select("id")
+            .eq("owner_member_id", app.wcbn_member_id)
+            .maybeSingle();
+
+          if (existingBiz) {
+            await supabase
+              .from("wcbn_businesses")
+              .update({
+                display_name: answers.business_name,
+                legal_name: answers.business_name,
+                sector: answers.sector || "General",
+                city: answers.city || null,
+                country: answers.country || "Cameroon",
+                summary: answers.business_summary || null,
+                description: answers.business_summary || null,
+                website_url: answers.website_url || null,
+                registration_number: answers.registration_number || null,
+                vetting_status: "approved",
+                is_active: true,
+                approved_at: now,
+                approved_by: identity?.userId ?? null,
+              })
+              .eq("id", existingBiz.id);
+          } else {
+            await supabase.from("wcbn_businesses").insert({
+              owner_member_id: app.wcbn_member_id,
+              display_name: answers.business_name,
+              legal_name: answers.business_name,
+              slug: bizSlug,
+              sector: answers.sector || "General",
+              city: answers.city || null,
+              country: answers.country || "Cameroon",
+              summary: answers.business_summary || null,
+              description: answers.business_summary || null,
+              website_url: answers.website_url || null,
+              registration_number: answers.registration_number || null,
+              listing_type: "business",
+              vetting_status: "approved",
+              is_active: true,
+              risk_level: "low",
+              approved_at: now,
+              approved_by: identity?.userId ?? null,
+            });
+          }
+        }
       }
     },
     onSuccess: () => {

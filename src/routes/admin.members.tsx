@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   Briefcase,
+  Building2,
   CheckCircle2,
   Clock,
   Edit2,
@@ -79,6 +80,12 @@ interface MemberItem {
     code: string;
     applicant_type: string;
   } | null;
+  wcbn_applications?: {
+    id: string;
+    applicant_type: string;
+    applicant_data: Record<string, any>;
+    status: string;
+  }[];
 }
 
 function MembersPage() {
@@ -101,15 +108,19 @@ function MembersPage() {
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["admin", "members-streamlined"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("wcbn_members")
         .select(`
           *,
-          profiles (first_name, last_name, email, phone, city, country),
+          profiles (first_name, last_name, email, phone),
           members (member_id, status, join_date),
-          wcbn_membership_categories (id, name, code, applicant_type)
+          wcbn_membership_categories (id, name, code, applicant_type),
+          wcbn_applications (id, applicant_type, applicant_data, status)
         `)
         .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Error fetching members:", error);
+      }
       return (data ?? []) as unknown as MemberItem[];
     },
   });
@@ -449,7 +460,9 @@ function MembersPage() {
                       m.member_type === "investor" ||
                       m.member_type === "mentor" ||
                       m.member_type === "investor_mentor";
-                    const catName = m.category || m.wcbn_membership_categories?.name || "General Member";
+                    const appData = (m.wcbn_applications?.[0]?.applicant_data ?? {}) as Record<string, any>;
+                    const enterpriseName = appData.business_name || null;
+                    const enterpriseSector = appData.sector || null;
 
                     return (
                       <tr key={m.id} className="hover:bg-muted/20 transition-colors">
@@ -469,6 +482,17 @@ function MembersPage() {
                               </span>
                             )}
                           </div>
+                          {enterpriseName && (
+                            <div className="flex items-center gap-1.5 mt-1 text-xs text-foreground font-semibold">
+                              <Building2 className="size-3 text-primary shrink-0" />
+                              <span>{enterpriseName}</span>
+                              {enterpriseSector && (
+                                <span className="text-muted-foreground text-[10px] font-normal">
+                                  ({enterpriseSector})
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </td>
 
                         {/* Combined Category & Track Column */}

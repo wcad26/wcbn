@@ -70,7 +70,7 @@ function AdminOverview() {
           .order("created_at", { ascending: true }),
         supabase
           .from("wcbn_businesses")
-          .select("id, name, is_active, created_at")
+          .select("id, display_name, legal_name, is_active, created_at")
           .order("created_at", { ascending: true }),
         supabase
           .from("wcbn_membership_categories")
@@ -82,8 +82,7 @@ function AdminOverview() {
           .in("status", ["pending", "declared"]),
         supabase
           .from("wcbn_applications")
-          .select("id, status, current_stage, created_at")
-          .in("status", ["draft", "submitted", "in_review", "applied"]),
+          .select("id, status, applicant_type, applicant_data, current_stage, created_at"),
       ]);
 
       return {
@@ -91,16 +90,19 @@ function AdminOverview() {
         businesses: businessesRes.data ?? [],
         categories: (categoriesRes.data ?? []) as Category[],
         pendingPayments: paymentsRes.data ?? [],
-        pendingApplications: applicationsRes.data ?? [],
+        applications: applicationsRes.data ?? [],
       };
     },
   });
 
   const allMembers = data?.members ?? [];
   const allBusinesses = data?.businesses ?? [];
+  const allApplications = data?.applications ?? [];
   const categories = data?.categories ?? [];
   const pendingPayments = data?.pendingPayments ?? [];
-  const pendingApplications = data?.pendingApplications ?? [];
+  const pendingApplications = allApplications.filter((a) =>
+    ["draft", "submitted", "in_review", "applied"].includes(a.status)
+  );
 
   // Filter members and businesses based on selected date period
   const filteredMembers = useMemo(() => {
@@ -146,8 +148,27 @@ function AdminOverview() {
   }, [allMembers]);
 
   // 4. Total Businesses
-  const totalBusinessesCount = allBusinesses.length;
-  const newBusinessesInPeriod = filteredBusinesses.length;
+  const totalBusinessesCount = useMemo(() => {
+    const registeredCount = allBusinesses.length;
+    const applicantCount = allApplications.filter((a) => {
+      const d = (a.applicant_data ?? {}) as Record<string, any>;
+      return (a.applicant_type === "business" || d.business_name) && d.business_name?.trim();
+    }).length;
+    return Math.max(registeredCount, applicantCount);
+  }, [allBusinesses, allApplications]);
+
+  const newBusinessesInPeriod = useMemo(() => {
+    const registeredCount = filteredBusinesses.length;
+    const applicantCount = allApplications.filter((a) => {
+      const d = (a.applicant_data ?? {}) as Record<string, any>;
+      return (
+        isDateInPeriod(a.created_at, period) &&
+        (a.applicant_type === "business" || d.business_name) &&
+        d.business_name?.trim()
+      );
+    }).length;
+    return Math.max(registeredCount, applicantCount);
+  }, [filteredBusinesses, allApplications, period]);
 
   // Track breakdown in selected period
   const periodEntrepreneurs = useMemo(() => {
