@@ -27,14 +27,13 @@ const adminLinks = [
   ["Overview", "/admin", BarChart3],
   ["Applications", "/admin/applications", ClipboardCheck],
   ["Members", "/admin/members", Users],
-  ["Businesses", "/admin/businesses", BriefcaseBusiness],
+  ["Ventures & Directory", "/admin/businesses", BriefcaseBusiness],
+  ["Finance & Invoices", "/admin/contributions", CircleDollarSign],
+  ["Categories", "/admin/categories", Layers],
   ["Events", "/admin/events", CalendarDays],
   ["News", "/admin/news", Newspaper],
-  ["Fee management & invoices", "/admin/contributions", CircleDollarSign],
-  ["Categories", "/admin/categories", Layers],
-  ["Payment settings", "/admin/payments", Settings2],
-  ["Criteria", "/admin/criteria", Settings2],
-  ["Roles & access", "/admin/roles", ShieldCheck],
+  ["Payment Settings", "/admin/payments", Settings2],
+  ["Roles & Access", "/admin/roles", ShieldCheck],
 ] as const;
 
 export function PortalShell({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
