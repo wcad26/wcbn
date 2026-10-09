@@ -50,7 +50,30 @@ import { PeriodFilter, PeriodFilterState, isDateInPeriod } from "@/components/wc
 import { unregisterWcbnMembers } from "@/lib/payments.functions";
 import { getCategoryArchetype, type Category } from "@/lib/fees";
 
-export const Route = createFileRoute("/admin/members")({ component: MembersPage });
+function MembersErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+  return (
+    <AdminPage
+      title="Member Directory"
+      description="The official WCBN roster of inducted and active members across Entrepreneur and Investor/Mentor categories."
+    >
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center max-w-lg mx-auto my-8">
+        <AlertCircle className="size-8 text-destructive mx-auto mb-3" />
+        <h3 className="font-semibold text-foreground text-base">Unable to load Member Directory</h3>
+        <p className="text-xs text-muted-foreground mt-1 mb-4">
+          {error?.message || "An unexpected error occurred while loading members."}
+        </p>
+        <Button size="sm" onClick={() => reset()} className="text-xs">
+          Try Again
+        </Button>
+      </div>
+    </AdminPage>
+  );
+}
+
+export const Route = createFileRoute("/admin/members")({
+  component: MembersPage,
+  errorComponent: MembersErrorComponent,
+});
 
 interface MemberItem {
   id: string;
@@ -108,20 +131,42 @@ function MembersPage() {
   const { data: members = [], isLoading } = useQuery({
     queryKey: ["admin", "members-streamlined"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("wcbn_members")
-        .select(`
-          *,
-          profiles (first_name, last_name, email, phone),
-          members (member_id, status, join_date),
-          wcbn_membership_categories (id, name, code, applicant_type),
-          wcbn_applications (id, applicant_type, applicant_data, status)
-        `)
-        .order("created_at", { ascending: false });
-      if (error) {
-        console.error("Error fetching members:", error);
+      const [membersRes, appsRes] = await Promise.all([
+        supabase
+          .from("wcbn_members")
+          .select(`
+            *,
+            profiles (first_name, last_name, email, phone, city, country),
+            members (member_id, status, join_date),
+            wcbn_membership_categories (id, name, code, applicant_type)
+          `)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("wcbn_applications")
+          .select("id, wcbn_member_id, applicant_type, applicant_data, status")
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (membersRes.error) {
+        console.error("Error fetching members:", membersRes.error);
+        return [];
       }
-      return (data ?? []) as unknown as MemberItem[];
+
+      const apps = appsRes.data ?? [];
+      const appsByMember = new Map<string, (typeof apps)[0]>();
+      for (const app of apps) {
+        if (app.wcbn_member_id && !appsByMember.has(app.wcbn_member_id)) {
+          appsByMember.set(app.wcbn_member_id, app);
+        }
+      }
+
+      return (membersRes.data ?? []).map((m) => {
+        const app = appsByMember.get(m.id);
+        return {
+          ...m,
+          wcbn_applications: app ? [app] : [],
+        };
+      }) as unknown as MemberItem[];
     },
   });
 
@@ -155,7 +200,7 @@ function MembersPage() {
         .from("wcbn_members")
         .update({
           category_id: categoryId || null,
-          category: catObj?.name || null,
+          category: catObj?.name || "Member",
           member_type: memberType,
         })
         .eq("id", id);
@@ -174,7 +219,7 @@ function MembersPage() {
   const toggleStatusMutation = useMutation({
     mutationFn: async (m: MemberItem) => {
       const newStatus = m.status === "active" ? "inactive" : "active";
-      const payload: Record<string, any> = { status: newStatus };
+      const payload: { status: string; inducted_at?: string } = { status: newStatus };
       if (newStatus === "active" && !m.inducted_at) {
         payload.inducted_at = new Date().toISOString();
       }
@@ -459,10 +504,12 @@ function MembersPage() {
                       m.member_type === "professional" ||
                       m.member_type === "investor" ||
                       m.member_type === "mentor" ||
-                      m.member_type === "investor_mentor";
+                      m.member_type === "investor_mentor" ||
+                      m.wcbn_membership_categories?.applicant_type === "professional";
                     const appData = (m.wcbn_applications?.[0]?.applicant_data ?? {}) as Record<string, any>;
-                    const enterpriseName = appData.business_name || null;
-                    const enterpriseSector = appData.sector || null;
+                    const enterpriseName = (appData["business_name"] as string | undefined) || (appData["organization"] as string | undefined) || null;
+                    const enterpriseSector = (appData["sector"] as string | undefined) || (appData["preferred_sectors"] as string | undefined) || null;
+                    const catName = m.category || m.wcbn_membership_categories?.name || "General Member";
 
                     return (
                       <tr key={m.id} className="hover:bg-muted/20 transition-colors">

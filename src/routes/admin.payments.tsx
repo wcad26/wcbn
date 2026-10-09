@@ -110,7 +110,18 @@ function AdminPaymentSettingsPage() {
 
   const handleOpenEditBank = (index: number) => {
     setEditingBankIndex(index);
-    setBankForm({ ...bankAccounts[index] });
+    const acc = bankAccounts[index];
+    if (acc) {
+      setBankForm({
+        bank_name: acc.bank_name || "",
+        account_name: acc.account_name || "",
+        account_number: acc.account_number || "",
+        swift: acc.swift || "",
+        branch: acc.branch || "",
+        currency: acc.currency || "XAF",
+        instructions: acc.instructions || "",
+      });
+    }
     setBankDialogOpen(true);
   };
 

@@ -152,7 +152,8 @@ function AdminOverview() {
     const registeredCount = allBusinesses.length;
     const applicantCount = allApplications.filter((a) => {
       const d = (a.applicant_data ?? {}) as Record<string, any>;
-      return (a.applicant_type === "business" || d.business_name) && d.business_name?.trim();
+      const bName = typeof d["business_name"] === "string" ? d["business_name"].trim() : "";
+      return (a.applicant_type === "business" || Boolean(bName)) && Boolean(bName);
     }).length;
     return Math.max(registeredCount, applicantCount);
   }, [allBusinesses, allApplications]);
@@ -161,10 +162,11 @@ function AdminOverview() {
     const registeredCount = filteredBusinesses.length;
     const applicantCount = allApplications.filter((a) => {
       const d = (a.applicant_data ?? {}) as Record<string, any>;
+      const bName = typeof d["business_name"] === "string" ? d["business_name"].trim() : "";
       return (
         isDateInPeriod(a.created_at, period) &&
-        (a.applicant_type === "business" || d.business_name) &&
-        d.business_name?.trim()
+        (a.applicant_type === "business" || Boolean(bName)) &&
+        Boolean(bName)
       );
     }).length;
     return Math.max(registeredCount, applicantCount);
@@ -235,7 +237,7 @@ function AdminOverview() {
         keys.push({
           key: `cat_${cat.id}`,
           label: cat.name,
-          color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
+          color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length] ?? "#7c3aed",
         });
       });
     }

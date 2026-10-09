@@ -617,24 +617,24 @@ function ApplicationsPipeline() {
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
                       <span className="text-muted-foreground block">Operating Location</span>
                       <p className="font-semibold text-foreground mt-1 text-sm">
-                        {[answers.city, answers.country].filter(Boolean).join(", ") || "—"}
+                        {[answers["city"], answers["country"]].filter(Boolean).join(", ") || "—"}
                       </p>
                     </div>
 
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
                       <span className="text-muted-foreground block">Business Stage</span>
-                      <p className="font-semibold text-foreground mt-1 text-sm">{answers.business_stage || "—"}</p>
+                      <p className="font-semibold text-foreground mt-1 text-sm">{answers["business_stage"] || "—"}</p>
                     </div>
                   </div>
 
-                  {answers.website_url && (
+                  {answers["website_url"] && (
                     <div className="rounded-2xl border border-border p-4 bg-muted/20 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <Globe className="size-4 text-primary" />
                         <span className="font-medium text-foreground">Enterprise Website:</span>
-                        <span className="text-muted-foreground">{answers.website_url}</span>
+                        <span className="text-muted-foreground">{answers["website_url"]}</span>
                       </div>
-                      <a href={answers.website_url} target="_blank" rel="noreferrer">
+                      <a href={answers["website_url"]} target="_blank" rel="noreferrer">
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
                           Visit Site <ExternalLink className="size-3" />
                         </Button>
@@ -642,20 +642,20 @@ function ApplicationsPipeline() {
                     </div>
                   )}
 
-                  {answers.business_summary && (
+                  {answers["business_summary"] && (
                     <div className="space-y-1.5 text-xs">
                       <span className="text-muted-foreground block font-medium">Business Executive Summary:</span>
                       <div className="rounded-2xl bg-muted/30 p-4 border border-border text-foreground leading-relaxed">
-                        {answers.business_summary}
+                        {answers["business_summary"]}
                       </div>
                     </div>
                   )}
 
-                  {answers.growth_priorities?.length > 0 && (
+                  {answers["growth_priorities"]?.length > 0 && (
                     <div className="space-y-1.5 text-xs">
                       <span className="text-muted-foreground block font-medium">Core Growth Priorities:</span>
                       <div className="flex flex-wrap gap-1.5">
-                        {answers.growth_priorities.map((item: string) => (
+                        {answers["growth_priorities"].map((item: string) => (
                           <Badge key={item} variant="secondary" className="text-xs">
                             {item}
                           </Badge>
@@ -664,11 +664,11 @@ function ApplicationsPipeline() {
                     </div>
                   )}
 
-                  {answers.impact_statement && (
+                  {answers["impact_statement"] && (
                     <div className="space-y-1.5 text-xs">
                       <span className="text-muted-foreground block font-medium">Kingdom & Community Impact Statement:</span>
                       <div className="rounded-2xl bg-muted/30 p-4 border border-border text-foreground leading-relaxed">
-                        {answers.impact_statement}
+                        {answers["impact_statement"]}
                       </div>
                     </div>
                   )}
@@ -1013,8 +1013,8 @@ function ApplicationsPipeline() {
                     const isInvestor = app.applicant_type === "professional";
                     const cat = app.category_id ? categoryMap.get(app.category_id) : null;
                     const fullName = [p?.first_name, p?.last_name].filter(Boolean).join(" ") || p?.email || "Applicant";
-                    const orgName = answers.business_name || answers.organization || "—";
-                    const sectorName = answers.sector || answers.preferred_sectors || "—";
+                    const orgName = answers["business_name"] || answers["organization"] || "—";
+                    const sectorName = answers["sector"] || answers["preferred_sectors"] || "—";
 
                     return (
                       <tr

@@ -108,7 +108,7 @@ function BusinessVetting() {
       applications.forEach((app) => {
         const answers = (app.applicant_data ?? {}) as Record<string, any>;
         const bName =
-          answers.business_name || (app.applicant_type === "professional" ? answers.organization : null);
+          answers["business_name"] || (app.applicant_type === "professional" ? answers["organization"] : null);
         if (!bName) return;
 
         if (!registeredOwnerIds.has(app.wcbn_member_id)) {
@@ -116,18 +116,18 @@ function BusinessVetting() {
             id: `app_${app.id}`,
             display_name: bName,
             legal_name: bName,
-            sector: answers.sector || answers.preferred_sectors || "General",
-            city: answers.city || "—",
-            country: answers.country || "—",
-            summary: answers.business_summary || answers.experience_summary || answers.impact_statement || null,
-            description: answers.business_summary || answers.experience_summary || null,
-            website_url: answers.website_url || answers.linkedin_url || null,
+            sector: answers["sector"] || answers["preferred_sectors"] || "General",
+            city: answers["city"] || "—",
+            country: answers["country"] || "—",
+            summary: answers["business_summary"] || answers["experience_summary"] || answers["impact_statement"] || null,
+            description: answers["business_summary"] || answers["experience_summary"] || null,
+            website_url: answers["website_url"] || answers["linkedin_url"] || null,
             listing_type: app.applicant_type === "professional" ? "professional" : "business",
             vetting_status: app.status === "approved" ? "approved" : "pending",
             is_active: app.status === "approved",
-            is_featured: false,
             risk_level: "low",
             created_at: app.created_at,
+            is_featured: false,
             is_candidate: true,
             application_id: app.id,
             owner_member_id: app.wcbn_member_id,

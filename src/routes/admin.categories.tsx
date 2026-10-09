@@ -22,7 +22,7 @@ type CategoryForm = {
   name: string;
   description: string;
   target_audience: string;
-  applicant_type: "business" | "professional" | "any";
+  applicant_type: "business" | "professional" | "investor_mentor" | "entrepreneur" | "any";
   fees: { currency: string; amount: number }[];
   benefits: string[];
   allow_installments: boolean;
@@ -178,7 +178,11 @@ function AdminCategoriesPage() {
   const handleFeeChange = (index: number, field: "currency" | "amount", val: string | number) => {
     setForm((f) => {
       const updated = [...f.fees];
-      updated[index] = { ...updated[index], [field]: val };
+      const current = updated[index] ?? { currency: "USD", amount: 0 };
+      updated[index] = {
+        currency: field === "currency" ? String(val) : current.currency,
+        amount: field === "amount" ? Number(val) : current.amount,
+      };
       return { ...f, fees: updated };
     });
   };

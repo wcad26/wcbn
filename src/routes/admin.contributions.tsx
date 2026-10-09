@@ -739,7 +739,7 @@ function ContributionsAdmin() {
                                   const { error } = await supabase
                                     .from("wcbn_invoices")
                                     .update({
-                                      paid_amount: inv.amount,
+                                      paid_amount: Number(inv.amount),
                                       status: "paid",
                                       payment_method: "cash_direct",
                                     })
