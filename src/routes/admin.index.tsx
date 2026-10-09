@@ -92,6 +92,7 @@ function AdminOverview() {
   });
 
   const allMembers = data?.members ?? [];
+  const allApplications = data?.applications ?? [];
   const allBusinesses = data?.businesses ?? [];
   const categories = data?.categories ?? [];
   const pendingPayments = data?.pendingPayments ?? [];
