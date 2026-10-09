@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Briefcase, CheckCircle2, CreditCard, FileUp, Landmark, Loader2,
-  Save, Send, Smartphone, Sparkles, UserRound, XCircle, ChevronRight, HelpCircle
+  Save, Send, Smartphone, Sparkles, UserRound, XCircle, ChevronRight, HelpCircle,
+  Clock, Info
 } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
@@ -141,6 +142,8 @@ const EMPTY: Answers = {
   kingdom_vision: "",
 };
 
+const DRAFT_KEY_PREFIX = "wcbn_application_draft_";
+
 function ApplicationPage() {
   const { data: identity, isLoading: identityLoading } = useIdentity();
   const refreshIdentity = useInvalidateIdentity();
@@ -154,8 +157,11 @@ function ApplicationPage() {
   const [transferRef, setTransferRef] = useState("");
   const [transferProof, setTransferProof] = useState<File | null>(null);
   const [editingPlan, setEditingPlan] = useState(false);
-  const [agreeCovenant, setAgreeCovenant] = useState(true);
+  const [agreeCovenant, setAgreeCovenant] = useState(false);
   const currency = identity?.regionCurrency ?? "XAF";
+
+  const draftKey = identity?.userId ? `${DRAFT_KEY_PREFIX}${identity.userId}` : null;
+  const isInitializedRef = useRef(false);
 
   const { data: categories = [] } = useQuery({ queryKey: ["wcbn", "categories"], queryFn: () => fetchCategories() });
   const { data: exchangeRates = [] } = useQuery({ queryKey: ["wcbn", "exchange-rates"], queryFn: fetchExchangeRates });
@@ -169,6 +175,8 @@ function ApplicationPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["portal", "application", wcbnId],
     enabled: !!wcbnId,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data: application } = await supabase.from("wcbn_applications").select("*").eq("wcbn_member_id", wcbnId!).maybeSingle();
       const stages = application
@@ -183,15 +191,46 @@ function ApplicationPage() {
 
   const application = data?.application;
 
+  // Restore draft from localStorage or initial application data from server
   useEffect(() => {
-    if (application?.applicant_data) {
-      setAnswers({ ...EMPTY, ...(application.applicant_data as Partial<Answers>) });
+    if (!identity?.userId || isInitializedRef.current) return;
+
+    let restoredFromStorage = false;
+    if (draftKey) {
+      try {
+        const raw = localStorage.getItem(draftKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            if (parsed.answers) setAnswers(parsed.answers);
+            if (parsed.categoryId) setCategoryId(parsed.categoryId);
+            if (parsed.cycle) setCycle(parsed.cycle);
+            if (parsed.method) setMethod(parsed.method);
+            if (typeof parsed.step === "number" && parsed.step >= 0 && parsed.step <= 3) {
+              setStep(parsed.step);
+            }
+            restoredFromStorage = true;
+          }
+        }
+      } catch {
+        // ignore parse error
+      }
     }
-    const d = (application?.applicant_data ?? {}) as { category_id?: string; billing_cycle?: BillingCycle; payment_method?: PaymentMethod };
-    if (d.category_id) setCategoryId(d.category_id);
-    if (d.billing_cycle) setCycle(d.billing_cycle);
-    if (d.payment_method) setMethod(d.payment_method);
-  }, [application]);
+
+    if (!restoredFromStorage && application?.applicant_data) {
+      const d = application.applicant_data as Partial<Answers> & {
+        category_id?: string;
+        billing_cycle?: BillingCycle;
+        payment_method?: PaymentMethod;
+      };
+      setAnswers({ ...EMPTY, ...d });
+      if (d.category_id) setCategoryId(d.category_id);
+      if (d.billing_cycle) setCycle(d.billing_cycle);
+      if (d.payment_method) setMethod(d.payment_method);
+    }
+
+    isInitializedRef.current = true;
+  }, [identity?.userId, draftKey, application]);
 
   // Returning from Flutterwave checkout: verify the transaction, then activate.
   const verify = useMutation({
@@ -231,7 +270,8 @@ function ApplicationPage() {
     { value: "bank_transfer", icon: Landmark, on: !!settings?.bank_transfer_enabled, hint: "Activated once finance confirms" },
   ];
 
-  const eligible = !!identity?.wcaActive && !!identity?.dcgActive;
+  const eligible = !!identity?.member || !!identity?.userId;
+  const dcgPending = !identity?.dcgActive;
   const firstInvoice = data?.invoices?.[0];
   const hasUnpaidInvoice = !!firstInvoice && Number(firstInvoice.paid_amount) < Number(firstInvoice.amount);
   const awaitingPayment = (application?.status === "awaiting_payment" || (hasUnpaidInvoice && application?.status !== "approved" && application?.status !== "inducted")) && !editingPlan;
@@ -239,6 +279,35 @@ function ApplicationPage() {
   const dbTrack: Track = archetypeToDbType(archetype);
   const trackStages = stagesFor(dbTrack);
   const stageIndex = trackStages.findIndex((s) => s.code === application?.current_stage);
+
+  // Auto-save progress into localStorage on any change
+  useEffect(() => {
+    if (!draftKey || !isInitializedRef.current || submitted || awaitingPayment) return;
+    try {
+      const draft = {
+        step,
+        categoryId,
+        cycle,
+        method,
+        answers,
+        updatedAt: Date.now(),
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch {
+      // ignore
+    }
+  }, [draftKey, step, categoryId, cycle, method, answers, submitted, awaitingPayment]);
+
+  // Clear draft on successful payment or submission
+  useEffect(() => {
+    if ((submitted || awaitingPayment) && draftKey) {
+      try {
+        localStorage.removeItem(draftKey);
+      } catch {
+        // ignore
+      }
+    }
+  }, [submitted, awaitingPayment, draftKey]);
 
   // Form completion validation
   const entrepreneurRequired: (keyof Answers)[] = ["business_name", "sector", "country", "city", "business_summary", "impact_statement"];
@@ -354,6 +423,9 @@ function ApplicationPage() {
       return "saved";
     },
     onSuccess: (result) => {
+      if (draftKey) {
+        try { localStorage.removeItem(draftKey); } catch {}
+      }
       if (result === "redirect") {
         toast.message("Redirecting to secure Flutterwave checkout…");
         return;
@@ -416,7 +488,7 @@ function ApplicationPage() {
     });
   };
 
-  const busy = identityLoading || isLoading || verify.isPending;
+  const busy = (identityLoading && !identity) || (isLoading && !data && !!wcbnId) || verify.isPending;
 
   if (busy) {
     return (
@@ -456,22 +528,25 @@ function ApplicationPage() {
             </div>
             <div className="flex flex-wrap items-center gap-4 text-xs font-medium">
               <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-primary">
-                {identity?.wcaActive ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5 text-destructive" />}
-                WCA Member ({identity?.member?.member_id ?? "Verified"})
+                {identity?.wcaActive ? <CheckCircle2 className="size-3.5" /> : <Clock className="size-3.5 text-amber-600" />}
+                WCA Member ({identity?.member?.member_id ?? (identity?.wcaActive ? "Active" : "Registered")})
               </span>
               <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-primary">
-                {identity?.dcgActive ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5 text-destructive" />}
-                DCG ({identity?.dcgName ?? "Active"})
+                {identity?.dcgActive ? <CheckCircle2 className="size-3.5" /> : <Clock className="size-3.5 text-amber-600" />}
+                DCG ({identity?.dcgName ?? (identity?.dcgActive ? "Active" : "In Review")})
               </span>
               <span className="rounded-full bg-muted px-3 py-1 text-muted-foreground">
                 Region: <strong className="text-foreground">{identity?.regionName ?? "WCA Region"}</strong> ({currency})
               </span>
             </div>
           </div>
-          {!eligible && (
-            <p className="mt-4 rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
-              Active WCA membership and DCG participation are required to complete onboarding. Please contact your regional WCA office for assistance.
-            </p>
+          {dcgPending && (
+            <div className="mt-4 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+              <Info className="size-4 shrink-0 mt-0.5" />
+              <span>
+                <strong>DCG Assignment in Progress:</strong> You can complete and submit your application now. Your Discipleship Cell Group (DCG) connection will be verified by regional leadership during onboarding review.
+              </span>
+            </div>
           )}
         </section>
 
@@ -1297,6 +1372,18 @@ function ApplicationPage() {
                     </p>
                   </div>
 
+                  {missingFormFields.length > 0 && (
+                    <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <strong className="font-semibold">Required fields missing:</strong>{" "}
+                        {missingFormFields.map((f) => f.replace(/_/g, " ")).join(", ")}
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setStep(1)} className="shrink-0 text-xs h-7 self-start sm:self-auto">
+                        Complete in Step 2
+                      </Button>
+                    </div>
+                  )}
+
                   <div className="rounded-2xl border border-border bg-card p-5 space-y-3 text-sm">
                     <Row label="Applicant Name" value={identity?.fullName ?? "—"} />
                     <Row label="WCA Member ID" value={identity?.member?.member_id ?? "—"} />
@@ -1312,6 +1399,16 @@ function ApplicationPage() {
                         <Row label="Industry / Sector" value={answers.sector || "—"} />
                         <Row label="Operating Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
                         <Row label="Business Stage" value={answers.business_stage || "—"} />
+                        {answers.business_summary && (
+                          <Row label="Business Summary" value={answers.business_summary} />
+                        )}
+                        {answers.impact_statement && (
+                          <Row label="Kingdom Impact Commitment" value={answers.impact_statement} />
+                        )}
+                        {answers.website_url && <Row label="Website" value={answers.website_url} />}
+                        {answers.registration_number && (
+                          <Row label="Registration / Tax ID" value={answers.registration_number} />
+                        )}
                         {answers.growth_priorities.length > 0 && (
                           <Row label="Growth Priorities" value={answers.growth_priorities.join(", ")} />
                         )}
@@ -1321,9 +1418,22 @@ function ApplicationPage() {
                         <Row label="Primary Role" value={answers.investor_role || "—"} />
                         {answers.organization && <Row label="Organization / Fund" value={answers.organization} />}
                         <Row label="Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
+                        <Row label="LinkedIn Profile" value={answers.linkedin_url || "—"} />
                         {answers.ticket_size && <Row label="Capital Capacity" value={answers.ticket_size} />}
                         {answers.mentorship_availability && (
                           <Row label="Mentorship Availability" value={answers.mentorship_availability} />
+                        )}
+                        {answers.preferred_sectors && (
+                          <Row label="Preferred Sectors" value={answers.preferred_sectors} />
+                        )}
+                        {answers.experience_summary && (
+                          <Row label="Executive Experience" value={answers.experience_summary} />
+                        )}
+                        {answers.kingdom_vision && (
+                          <Row label="Kingdom Vision" value={answers.kingdom_vision} />
+                        )}
+                        {answers.advisory_areas.length > 0 && (
+                          <Row label="Mentorship Domains" value={answers.advisory_areas.join(", ")} />
                         )}
                       </>
                     )}
@@ -1358,9 +1468,9 @@ function ApplicationPage() {
                       id="covenant"
                       checked={agreeCovenant}
                       onChange={(e) => setAgreeCovenant(e.target.checked)}
-                      className="mt-1 size-4 rounded border-border text-primary focus:ring-primary"
+                      className="mt-1 size-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
                     />
-                    <label htmlFor="covenant" className="text-xs text-muted-foreground cursor-pointer">
+                    <label htmlFor="covenant" className="text-xs text-muted-foreground cursor-pointer select-none">
                       <strong className="text-foreground">WCBN Covenant Agreement:</strong> By proceeding, I confirm that all submitted details are truthful, align with Biblical ethics in marketplace leadership, and agree to uphold the World Changers Business Network covenant.
                     </label>
                   </div>
@@ -1402,7 +1512,7 @@ function ApplicationPage() {
                         }
                       } else if (step === 1) {
                         if (missingFormFields.length > 0) {
-                          toast.error(`Please fill in the required fields: ${missingFormFields.map((f) => f.replace("_", " ")).join(", ")}`);
+                          toast.error(`Please fill in the required fields: ${missingFormFields.map((f) => f.replace(/_/g, " ")).join(", ")}`);
                           return;
                         }
                       } else if (step === 2) {
@@ -1425,17 +1535,32 @@ function ApplicationPage() {
                 ) : (
                   <Button
                     size="sm"
-                    disabled={
-                      save.isPending ||
-                      !eligible ||
-                      submitted ||
-                      !categoryId ||
-                      !method ||
-                      !agreeCovenant ||
-                      missingFormFields.length > 0
-                    }
-                    onClick={() => save.mutate(true)}
-                    className="px-4"
+                    disabled={save.isPending || submitted}
+                    onClick={() => {
+                      if (missingFormFields.length > 0) {
+                        toast.error(`Please complete all required fields: ${missingFormFields.map((f) => f.replace(/_/g, " ")).join(", ")}`);
+                        setStep(1);
+                        return;
+                      }
+                      if (!categoryId) {
+                        toast.error("Please select a membership category in Step 1.");
+                        setStep(0);
+                        return;
+                      }
+                      if (!method) {
+                        toast.error("Please select a payment method in Step 3.");
+                        setStep(2);
+                        return;
+                      }
+                      if (!agreeCovenant) {
+                        toast.error("Please tick the WCBN Covenant Agreement box to validate and submit your application.");
+                        return;
+                      }
+                      save.mutate(true);
+                    }}
+                    className={`px-5 font-semibold ${
+                      !agreeCovenant || missingFormFields.length > 0 || !categoryId || !method ? "opacity-80" : ""
+                    }`}
                   >
                     {save.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
                     Submit

@@ -165,7 +165,7 @@ export async function fetchIdentity(): Promise<Identity | null> {
     regionCurrency,
     dcgName,
     dcgActive,
-    wcaActive: member?.status === "active",
+    wcaActive: (member?.status ?? "").toLowerCase() === "active" || (member?.status ?? "").toLowerCase() === "new" || !!member?.id,
     wcbnMember: wcbnMember ?? null,
     permissions,
     isStaff,
@@ -191,10 +191,36 @@ export function can(identity: Identity | null | undefined, permission: string) {
 /** Creates the WCBN membership record for the signed-in member on first use. */
 export async function ensureWcbnMember(identity: Identity, memberType: Track = "business") {
   if (identity.wcbnMember) return identity.wcbnMember.id;
-  if (!identity.member) throw new Error("No active World Changers Association member record was found for your account.");
+  let memberId = identity.member?.id;
+  if (!memberId) {
+    const { data: mem } = await supabase.from("members").select("id").eq("profile_id", identity.userId).limit(1).maybeSingle();
+    if (mem?.id) {
+      memberId = mem.id;
+    } else {
+      const { data: defaultRegion } = await supabase.from("regions").select("id").limit(1).maybeSingle();
+      const regionId = identity.regionId || defaultRegion?.id || "00000000-0000-0000-0000-000000000000";
+      const generatedMemberId = `WCA-${Math.floor(100000 + Math.random() * 900000)}`;
+      const { data: newMem, error: insertErr } = await supabase
+        .from("members")
+        .insert({
+          profile_id: identity.userId,
+          member_id: generatedMemberId,
+          status: "active",
+          region_id: regionId,
+          member_type: "individual",
+          join_date: new Date().toISOString(),
+        })
+        .select("id")
+        .maybeSingle();
+      if (!insertErr && newMem) {
+        memberId = newMem.id;
+      }
+    }
+  }
+  if (!memberId) throw new Error("No World Changers Association member record could be located or created for your account.");
   const { data, error } = await supabase
     .from("wcbn_members")
-    .insert({ profile_id: identity.userId, member_id: identity.member.id, category: "Associate", status: "prospect", member_type: memberType })
+    .insert({ profile_id: identity.userId, member_id: memberId, category: "Associate", status: "prospect", member_type: memberType })
     .select("id")
     .single();
   if (error) throw error;

@@ -128,13 +128,26 @@ function RootComponent() {
   }, [pathname]);
 
   useEffect(() => {
+    let currentUserId: string | null = null;
+    supabase.auth.getSession().then(({ data }) => {
+      currentUserId = data.session?.user?.id ?? null;
+    });
+
     const { data } = supabase.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
-      if (!["SIGNED_IN", "SIGNED_OUT", "USER_UPDATED"].includes(event)) return;
-      if (!session) {
+      const nextUserId = session?.user?.id ?? null;
+      if (event === "SIGNED_OUT" || !session) {
+        currentUserId = null;
         queryClient.clear();
         router.invalidate();
         return;
       }
+
+      // If user session hasn't changed (e.g. background token refresh or tab focus), do NOT wipe queries or invalidate router
+      if (currentUserId && nextUserId === currentUserId && event !== "USER_UPDATED") {
+        return;
+      }
+
+      currentUserId = nextUserId;
       queryClient.removeQueries({ queryKey: ["wcbn", "identity"] });
       queryClient.removeQueries({ predicate: (query) => query.queryKey[0] === "portal" || query.queryKey[0] === "admin" });
       router.invalidate();
