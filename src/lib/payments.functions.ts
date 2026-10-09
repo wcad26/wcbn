@@ -202,11 +202,11 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
     }
 
     let updateError: { message: string } | null = null;
-    const { error: userError } = await supabase.from("wcbn_payment_settings").update(dbFields).eq("id", 1);
+    const { error: userError } = await supabase.from("wcbn_payment_settings").update(payload).eq("id", 1);
     if (userError) {
       if (process.env['SUPABASE_SERVICE_ROLE_KEY']) {
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(dbFields).eq("id", 1);
+        const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(payload).eq("id", 1);
         updateError = adminError;
       } else {
         updateError = userError;
