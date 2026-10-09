@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { slugify, useIdentity } from "@/lib/wcbn";
 import { AUDIENCES, EVENT_CATEGORIES, EVENT_FIELDS, EVENT_STATUSES, eventDate, eventPlace, uploadCover, type WcbnEvent } from "@/lib/wcbn-content";
 
-export const Route = createFileRoute("/admin_/events")({ component: AdminEvents });
+export const Route = createFileRoute("/admin/events")({ component: AdminEvents });
 
 const empty = {
   title: "", summary: "", description: "", category: "Networking", start_datetime: "", end_datetime: "",

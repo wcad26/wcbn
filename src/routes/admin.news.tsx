@@ -15,7 +15,7 @@ import { slugify, useIdentity } from "@/lib/wcbn";
 import { AUDIENCES, POST_FIELDS, POST_TYPES, postDate, postTypeLabel, uploadCover, type WcbnPost } from "@/lib/wcbn-content";
 import { Field, Native } from "@/components/wcbn/form-field";
 
-export const Route = createFileRoute("/admin_/news")({ component: AdminNews });
+export const Route = createFileRoute("/admin/news")({ component: AdminNews });
 
 const empty = { post_type: "announcement", title: "", summary: "", body: "", image_url: "", tags: "", is_pinned: false, audience: "public", status: "draft" };
 type Form = typeof empty;

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleDollarSign, FileUp, Loader2, Plus, Receipt, Send, TriangleAlert } from "lucide-react";
+import { CircleDollarSign, FileUp, Loader2, Plus, Printer, Receipt, Send, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { MetricCard } from "@/components/wcbn/metric-card";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { money, uploadDocument, useIdentity } from "@/lib/wcbn";
+import { InvoiceCard, type InvoiceRow } from "@/components/wcbn/invoice-card";
+import { fetchPaymentSettings } from "@/lib/fees";
 
 export const Route = createFileRoute("/portal/contributions")({ component: ContributionsPage });
 
@@ -20,6 +22,7 @@ function ContributionsPage() {
   const queryClient = useQueryClient();
   const wcbnId = identity?.wcbnMember?.id;
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedInvoiceForView, setSelectedInvoiceForView] = useState<InvoiceRow | null>(null);
   const [invoiceId, setInvoiceId] = useState("");
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState("mobile_money");
@@ -27,21 +30,26 @@ function ContributionsPage() {
   const [notes, setNotes] = useState("");
   const [proof, setProof] = useState<File | null>(null);
 
+  const { data: settings } = useQuery({
+    queryKey: ["wcbn", "payment-settings"],
+    queryFn: fetchPaymentSettings,
+  });
+
   const { data } = useQuery({
     queryKey: ["portal", "contributions", wcbnId],
     enabled: !!wcbnId,
     queryFn: async () => {
       const [invoices, plans] = await Promise.all([
-        supabase.from("wcbn_invoices").select("*, wcbn_payments(id, amount, status, reference, method, paid_at)").eq("wcbn_member_id", wcbnId!).order("due_date", { ascending: false }),
+        supabase.from("wcbn_invoices").select("*, wcbn_membership_categories(name), wcbn_payments(id, amount, status, reference, method, paid_at)").eq("wcbn_member_id", wcbnId!).order("due_date", { ascending: false }),
         supabase.from("wcbn_dues_plans").select("*").eq("is_active", true).order("amount"),
       ]);
-      return { invoices: invoices.data ?? [], plans: plans.data ?? [] };
+      return { invoices: (invoices.data ?? []) as (InvoiceRow & { wcbn_payments: { id: string; amount: number; status: string; reference: string | null; method: string | null }[] | null })[], plans: plans.data ?? [] };
     },
   });
 
   const invoices = data?.invoices ?? [];
   const selected = invoices.find((i) => i.id === invoiceId);
-  const currency = selected?.currency_code ?? invoices[0]?.currency_code ?? "XAF";
+  const currency = selected?.currency_code ?? invoices[0]?.currency_code ?? identity?.regionCurrency ?? "XAF";
   const outstanding = invoices.reduce((sum, i) => sum + Math.max(0, Number(i.amount) - Number(i.paid_amount)), 0);
   const paidTotal = invoices.reduce((sum, i) => sum + Number(i.paid_amount), 0);
   const today = new Date().toISOString().slice(0, 10);
@@ -59,18 +67,27 @@ function ContributionsPage() {
       });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Payment declared. Finance will confirm it shortly."); setAmount(""); setReference(""); setNotes(""); setProof(null); setDialogOpen(false);
-      queryClient.invalidateQueries({ queryKey: ["portal", "contributions"] }); },
+    onSuccess: () => {
+      toast.success("Payment declared. Finance will confirm it shortly.");
+      setAmount("");
+      setReference("");
+      setNotes("");
+      setProof(null);
+      setDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["portal", "contributions"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
-
   return (
-    <MemberPage title="Contributions" description="Your dues schedule, invoices and payment history. Declare a payment you have already made and finance will confirm it.">
+    <MemberPage
+      title="Membership Fees & Invoices"
+      description="Your membership dues schedule, invoices and payment history. Review formal invoices, print receipts, and declare payments made offline."
+    >
       <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <MetricCard label="Outstanding balance" value={money(outstanding, currency)} detail={`${invoices.length} invoice(s) on record`} icon={CircleDollarSign} />
-        <MetricCard label="Total contributed" value={money(paidTotal, currency)} detail="Confirmed by finance" icon={Receipt} />
-        <MetricCard label={overdue.length ? "Overdue" : "Next payment due"} value={overdue.length ? money(overdue.reduce((s, i) => s + (Number(i.amount) - Number(i.paid_amount)), 0), currency) : nextDue ? money(Number(nextDue.amount) - Number(nextDue.paid_amount), currency) : "—"} detail={overdue.length ? `${overdue.length} invoice(s) past due` : nextDue ? `Due ${nextDue.due_date}` : "Nothing due"} icon={TriangleAlert} />
+        <MetricCard label="Outstanding fee balance" value={money(outstanding, currency)} detail={`${invoices.length} invoice(s) on record`} icon={CircleDollarSign} />
+        <MetricCard label="Total fees paid" value={money(paidTotal, currency)} detail="Confirmed by finance" icon={Receipt} />
+        <MetricCard label={overdue.length ? "Overdue fee" : "Next fee due"} value={overdue.length ? money(overdue.reduce((s, i) => s + (Number(i.amount) - Number(i.paid_amount)), 0), currency) : nextDue ? money(Number(nextDue.amount) - Number(nextDue.paid_amount), currency) : "—"} detail={overdue.length ? `${overdue.length} invoice(s) past due` : nextDue ? `Due ${nextDue.due_date}` : "Nothing due"} icon={TriangleAlert} />
       </div>
 
       <div className="mb-6 flex justify-end">
@@ -80,12 +97,12 @@ function ContributionsPage() {
           </DialogTrigger>
           <DialogContent className="max-w-lg rounded-3xl">
             <DialogHeader>
-              <DialogTitle>Declare a payment</DialogTitle>
-              <DialogDescription>Already paid by transfer or mobile money? Tell us and finance will confirm.</DialogDescription>
+              <DialogTitle>Declare an offline payment</DialogTitle>
+              <DialogDescription>Already paid via direct bank transfer or mobile money? Submit your transaction details and finance will verify.</DialogDescription>
             </DialogHeader>
             <div className="mt-2 space-y-4">
               <div className="space-y-2">
-                <Label>Invoice</Label>
+                <Label>Select Invoice</Label>
                 <select value={invoiceId} onChange={(e) => setInvoiceId(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
                   <option value="">Select an invoice</option>
                   {data?.invoices.map((i) => <option key={i.id} value={i.id}>{i.invoice_number} — {money(Number(i.amount), i.currency_code)}</option>)}
@@ -93,25 +110,25 @@ function ContributionsPage() {
               </div>
               <div className="space-y-2"><Label>Amount paid</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div>
               <div className="space-y-2">
-                <Label>Method</Label>
+                <Label>Payment Method</Label>
                 <select value={method} onChange={(e) => setMethod(e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                  <option value="mobile_money">Mobile money</option>
                   <option value="bank_transfer">Bank transfer</option>
-                  <option value="cash">Cash</option>
-                  <option value="card">Card</option>
+                  <option value="mobile_money">Mobile money</option>
+                  <option value="card">Bank card</option>
+                  <option value="cash">Cash deposit</option>
                 </select>
               </div>
-              <div className="space-y-2"><Label>Reference</Label><Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Transaction reference" /></div>
-              <div className="space-y-2"><Label>Notes</Label><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+              <div className="space-y-2"><Label>Reference / Transaction ID</Label><Input value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Transaction reference" /></div>
+              <div className="space-y-2"><Label>Notes (optional)</Label><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
               <div className="space-y-2">
-                <Label>Proof of payment (optional)</Label>
+                <Label>Proof of payment / Receipt (optional)</Label>
                 <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border px-4 py-3 text-sm font-medium hover:border-primary/50">
                   <FileUp className="size-4" />{proof ? proof.name : "Attach a receipt or screenshot"}
                   <input type="file" className="hidden" onChange={(e) => setProof(e.target.files?.[0] ?? null)} />
                 </label>
               </div>
               <Button className="w-full" disabled={!invoiceId || !amount || declare.isPending} onClick={() => declare.mutate()}>
-                {declare.isPending ? <Loader2 className="animate-spin" /> : <Send />}Submit for confirmation
+                {declare.isPending ? <Loader2 className="animate-spin" /> : <Send className="size-4" />}Submit for confirmation
               </Button>
             </div>
           </DialogContent>
@@ -120,42 +137,73 @@ function ContributionsPage() {
 
       <div className="space-y-6">
         <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-          <h2 className="text-lg font-semibold">Invoices</h2>
+          <h2 className="text-lg font-semibold">Issued Invoices</h2>
           {!data?.invoices.length && <p className="mt-4 text-sm text-muted-foreground">No invoices have been issued to you yet.</p>}
           <div className="mt-4 space-y-3">
             {data?.invoices.map((inv) => (
-              <div key={inv.id} className="rounded-2xl border border-border p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <div key={inv.id} className="rounded-2xl border border-border p-4 transition hover:border-primary/40">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="font-semibold">{inv.invoice_number}</p>
-                    <p className="text-xs text-muted-foreground">{inv.period_start} → {inv.period_end} · due {inv.due_date}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold">{inv.invoice_number}</p>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${inv.status === "paid" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{inv.status}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{inv.period_start} → {inv.period_end} · Due {inv.due_date}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{money(Number(inv.amount), inv.currency_code)}</p>
-                    <span className="text-xs capitalize text-muted-foreground">{inv.status} · paid {money(Number(inv.paid_amount), inv.currency_code)}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-bold">{money(Number(inv.amount), inv.currency_code)}</p>
+                      <span className="text-xs text-muted-foreground">Paid: {money(Number(inv.paid_amount), inv.currency_code)}</span>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => setSelectedInvoiceForView(inv)}>
+                      <Printer className="size-3.5" /> View / Print
+                    </Button>
                   </div>
                 </div>
                 {(inv.wcbn_payments as { id: string; amount: number; status: string; reference: string | null }[] | null)?.map((p) => (
-                  <p key={p.id} className="mt-2 text-xs text-muted-foreground">Payment {money(Number(p.amount), inv.currency_code)} · {p.status}{p.reference ? ` · ref ${p.reference}` : ""}</p>
+                  <p key={p.id} className="mt-2 text-xs text-muted-foreground border-t border-border pt-1.5">
+                    Payment log: {money(Number(p.amount), inv.currency_code)} · {p.status}{p.reference ? ` · Ref: ${p.reference}` : ""}
+                  </p>
                 ))}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-          <h2 className="text-lg font-semibold">Dues plans</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {data?.plans.map((p) => (
-              <div key={p.id} className="rounded-2xl border border-border p-4">
-                <p className="font-semibold">{p.name}</p>
-                <p className="text-sm text-muted-foreground">{p.category} · {p.frequency}</p>
-                <p className="mt-2 text-xl font-bold text-gradient-brand">{money(Number(p.amount), p.currency_code)}</p>
-              </div>
-            ))}
+        {data?.plans && data.plans.length > 0 && (
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
+            <h2 className="text-lg font-semibold">Standard Dues Plans</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {data.plans.map((p) => (
+                <div key={p.id} className="rounded-2xl border border-border p-4">
+                  <p className="font-semibold">{p.name}</p>
+                  <p className="text-sm text-muted-foreground">{p.category} · {p.frequency}</p>
+                  <p className="mt-2 text-xl font-bold text-gradient-brand">{money(Number(p.amount), p.currency_code)}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
+
+      {/* Invoice Detail & Print Modal */}
+      <Dialog open={!!selectedInvoiceForView} onOpenChange={(open) => !open && setSelectedInvoiceForView(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle>Membership Invoice Details</DialogTitle>
+          </DialogHeader>
+          {selectedInvoiceForView && (
+            <div className="mt-2">
+              <InvoiceCard
+                invoice={selectedInvoiceForView}
+                memberName={identity?.fullName}
+                bankAccounts={settings?.bank_accounts}
+                note={settings?.invoice_note}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </MemberPage>
   );
 }

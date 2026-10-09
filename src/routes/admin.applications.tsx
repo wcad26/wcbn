@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { stagesFor, trackLabel, useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/admin_/applications")({ component: ApplicationsPipeline });
+export const Route = createFileRoute("/admin/applications")({ component: ApplicationsPipeline });
 
 function ApplicationsPipeline() {
   const queryClient = useQueryClient();
@@ -58,7 +58,7 @@ function ApplicationsPipeline() {
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <div className="space-y-3">
           <div className="flex flex-wrap gap-2">
-            {([["all", "All"], ["business", "Businesses"], ["professional", "Professionals"]] as const).map(([value, label]) => (
+            {([["all", "All Applications"], ["business", "🚀 Entrepreneurs"], ["professional", "💎 Investors & Mentors"]] as const).map(([value, label]) => (
               <button key={value} onClick={() => { setTrack(value); setSelected(null); }}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${track === value ? "gradient-brand text-white" : "bg-muted text-muted-foreground hover:bg-secondary"}`}>
                 {label}
@@ -129,19 +129,34 @@ function ApplicationsPipeline() {
 }
 
 const FIELD_LABELS: Record<string, string> = {
-  business_name: "Business name", sector: "Sector", cities: "Cities of operation", founding_year: "Founding year",
+  business_name: "Business or venture name", sector: "Industry / Sector", cities: "Cities of operation", founding_year: "Founding year",
   employees: "Team size", business_phone: "Business phone", business_email: "Business email",
-  business_summary: "What the business does", documents: "Registration references",
+  business_stage: "Business stage", growth_priorities: "Growth priorities", website_url: "Website / Portfolio",
+  registration_number: "Registration / Tax reference", business_summary: "What the business does",
+  documents: "Registration references",
+  investor_role: "Primary investor / mentor role", organization: "Firm / Organization / Fund",
+  linkedin_url: "LinkedIn profile", advisory_areas: "Domains of advisory expertise", preferred_sectors: "Preferred sectors",
+  ticket_size: "Capital capacity / Ticket size", mentorship_availability: "Mentorship availability",
+  experience_summary: "Executive track record & experience", kingdom_vision: "Kingdom vision & contribution",
   profession: "Profession", practice_field: "Field of practice", practice_type: "Work status", employer: "Employer",
   experience: "Years of experience", qualifications: "Qualifications", licence_reference: "Licence reference",
   work_phone: "Work phone", work_email: "Work email", practice_summary: "What they do",
   service_values: "Service & values", career_goals: "Career and service goals", portfolio_url: "Portfolio",
-  country: "Country", city: "City", impact_statement: "Impact commitment", sdgs: "SDGs",
+  country: "Country", city: "City", impact_statement: "Kingdom impact commitment", sdgs: "Aligned SDGs",
 };
 
 const TRACK_FIELDS: Record<string, string[]> = {
-  business: ["business_name", "sector", "country", "cities", "founding_year", "employees", "business_phone", "business_email", "documents", "business_summary", "impact_statement", "sdgs"],
-  professional: ["profession", "practice_field", "practice_type", "employer", "country", "city", "experience", "qualifications", "licence_reference", "work_phone", "work_email", "portfolio_url", "practice_summary", "service_values", "career_goals", "impact_statement", "sdgs"],
+  business: [
+    "business_name", "sector", "country", "city", "business_stage", "business_summary",
+    "growth_priorities", "website_url", "registration_number", "impact_statement", "sdgs",
+    "cities", "founding_year", "employees", "business_phone", "business_email", "documents"
+  ],
+  professional: [
+    "investor_role", "organization", "country", "city", "linkedin_url", "ticket_size",
+    "mentorship_availability", "advisory_areas", "preferred_sectors", "experience_summary",
+    "kingdom_vision", "impact_statement", "sdgs",
+    "profession", "practice_field", "practice_type", "employer", "experience", "qualifications"
+  ],
 };
 
 /** Shows only the answers that belong to the applicant's track, in a readable order. */

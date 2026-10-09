@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useIdentity } from "@/lib/wcbn";
 
-export const Route = createFileRoute("/admin_/criteria")({ component: CriteriaPage });
+export const Route = createFileRoute("/admin/criteria")({ component: CriteriaPage });
 
 type Track = "business" | "professional";
 

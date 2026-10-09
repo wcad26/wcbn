@@ -7,6 +7,8 @@ export type Identity = {
   fullName: string;
   profile: { id: string; first_name: string | null; last_name: string | null; email: string | null; phone: string | null; region_id: string | null } | null;
   member: { id: string; member_id: string; status: string | null; join_date: string | null; region_id: string } | null;
+  regionId: string | null;
+  regionCode: string | null;
   regionName: string | null;
   regionCurrency: string;
   dcgName: string | null;
@@ -27,7 +29,8 @@ export const TRACKS: { value: Track; label: string; blurb: string }[] = [
 ];
 
 export function trackLabel(track: string | null | undefined) {
-  return track === "professional" ? "Professional" : "Business owner";
+  if (track === "investor_mentor" || track === "professional") return "Investor / Mentor";
+  return "Entrepreneur";
 }
 
 export const PRACTICE_TYPES = ["Employed", "Self-employed", "Consultant / freelance", "Public service", "Ministry / non-profit", "Student / early career", "Other"] as const;
@@ -48,7 +51,7 @@ export const STAGES = [
   { code: "wca_verified", label: "WCA verified" },
   { code: "character_review", label: "Character review" },
   { code: "business_review", label: "Business review" },
-  { code: "practice_review", label: "Professional practice review" },
+  { code: "practice_review", label: "Professional & strategic review" },
   { code: "impact_review", label: "Impact & SDG review" },
   { code: "leadership_review", label: "Leadership review" },
   { code: "interview", label: "Interview" },
@@ -57,11 +60,11 @@ export const STAGES = [
   { code: "inducted", label: "Inducted" },
 ] as const;
 
-/** Review stages differ per track: businesses are vetted as enterprises, professionals as practitioners. */
+/** Review stages differ per track: entrepreneurs are vetted as enterprises, investors/mentors as strategic leaders. */
 export function stagesFor(track: string | null | undefined) {
-  const isPro = track === "professional";
-  return STAGES.filter((s) => (isPro ? s.code !== "business_review" : s.code !== "practice_review")).map((s) =>
-    isPro && s.code === "impact_review" ? { code: s.code, label: "Service & impact review" } : { code: s.code, label: s.label },
+  const isInvestorOrPro = track === "professional" || track === "investor_mentor";
+  return STAGES.filter((s) => (isInvestorOrPro ? s.code !== "business_review" : s.code !== "practice_review")).map((s) =>
+    isInvestorOrPro && s.code === "impact_review" ? { code: s.code, label: "Mentorship & impact review" } : { code: s.code, label: s.label },
   );
 }
 
@@ -113,12 +116,17 @@ export async function fetchIdentity(): Promise<Identity | null> {
     supabase.from("wcbn_user_roles").select("is_active, wcbn_roles(name, permissions, is_active)").eq("user_id", user.id).eq("is_active", true),
   ]);
 
+  let regionId: string | null = null;
+  let regionCode: string | null = null;
   let regionName: string | null = null;
   let regionCurrency = "XAF";
-  if (member?.region_id ?? profile?.region_id) {
-    const { data: region } = await supabase.from("regions").select("name, currency_code").eq("id", (member?.region_id ?? profile?.region_id)!).maybeSingle();
+  const rId = member?.region_id ?? profile?.region_id;
+  if (rId) {
+    const { data: region } = await supabase.from("regions").select("id, code, name, currency_code").eq("id", rId).maybeSingle();
+    regionId = region?.id ?? rId;
+    regionCode = region?.code ?? null;
     regionName = region?.name ?? null;
-    regionCurrency = region?.currency_code ?? "XAF";
+    regionCurrency = region?.currency_code || "XAF";
   }
 
   let dcgName: string | null = null;
@@ -151,6 +159,8 @@ export async function fetchIdentity(): Promise<Identity | null> {
     fullName,
     profile: profile ?? null,
     member: member ?? null,
+    regionId,
+    regionCode,
     regionName,
     regionCurrency,
     dcgName,

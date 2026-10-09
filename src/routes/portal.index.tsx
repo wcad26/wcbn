@@ -90,7 +90,7 @@ function PortalHome() {
     { ok: covenantOk, label: "Covenant accepted", to: "/portal/covenant" as const, action: "Accept the covenant" },
     { ok: live > 0, label: "Business live in the catalog", to: "/portal/business" as const, action: "Complete your business profile" },
     { ok: !!data?.commitment, label: "Impact commitment on file", to: "/portal/impact" as const, action: "Record your impact commitment" },
-    { ok: duesOk, label: "Dues up to date", to: "/portal/contributions" as const, action: "Settle your outstanding dues" },
+    { ok: duesOk, label: "Membership fees up to date", to: "/portal/contributions" as const, action: "Settle your outstanding fees" },
     { ok: !!thisYearReview, label: `${year} annual review submitted`, to: "/portal/impact" as const, action: "Submit this year's review" },
   ];
 
@@ -104,7 +104,7 @@ function PortalHome() {
   }
 
   return (
-    <MemberPage title={`Welcome, ${identity?.fullName ?? "member"}`} description="Your standing in the World Changers Business Network: contributions, listings, impact and what needs your attention.">
+    <MemberPage title={`Welcome, ${identity?.fullName ?? "member"}`} description="Your standing in the World Changers Business Network: membership fees, listings, impact and what needs your attention.">
       <div className="mb-6 flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"><BadgeCheck className="size-3.5" />{identity?.wcbnMember?.category ?? "Member"}</span>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${goodStanding ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-300" : "bg-amber-500/15 text-amber-700 dark:text-amber-300"}`}>
@@ -117,7 +117,7 @@ function PortalHome() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Membership standing" value={goodStanding ? "Good standing" : "Attention needed"} detail={`${identity?.wcbnMember?.category ?? "Member"} · ${identity?.regionName ?? "WCBN"}`} icon={BadgeCheck} />
-        <MetricCard label={`Contributed in ${year}`} value={money(confirmedThisYear, currency)} detail={outstanding > 0 ? `${money(outstanding, currency)} still outstanding` : "No outstanding balance"} icon={CircleDollarSign} tone="accent" />
+        <MetricCard label={`Fees paid in ${year}`} value={money(confirmedThisYear, currency)} detail={outstanding > 0 ? `${money(outstanding, currency)} still outstanding` : "No outstanding balance"} icon={CircleDollarSign} tone="accent" />
         <MetricCard label="Business listings" value={businesses.length} detail={`${live} live in the public catalog`} icon={BriefcaseBusiness} />
         <MetricCard label="Impact delivered" value={jobs} detail={`${jobs} job(s) created · ${trained} people trained`} icon={Target} tone="secondary" />
       </div>
@@ -127,10 +127,10 @@ function PortalHome() {
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold">Dues & payments</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Your contribution schedule and the latest payments on record.</p>
+                <h2 className="text-lg font-semibold">Fees & invoices</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Your fee schedule and the latest payments on record.</p>
               </div>
-              <Button asChild variant="outline" size="sm"><Link to="/portal/contributions"><Receipt className="size-4" />Go to contributions</Link></Button>
+              <Button asChild variant="outline" size="sm"><Link to="/portal/contributions"><Receipt className="size-4" />Fees & invoices</Link></Button>
             </div>
 
             {overdue.length > 0 && (

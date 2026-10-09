@@ -20,14 +20,17 @@ import { Route as ImpactRouteImport } from './routes/impact'
 import { Route as MembershipRouteImport } from './routes/membership'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as PortalRouteImport } from './routes/portal'
-import { Route as AdminApplicationsRouteImport } from './routes/admin_.applications'
-import { Route as AdminBusinessesRouteImport } from './routes/admin_.businesses'
-import { Route as AdminContributionsRouteImport } from './routes/admin_.contributions'
-import { Route as AdminCriteriaRouteImport } from './routes/admin_.criteria'
-import { Route as AdminEventsRouteImport } from './routes/admin_.events'
-import { Route as AdminMembersRouteImport } from './routes/admin_.members'
-import { Route as AdminNewsRouteImport } from './routes/admin_.news'
-import { Route as AdminRolesRouteImport } from './routes/admin_.roles'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminApplicationsRouteImport } from './routes/admin.applications'
+import { Route as AdminBusinessesRouteImport } from './routes/admin.businesses'
+import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
+import { Route as AdminContributionsRouteImport } from './routes/admin.contributions'
+import { Route as AdminCriteriaRouteImport } from './routes/admin.criteria'
+import { Route as AdminEventsRouteImport } from './routes/admin.events'
+import { Route as AdminMembersRouteImport } from './routes/admin.members'
+import { Route as AdminNewsRouteImport } from './routes/admin.news'
+import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
+import { Route as AdminRolesRouteImport } from './routes/admin.roles'
 import { Route as AuthAdminRouteImport } from './routes/auth_.admin'
 import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
 import { Route as EventsSlugRouteImport } from './routes/events_.$slug'
@@ -99,45 +102,60 @@ const PortalRoute = PortalRouteImport.update({
   path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminApplicationsRoute = AdminApplicationsRouteImport.update({
-  id: '/admin_/applications',
-  path: '/admin/applications',
-  getParentRoute: () => rootRouteImport,
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminBusinessesRoute = AdminBusinessesRouteImport.update({
-  id: '/admin_/businesses',
-  path: '/admin/businesses',
-  getParentRoute: () => rootRouteImport,
+  id: '/businesses',
+  path: '/businesses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminContributionsRoute = AdminContributionsRouteImport.update({
-  id: '/admin_/contributions',
-  path: '/admin/contributions',
-  getParentRoute: () => rootRouteImport,
+  id: '/contributions',
+  path: '/contributions',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminCriteriaRoute = AdminCriteriaRouteImport.update({
-  id: '/admin_/criteria',
-  path: '/admin/criteria',
-  getParentRoute: () => rootRouteImport,
+  id: '/criteria',
+  path: '/criteria',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminEventsRoute = AdminEventsRouteImport.update({
-  id: '/admin_/events',
-  path: '/admin/events',
-  getParentRoute: () => rootRouteImport,
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminMembersRoute = AdminMembersRouteImport.update({
-  id: '/admin_/members',
-  path: '/admin/members',
-  getParentRoute: () => rootRouteImport,
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminNewsRoute = AdminNewsRouteImport.update({
-  id: '/admin_/news',
-  path: '/admin/news',
-  getParentRoute: () => rootRouteImport,
+  id: '/news',
+  path: '/news',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminRolesRoute = AdminRolesRouteImport.update({
-  id: '/admin_/roles',
-  path: '/admin/roles',
-  getParentRoute: () => rootRouteImport,
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AuthAdminRoute = AuthAdminRouteImport.update({
   id: '/auth_/admin',
@@ -218,7 +236,7 @@ const PortalNewsSlugRoute = PortalNewsSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
@@ -229,11 +247,13 @@ export interface FileRoutesByFullPath {
   '/portal': typeof PortalRouteWithChildren
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/news': typeof AdminNewsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
@@ -247,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/portal/impact': typeof PortalImpactRoute
   '/portal/news': typeof PortalNewsRouteWithChildren
   '/portal/profile': typeof PortalProfileRoute
+  '/admin/': typeof AdminIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/portal/events/$slug': typeof PortalEventsSlugRoute
   '/portal/news/$slug': typeof PortalNewsSlugRoute
@@ -254,7 +275,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
@@ -264,11 +284,13 @@ export interface FileRoutesByTo {
   '/news': typeof NewsRoute
   '/admin/applications': typeof AdminApplicationsRoute
   '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/categories': typeof AdminCategoriesRoute
   '/admin/contributions': typeof AdminContributionsRoute
   '/admin/criteria': typeof AdminCriteriaRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/members': typeof AdminMembersRoute
   '/admin/news': typeof AdminNewsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/roles': typeof AdminRolesRoute
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
@@ -282,6 +304,7 @@ export interface FileRoutesByTo {
   '/portal/impact': typeof PortalImpactRoute
   '/portal/news': typeof PortalNewsRouteWithChildren
   '/portal/profile': typeof PortalProfileRoute
+  '/admin': typeof AdminIndexRoute
   '/portal': typeof PortalIndexRoute
   '/portal/events/$slug': typeof PortalEventsSlugRoute
   '/portal/news/$slug': typeof PortalNewsSlugRoute
@@ -290,7 +313,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
-  '/admin': typeof AdminRoute
+  '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/businesses': typeof BusinessesRouteWithChildren
   '/contact': typeof ContactRoute
@@ -299,14 +322,16 @@ export interface FileRoutesById {
   '/membership': typeof MembershipRoute
   '/news': typeof NewsRoute
   '/portal': typeof PortalRouteWithChildren
-  '/admin_/applications': typeof AdminApplicationsRoute
-  '/admin_/businesses': typeof AdminBusinessesRoute
-  '/admin_/contributions': typeof AdminContributionsRoute
-  '/admin_/criteria': typeof AdminCriteriaRoute
-  '/admin_/events': typeof AdminEventsRoute
-  '/admin_/members': typeof AdminMembersRoute
-  '/admin_/news': typeof AdminNewsRoute
-  '/admin_/roles': typeof AdminRolesRoute
+  '/admin/applications': typeof AdminApplicationsRoute
+  '/admin/businesses': typeof AdminBusinessesRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/contributions': typeof AdminContributionsRoute
+  '/admin/criteria': typeof AdminCriteriaRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/members': typeof AdminMembersRoute
+  '/admin/news': typeof AdminNewsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
+  '/admin/roles': typeof AdminRolesRoute
   '/auth_/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/events_/$slug': typeof EventsSlugRoute
@@ -319,6 +344,7 @@ export interface FileRoutesById {
   '/portal/impact': typeof PortalImpactRoute
   '/portal/news': typeof PortalNewsRouteWithChildren
   '/portal/profile': typeof PortalProfileRoute
+  '/admin/': typeof AdminIndexRoute
   '/portal/': typeof PortalIndexRoute
   '/portal/events/$slug': typeof PortalEventsSlugRoute
   '/portal/news/$slug': typeof PortalNewsSlugRoute
@@ -339,11 +365,13 @@ export interface FileRouteTypes {
     | '/portal'
     | '/admin/applications'
     | '/admin/businesses'
+    | '/admin/categories'
     | '/admin/contributions'
     | '/admin/criteria'
     | '/admin/events'
     | '/admin/members'
     | '/admin/news'
+    | '/admin/payments'
     | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
@@ -357,6 +385,7 @@ export interface FileRouteTypes {
     | '/portal/impact'
     | '/portal/news'
     | '/portal/profile'
+    | '/admin/'
     | '/portal/'
     | '/portal/events/$slug'
     | '/portal/news/$slug'
@@ -364,7 +393,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
-    | '/admin'
     | '/auth'
     | '/businesses'
     | '/contact'
@@ -374,11 +402,13 @@ export interface FileRouteTypes {
     | '/news'
     | '/admin/applications'
     | '/admin/businesses'
+    | '/admin/categories'
     | '/admin/contributions'
     | '/admin/criteria'
     | '/admin/events'
     | '/admin/members'
     | '/admin/news'
+    | '/admin/payments'
     | '/admin/roles'
     | '/auth/admin'
     | '/businesses/$slug'
@@ -392,6 +422,7 @@ export interface FileRouteTypes {
     | '/portal/impact'
     | '/portal/news'
     | '/portal/profile'
+    | '/admin'
     | '/portal'
     | '/portal/events/$slug'
     | '/portal/news/$slug'
@@ -408,14 +439,16 @@ export interface FileRouteTypes {
     | '/membership'
     | '/news'
     | '/portal'
-    | '/admin_/applications'
-    | '/admin_/businesses'
-    | '/admin_/contributions'
-    | '/admin_/criteria'
-    | '/admin_/events'
-    | '/admin_/members'
-    | '/admin_/news'
-    | '/admin_/roles'
+    | '/admin/applications'
+    | '/admin/businesses'
+    | '/admin/categories'
+    | '/admin/contributions'
+    | '/admin/criteria'
+    | '/admin/events'
+    | '/admin/members'
+    | '/admin/news'
+    | '/admin/payments'
+    | '/admin/roles'
     | '/auth_/admin'
     | '/businesses/$slug'
     | '/events_/$slug'
@@ -428,6 +461,7 @@ export interface FileRouteTypes {
     | '/portal/impact'
     | '/portal/news'
     | '/portal/profile'
+    | '/admin/'
     | '/portal/'
     | '/portal/events/$slug'
     | '/portal/news/$slug'
@@ -436,7 +470,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
-  AdminRoute: typeof AdminRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   BusinessesRoute: typeof BusinessesRouteWithChildren
   ContactRoute: typeof ContactRoute
@@ -445,14 +479,6 @@ export interface RootRouteChildren {
   MembershipRoute: typeof MembershipRoute
   NewsRoute: typeof NewsRoute
   PortalRoute: typeof PortalRouteWithChildren
-  AdminApplicationsRoute: typeof AdminApplicationsRoute
-  AdminBusinessesRoute: typeof AdminBusinessesRoute
-  AdminContributionsRoute: typeof AdminContributionsRoute
-  AdminCriteriaRoute: typeof AdminCriteriaRoute
-  AdminEventsRoute: typeof AdminEventsRoute
-  AdminMembersRoute: typeof AdminMembersRoute
-  AdminNewsRoute: typeof AdminNewsRoute
-  AdminRolesRoute: typeof AdminRolesRoute
   AuthAdminRoute: typeof AuthAdminRoute
   EventsSlugRoute: typeof EventsSlugRoute
   NewsSlugRoute: typeof NewsSlugRoute
@@ -537,61 +563,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin_/applications': {
-      id: '/admin_/applications'
-      path: '/admin/applications'
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/applications': {
+      id: '/admin/applications'
+      path: '/applications'
       fullPath: '/admin/applications'
       preLoaderRoute: typeof AdminApplicationsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin_/businesses': {
-      id: '/admin_/businesses'
-      path: '/admin/businesses'
+    '/admin/businesses': {
+      id: '/admin/businesses'
+      path: '/businesses'
       fullPath: '/admin/businesses'
       preLoaderRoute: typeof AdminBusinessesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin_/contributions': {
-      id: '/admin_/contributions'
-      path: '/admin/contributions'
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contributions': {
+      id: '/admin/contributions'
+      path: '/contributions'
       fullPath: '/admin/contributions'
       preLoaderRoute: typeof AdminContributionsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin_/criteria': {
-      id: '/admin_/criteria'
-      path: '/admin/criteria'
+    '/admin/criteria': {
+      id: '/admin/criteria'
+      path: '/criteria'
       fullPath: '/admin/criteria'
       preLoaderRoute: typeof AdminCriteriaRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin_/events': {
-      id: '/admin_/events'
-      path: '/admin/events'
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/events'
       fullPath: '/admin/events'
       preLoaderRoute: typeof AdminEventsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin_/members': {
-      id: '/admin_/members'
-      path: '/admin/members'
+    '/admin/members': {
+      id: '/admin/members'
+      path: '/members'
       fullPath: '/admin/members'
       preLoaderRoute: typeof AdminMembersRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin_/news': {
-      id: '/admin_/news'
-      path: '/admin/news'
+    '/admin/news': {
+      id: '/admin/news'
+      path: '/news'
       fullPath: '/admin/news'
       preLoaderRoute: typeof AdminNewsRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
-    '/admin_/roles': {
-      id: '/admin_/roles'
-      path: '/admin/roles'
+    '/admin/payments': {
+      id: '/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AdminPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/roles': {
+      id: '/admin/roles'
+      path: '/roles'
       fullPath: '/admin/roles'
       preLoaderRoute: typeof AdminRolesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/auth_/admin': {
       id: '/auth_/admin'
@@ -701,6 +748,36 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminApplicationsRoute: typeof AdminApplicationsRoute
+  AdminBusinessesRoute: typeof AdminBusinessesRoute
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminContributionsRoute: typeof AdminContributionsRoute
+  AdminCriteriaRoute: typeof AdminCriteriaRoute
+  AdminEventsRoute: typeof AdminEventsRoute
+  AdminMembersRoute: typeof AdminMembersRoute
+  AdminNewsRoute: typeof AdminNewsRoute
+  AdminPaymentsRoute: typeof AdminPaymentsRoute
+  AdminRolesRoute: typeof AdminRolesRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminApplicationsRoute: AdminApplicationsRoute,
+  AdminBusinessesRoute: AdminBusinessesRoute,
+  AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminContributionsRoute: AdminContributionsRoute,
+  AdminCriteriaRoute: AdminCriteriaRoute,
+  AdminEventsRoute: AdminEventsRoute,
+  AdminMembersRoute: AdminMembersRoute,
+  AdminNewsRoute: AdminNewsRoute,
+  AdminPaymentsRoute: AdminPaymentsRoute,
+  AdminRolesRoute: AdminRolesRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface BusinessesRouteChildren {
   BusinessesSlugRoute: typeof BusinessesSlugRoute
 }
@@ -767,7 +844,7 @@ const PortalRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
-  AdminRoute: AdminRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   BusinessesRoute: BusinessesRouteWithChildren,
   ContactRoute: ContactRoute,
@@ -776,14 +853,6 @@ const rootRouteChildren: RootRouteChildren = {
   MembershipRoute: MembershipRoute,
   NewsRoute: NewsRoute,
   PortalRoute: PortalRouteWithChildren,
-  AdminApplicationsRoute: AdminApplicationsRoute,
-  AdminBusinessesRoute: AdminBusinessesRoute,
-  AdminContributionsRoute: AdminContributionsRoute,
-  AdminCriteriaRoute: AdminCriteriaRoute,
-  AdminEventsRoute: AdminEventsRoute,
-  AdminMembersRoute: AdminMembersRoute,
-  AdminNewsRoute: AdminNewsRoute,
-  AdminRolesRoute: AdminRolesRoute,
   AuthAdminRoute: AuthAdminRoute,
   EventsSlugRoute: EventsSlugRoute,
   NewsSlugRoute: NewsSlugRoute,

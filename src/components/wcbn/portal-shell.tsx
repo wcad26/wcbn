@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  BadgeCheck, BarChart3, BriefcaseBusiness, CalendarDays, CircleDollarSign, ClipboardCheck, FileText, Newspaper,
+  BadgeCheck, BarChart3, BriefcaseBusiness, CalendarDays, CircleDollarSign, ClipboardCheck, FileText, Layers, Newspaper,
   LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, ShieldCheck, UserRound, Users, X,
 } from "lucide-react";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useIdentity } from "@/lib/wcbn";
-import { AccessGuard } from "./access-guard";
+import { AccessGuard, clearAccessGuardCache } from "./access-guard";
 
 const memberLinks = [
   ["Overview", "/portal", BarChart3],
@@ -17,7 +17,7 @@ const memberLinks = [
   ["My business", "/portal/business", BriefcaseBusiness],
   ["Events", "/portal/events", CalendarDays],
   ["News", "/portal/news", Newspaper],
-  ["Membership fees", "/portal/contributions", CircleDollarSign],
+  ["Membership fees & invoices", "/portal/contributions", CircleDollarSign],
   ["Impact", "/portal/impact", FileText],
   ["Covenant", "/portal/covenant", ScrollText],
   ["My profile", "/portal/profile", UserRound],
@@ -30,7 +30,9 @@ const adminLinks = [
   ["Businesses", "/admin/businesses", BriefcaseBusiness],
   ["Events", "/admin/events", CalendarDays],
   ["News", "/admin/news", Newspaper],
-  ["Fees & invoices", "/admin/contributions", CircleDollarSign],
+  ["Fee management & invoices", "/admin/contributions", CircleDollarSign],
+  ["Categories", "/admin/categories", Layers],
+  ["Payment settings", "/admin/payments", Settings2],
   ["Criteria", "/admin/criteria", Settings2],
   ["Roles & access", "/admin/roles", ShieldCheck],
 ] as const;
@@ -56,6 +58,7 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
   const current = [...links].find(([, to]) => to === path)?.[0] ?? (admin ? "Leadership" : "Member portal");
 
   async function signOut() {
+    clearAccessGuardCache();
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();

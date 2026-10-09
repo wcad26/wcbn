@@ -5,8 +5,21 @@ import { Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
+let cachedAdminAllowed: boolean | null = null;
+let cachedUserId: string | null = null;
+
+export function clearAccessGuardCache() {
+  cachedAdminAllowed = null;
+  cachedUserId = null;
+}
+
 export function AccessGuard({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
-  const [state, setState] = useState<"loading" | "allowed" | "signed-out" | "forbidden">("loading");
+  const [state, setState] = useState<"loading" | "allowed" | "signed-out" | "forbidden">(() => {
+    if (!admin) return "allowed";
+    if (cachedAdminAllowed === true) return "allowed";
+    if (cachedAdminAllowed === false) return "forbidden";
+    return "loading";
+  });
 
   useEffect(() => {
     let active = true;
@@ -14,13 +27,33 @@ export function AccessGuard({ children, admin = false }: { children: ReactNode; 
       const { data } = await supabase.auth.getUser();
       const user = data.user;
       if (!active) return;
-      if (!user) { setState("signed-out"); return; }
-      if (!admin) { setState("allowed"); return; }
+      if (!user) {
+        cachedAdminAllowed = null;
+        cachedUserId = null;
+        setState("signed-out");
+        return;
+      }
+      if (!admin) {
+        setState("allowed");
+        return;
+      }
+
+      // If user is already verified in this session, keep allowed immediately
+      if (cachedAdminAllowed === true && cachedUserId === user.id) {
+        setState("allowed");
+        return;
+      }
+
       const [{ data: roles }, { data: isSuper }] = await Promise.all([
         supabase.from("wcbn_user_roles").select("id").eq("user_id", user.id).eq("is_active", true).limit(1),
         supabase.rpc("is_super_admin_user", { _user_id: user.id }),
       ]);
-      if (active) setState(roles?.length || isSuper === true ? "allowed" : "forbidden");
+      if (active) {
+        const allowed = !!(roles?.length || isSuper === true);
+        cachedAdminAllowed = allowed;
+        cachedUserId = user.id;
+        setState(allowed ? "allowed" : "forbidden");
+      }
     }
     check();
     return () => { active = false; };

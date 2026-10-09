@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
-import { PortalShell } from "./portal-shell";
 
 export function AdminPage({ title, description, action, children }: { title: string; description: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <PortalShell admin>
+    <div className="space-y-8 animate-in fade-in-50 duration-150">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">WCBN leadership</p>
@@ -12,14 +11,14 @@ export function AdminPage({ title, description, action, children }: { title: str
         </div>
         {action}
       </div>
-      <div className="mt-8">{children}</div>
-    </PortalShell>
+      <div>{children}</div>
+    </div>
   );
 }
 
 export function MemberPage({ title, description, action, children }: { title: string; description: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <>
+    <div className="space-y-8 animate-in fade-in-50 duration-150">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Member portal</p>
@@ -28,7 +27,7 @@ export function MemberPage({ title, description, action, children }: { title: st
         </div>
         {action}
       </div>
-      <div className="mt-8">{children}</div>
-    </>
+      <div>{children}</div>
+    </div>
   );
 }
