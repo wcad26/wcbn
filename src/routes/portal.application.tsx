@@ -80,12 +80,12 @@ export const MENTORSHIP_AVAILABILITY = [
   "Event pitch judging & masterclass teaching",
 ] as const;
 
+// 4 streamlined onboarding steps
 const STEPS = [
   "Membership Category",
   "Registration Details",
-  "Payment Plan",
-  "Payment Method",
-  "Review & Pay",
+  "Billing & Payment Method",
+  "Review & Confirm",
 ] as const;
 
 type Answers = {
@@ -147,7 +147,6 @@ function ApplicationPage() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>(EMPTY);
-  const [filterCategoryArchetype, setFilterCategoryArchetype] = useState<"all" | CategoryArchetype>("all");
   const wcbnId = identity?.wcbnMember?.id;
   const [categoryId, setCategoryId] = useState("");
   const [cycle, setCycle] = useState<BillingCycle>("annual");
@@ -161,6 +160,11 @@ function ApplicationPage() {
   const { data: categories = [] } = useQuery({ queryKey: ["wcbn", "categories"], queryFn: () => fetchCategories() });
   const { data: exchangeRates = [] } = useQuery({ queryKey: ["wcbn", "exchange-rates"], queryFn: fetchExchangeRates });
   const { data: settings } = useQuery({ queryKey: ["wcbn", "payment-settings"], queryFn: fetchPaymentSettings });
+
+  // Scroll to top whenever step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
 
   const { data, isLoading } = useQuery({
     queryKey: ["portal", "application", wcbnId],
@@ -256,6 +260,36 @@ function ApplicationPage() {
     }).length;
     return Math.round((done / fields.length) * 100);
   }, [answers, currentRequired]);
+
+  // Contextual category resolution (Diaspora vs. Local)
+  const isDiasporaApplicant = useMemo(() => {
+    const code = (identity?.regionCode ?? "").toUpperCase();
+    const name = (identity?.regionName ?? "").toLowerCase();
+    const curr = (identity?.regionCurrency ?? "XAF").toUpperCase();
+
+    if (code.includes("EU") || code.includes("NA") || code.includes("US") || code.includes("UK")) return true;
+    if (name.includes("europe") || name.includes("north america") || name.includes("diaspora") || name.includes("international")) return true;
+    if (curr !== "XAF") return true;
+    return false;
+  }, [identity]);
+
+  const visibleCategories = useMemo(() => {
+    return categories.filter((c) => {
+      const isInvestorOrMentor = getCategoryArchetype(c) === "investor_mentor" || c.code === "mentor";
+      if (isInvestorOrMentor) return true; // Mentors & Investors always visible to both local and diaspora
+
+      const isDiasporaCategory =
+        c.code === "diaspora" ||
+        (c.target_audience ?? "").toLowerCase().includes("diaspora") ||
+        (c.target_audience ?? "").toLowerCase().includes("international");
+
+      if (isDiasporaApplicant) {
+        return isDiasporaCategory;
+      } else {
+        return !isDiasporaCategory;
+      }
+    });
+  }, [categories, isDiasporaApplicant]);
 
   const save = useMutation({
     mutationFn: async (submit: boolean) => {
@@ -394,12 +428,6 @@ function ApplicationPage() {
       </MemberPage>
     );
   }
-
-  // Filtered categories for Step 0
-  const visibleCategories = categories.filter((c) => {
-    if (filterCategoryArchetype === "all") return true;
-    return getCategoryArchetype(c) === filterCategoryArchetype;
-  });
 
   return (
     <MemberPage
@@ -577,13 +605,15 @@ function ApplicationPage() {
           </div>
         )}
 
-        {/* 5-STEP WIZARD VIEW */}
+        {/* 4-STEP STREAMLINED WIZARD VIEW */}
         {!busy && !submitted && !awaitingPayment && (
           <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
-            {/* Step Progress Pills */}
+            {/* Step Progress Bar */}
             <div className="mb-6">
               <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground">Step {step + 1} of {STEPS.length}: {STEPS[step]}</span>
+                <span className="font-medium text-foreground">
+                  Step {step + 1} of {STEPS.length}: {STEPS[step]}
+                </span>
                 <span className="text-xs text-muted-foreground">
                   {selectedCategory && (
                     <span className="font-semibold text-primary mr-2">
@@ -601,7 +631,18 @@ function ApplicationPage() {
               </div>
             </div>
 
-            <ol className="mb-8 flex flex-wrap gap-2">
+            {/* Mobile View: Active Step Pill Only */}
+            <div className="sm:hidden mb-6 flex items-center justify-between">
+              <span className="inline-flex items-center gap-1.5 rounded-full gradient-brand text-white px-3.5 py-1.5 text-xs font-semibold shadow-xs">
+                Step {step + 1} of {STEPS.length}: {STEPS[step]}
+              </span>
+              <span className="text-xs text-muted-foreground font-medium">
+                {step === 1 && `${completion}% done`}
+              </span>
+            </div>
+
+            {/* Desktop View: Full Step Numbered Breadcrumb Pills */}
+            <ol className="hidden sm:flex mb-8 flex-wrap gap-2">
               {STEPS.map((label, i) => (
                 <li key={label}>
                   <button
@@ -614,6 +655,10 @@ function ApplicationPage() {
                         }
                         if (step === 1 && missingFormFields.length > 0 && i > 1) {
                           toast.error("Please complete the required registration fields first.");
+                          return;
+                        }
+                        if (step === 2 && (!cycle || !method) && i > 2) {
+                          toast.error("Please select a billing plan and payment method.");
                           return;
                         }
                       }
@@ -634,46 +679,17 @@ function ApplicationPage() {
             </ol>
 
             <fieldset disabled={submitted} className="contents">
-              {/* STEP 0: CATEGORY SELECTION */}
+              {/* STEP 0: CATEGORY SELECTION (Contextual Local vs. Diaspora, No Filter Buttons) */}
               {step === 0 && (
                 <div className="space-y-6">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-base font-bold text-foreground">Choose Your Membership Category</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Select whether you are joining as an Entrepreneur or an Investor / Mentor. Fees are displayed in your regional currency ({currency}).
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={filterCategoryArchetype === "all" ? "default" : "outline"}
-                        onClick={() => setFilterCategoryArchetype("all")}
-                        className="rounded-full text-xs h-8"
-                      >
-                        All Categories
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={filterCategoryArchetype === "entrepreneur" ? "default" : "outline"}
-                        onClick={() => setFilterCategoryArchetype("entrepreneur")}
-                        className="rounded-full text-xs h-8"
-                      >
-                        🚀 Entrepreneurs
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant={filterCategoryArchetype === "investor_mentor" ? "default" : "outline"}
-                        onClick={() => setFilterCategoryArchetype("investor_mentor")}
-                        className="rounded-full text-xs h-8"
-                      >
-                        💎 Investors & Mentors
-                      </Button>
-                    </div>
+                  <div>
+                    <h3 className="text-base font-bold text-foreground">Choose Your Membership Category</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {isDiasporaApplicant
+                        ? "Displaying international & diaspora categories configured for your region."
+                        : "Displaying local categories configured for your region."}{" "}
+                      Fees are displayed in your regional currency ({currency}).
+                    </p>
                   </div>
 
                   <div className="grid gap-4 md:grid-cols-2">
@@ -757,7 +773,7 @@ function ApplicationPage() {
 
                     {visibleCategories.length === 0 && (
                       <p className="text-sm text-muted-foreground col-span-2 py-8 text-center">
-                        No membership categories found matching this filter.
+                        No membership categories found for your regional profile.
                       </p>
                     )}
                   </div>
@@ -1105,28 +1121,131 @@ function ApplicationPage() {
                 </div>
               )}
 
-              {/* STEP 2: PAYMENT PLAN (How They Intend to Pay) */}
+              {/* STEP 2: MERGED BILLING PLAN & PAYMENT METHOD */}
               {step === 2 && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-base font-bold text-foreground">Select Your Payment Plan</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Membership tier: <strong className="text-foreground">{selectedCategory?.name}</strong> · Base fee:{" "}
-                      <strong className="text-primary">{fee != null ? `${money(fee, currency)}/year` : "Calculated"}</strong>
-                    </p>
+                <div className="space-y-8">
+                  {/* Part 1: Payment Plan */}
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-base font-bold text-foreground">1. Select Your Payment Plan</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Membership tier: <strong className="text-foreground">{selectedCategory?.name}</strong> · Base fee:{" "}
+                        <strong className="text-primary">{fee != null ? `${money(fee, currency)}/year` : "Calculated"}</strong>
+                      </p>
+                    </div>
+
+                    {selectedCategory?.allow_installments ? (
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        {CYCLES.map((c) => {
+                          const on = cycle === c.value;
+                          const partAmt = fee != null ? instalment(fee, c.value, currency) : null;
+
+                          return (
+                            <div
+                              key={c.value}
+                              onClick={() => setCycle(c.value)}
+                              className={`cursor-pointer rounded-2xl border p-4 text-left transition flex flex-col justify-between ${
+                                on
+                                  ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md"
+                                  : "border-border hover:border-primary/40 bg-card hover:bg-muted/30"
+                              }`}
+                            >
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-sm font-bold text-foreground">{c.label}</h4>
+                                  <span className={`text-xs font-semibold ${on ? "text-primary" : "text-muted-foreground"}`}>
+                                    {on ? "Selected ✓" : ""}
+                                  </span>
+                                </div>
+                                <p className="mt-1 text-xs text-muted-foreground">{c.blurb}</p>
+                              </div>
+
+                              <div className="mt-3 pt-2.5 border-t border-border">
+                                <p className="text-[11px] text-muted-foreground">Due today:</p>
+                                <p className="text-base font-extrabold text-foreground">
+                                  {partAmt != null ? money(partAmt, currency) : "—"}
+                                </p>
+                                {c.parts > 1 && (
+                                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                                    {c.parts} payments of {partAmt != null ? money(partAmt, currency) : "—"}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="rounded-2xl border border-border bg-muted/20 p-4">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="size-5 text-primary mt-0.5" />
+                          <div>
+                            <h4 className="text-sm font-bold text-foreground">Annual One-Time Fee</h4>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              This strategic membership tier is billed on an annual one-time basis ({fee != null ? money(fee, currency) : ""}).
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Installment breakdown preview */}
+                    {selectedCategory?.allow_installments && cycle !== "annual" && fee != null && (
+                      <div className="rounded-2xl border border-border bg-muted/10 p-3.5 text-xs">
+                        <p className="font-semibold uppercase tracking-wider text-muted-foreground mb-1.5 text-[11px]">
+                          Projected Instalment Schedule
+                        </p>
+                        <div className="overflow-x-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-border text-muted-foreground text-left">
+                                <th className="pb-1">Instalment</th>
+                                <th className="pb-1">Schedule</th>
+                                <th className="pb-1">Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/60">
+                              {Array.from({ length: CYCLES.find((c) => c.value === cycle)?.parts ?? 1 }, (_, i) => (
+                                <tr key={i}>
+                                  <td className="py-1.5 font-medium">Instalment {i + 1}</td>
+                                  <td className="py-1.5 text-muted-foreground">
+                                    {i === 0
+                                      ? "Due today at registration"
+                                      : cycle === "semi_annual"
+                                      ? "In 6 months"
+                                      : `In ${i * 3} months`}
+                                  </td>
+                                  <td className="py-1.5 font-bold text-foreground">
+                                    {money(instalment(fee, cycle, currency), currency)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {selectedCategory?.allow_installments ? (
+                  {/* Part 2: Payment Method */}
+                  <div className="space-y-4 border-t border-border pt-6">
+                    <div>
+                      <h3 className="text-base font-bold text-foreground">2. Select Your Payment Method</h3>
+                      <p className="text-xs text-muted-foreground">
+                        An official WCBN invoice (WCBN-INV-2026-XXXX) is generated for all payment options.
+                      </p>
+                    </div>
+
                     <div className="grid gap-4 sm:grid-cols-3">
-                      {CYCLES.map((c) => {
-                        const on = cycle === c.value;
-                        const partAmt = fee != null ? instalment(fee, c.value, currency) : null;
+                      {methods.filter((m) => m.on).map((m) => {
+                        const on = method === m.value;
+                        const Icon = m.icon;
 
                         return (
                           <div
-                            key={c.value}
-                            onClick={() => setCycle(c.value)}
-                            className={`cursor-pointer rounded-2xl border p-5 text-left transition flex flex-col justify-between ${
+                            key={m.value}
+                            onClick={() => setMethod(m.value)}
+                            className={`cursor-pointer rounded-2xl border p-4 text-left transition flex flex-col justify-between ${
                               on
                                 ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md"
                                 : "border-border hover:border-primary/40 bg-card hover:bg-muted/30"
@@ -1134,144 +1253,42 @@ function ApplicationPage() {
                           >
                             <div>
                               <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-bold text-foreground">{c.label}</h4>
+                                <span
+                                  className={`grid size-9 place-items-center rounded-xl ${
+                                    on ? "gradient-brand text-white" : "bg-muted text-muted-foreground"
+                                  }`}
+                                >
+                                  <Icon className="size-4" />
+                                </span>
                                 <span className={`text-xs font-semibold ${on ? "text-primary" : "text-muted-foreground"}`}>
                                   {on ? "Selected ✓" : ""}
                                 </span>
                               </div>
-                              <p className="mt-1 text-xs text-muted-foreground">{c.blurb}</p>
+                              <h4 className="mt-2.5 text-sm font-bold text-foreground">{METHOD_LABELS[m.value]}</h4>
+                              <p className="mt-0.5 text-xs text-muted-foreground">{m.hint}</p>
                             </div>
 
-                            <div className="mt-4 pt-3 border-t border-border">
-                              <p className="text-xs text-muted-foreground">Due today:</p>
-                              <p className="text-lg font-extrabold text-foreground">
-                                {partAmt != null ? money(partAmt, currency) : "—"}
-                              </p>
-                              {c.parts > 1 && (
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
-                                  {c.parts} payments of {partAmt != null ? money(partAmt, currency) : "—"}
-                                </p>
-                              )}
+                            <div className="mt-3 pt-2.5 border-t border-border text-[11px] text-muted-foreground">
+                              {m.value === "bank_transfer"
+                                ? "Official bank details displayed on generated invoice."
+                                : "Instant digital checkout via Flutterwave."}
                             </div>
                           </div>
                         );
                       })}
-                    </div>
-                  ) : (
-                    <div className="rounded-2xl border border-border bg-muted/20 p-5">
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="size-5 text-primary mt-0.5" />
-                        <div>
-                          <h4 className="text-sm font-bold text-foreground">Annual One-Time Fee</h4>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            This strategic membership tier is billed on an annual one-time basis ({fee != null ? money(fee, currency) : ""}).
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* Installment breakdown table preview */}
-                  {selectedCategory?.allow_installments && cycle !== "annual" && fee != null && (
-                    <div className="rounded-2xl border border-border bg-muted/10 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                        Projected Instalment Schedule
-                      </p>
-                      <div className="overflow-x-auto text-xs">
-                        <table className="w-full">
-                          <thead>
-                            <tr className="border-b border-border text-muted-foreground text-left">
-                              <th className="pb-1.5">Instalment</th>
-                              <th className="pb-1.5">Schedule</th>
-                              <th className="pb-1.5">Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border/60">
-                            {Array.from({ length: CYCLES.find((c) => c.value === cycle)?.parts ?? 1 }, (_, i) => (
-                              <tr key={i}>
-                                <td className="py-2 font-medium">Instalment {i + 1}</td>
-                                <td className="py-2 text-muted-foreground">
-                                  {i === 0
-                                    ? "Due today at registration"
-                                    : cycle === "semi_annual"
-                                    ? "In 6 months"
-                                    : `In ${i * 3} months`}
-                                </td>
-                                <td className="py-2 font-bold text-foreground">
-                                  {money(instalment(fee, cycle, currency), currency)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      {!methods.some((m) => m.on) && (
+                        <p className="text-sm text-muted-foreground col-span-3 py-6 text-center">
+                          Payment methods are currently being configured by administration. Please check back shortly.
+                        </p>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 
-              {/* STEP 3: PAYMENT METHOD */}
+              {/* STEP 3: REVIEW & CONFIRM */}
               {step === 3 && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-base font-bold text-foreground">Select Your Payment Method</h3>
-                    <p className="text-xs text-muted-foreground">
-                      An official WCBN invoice (WCBN-INV-2026-XXXX) will be generated for your records.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    {methods.filter((m) => m.on).map((m) => {
-                      const on = method === m.value;
-                      const Icon = m.icon;
-
-                      return (
-                        <div
-                          key={m.value}
-                          onClick={() => setMethod(m.value)}
-                          className={`cursor-pointer rounded-2xl border p-5 text-left transition flex flex-col justify-between ${
-                            on
-                              ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md"
-                              : "border-border hover:border-primary/40 bg-card hover:bg-muted/30"
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <span
-                                className={`grid size-10 place-items-center rounded-xl ${
-                                  on ? "gradient-brand text-white" : "bg-muted text-muted-foreground"
-                                }`}
-                              >
-                                <Icon className="size-5" />
-                              </span>
-                              <span className={`text-xs font-semibold ${on ? "text-primary" : "text-muted-foreground"}`}>
-                                {on ? "Selected ✓" : ""}
-                              </span>
-                            </div>
-                            <h4 className="mt-3 text-sm font-bold text-foreground">{METHOD_LABELS[m.value]}</h4>
-                            <p className="mt-1 text-xs text-muted-foreground">{m.hint}</p>
-                          </div>
-
-                          <div className="mt-4 pt-3 border-t border-border text-[11px] text-muted-foreground">
-                            {m.value === "bank_transfer"
-                              ? "Official bank account details displayed on generated invoice."
-                              : "Secure instant checkout via Flutterwave."}
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                    {!methods.some((m) => m.on) && (
-                      <p className="text-sm text-muted-foreground col-span-3 py-6 text-center">
-                        Payment methods are currently being configured by administration. Please check back shortly.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 4: REVIEW & PAY */}
-              {step === 4 && (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-base font-bold text-foreground">Review & Confirm Your Membership</h3>
@@ -1351,25 +1368,27 @@ function ApplicationPage() {
               )}
             </fieldset>
 
-            {/* Navigation & Action Buttons */}
-            <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
+            {/* Navigation & Action Buttons (Single Row on Mobile) */}
+            <div className="mt-8 flex items-center justify-between gap-2 border-t border-border pt-5">
               <div>
                 {step > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setStep(step - 1)}>
+                  <Button variant="ghost" size="sm" onClick={() => setStep(step - 1)} className="px-3">
                     Back
                   </Button>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={save.isPending || submitted}
                   onClick={() => save.mutate(false)}
+                  className="px-3"
                 >
-                  <Save className="size-4" />
-                  Save Progress
+                  <Save className="size-4 sm:mr-1" />
+                  <span className="hidden sm:inline">Save Progress</span>
+                  <span className="sm:hidden">Save</span>
                 </Button>
 
                 {step < STEPS.length - 1 ? (
@@ -1391,7 +1410,6 @@ function ApplicationPage() {
                           toast.error("Please select a payment plan.");
                           return;
                         }
-                      } else if (step === 3) {
                         if (!method) {
                           toast.error("Please select a payment method.");
                           return;
@@ -1399,8 +1417,9 @@ function ApplicationPage() {
                       }
                       setStep(step + 1);
                     }}
+                    className="px-4"
                   >
-                    Next Step
+                    <span>Next</span>
                     <ChevronRight className="size-4 ml-1" />
                   </Button>
                 ) : (
@@ -1416,9 +1435,10 @@ function ApplicationPage() {
                       missingFormFields.length > 0
                     }
                     onClick={() => save.mutate(true)}
+                    className="px-4"
                   >
                     {save.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                    {method === "bank_transfer" ? "Generate Official Invoice" : "Generate Invoice & Pay Now"}
+                    Submit
                   </Button>
                 )}
               </div>
