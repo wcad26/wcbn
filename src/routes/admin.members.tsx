@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, type ErrorComponentProps } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -50,7 +50,8 @@ import { PeriodFilter, PeriodFilterState, isDateInPeriod } from "@/components/wc
 import { unregisterWcbnMembers } from "@/lib/payments.functions";
 import { getCategoryArchetype, type Category } from "@/lib/fees";
 
-function MembersErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function MembersErrorComponent({ error, reset }: ErrorComponentProps) {
+  const message = error instanceof Error ? error.message : undefined;
   return (
     <AdminPage
       title="Member Directory"
