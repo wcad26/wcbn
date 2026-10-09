@@ -208,8 +208,8 @@ function ApplicationsPipeline() {
 
         // 4. If this is an entrepreneur application with a business name, ensure it is created in wcbn_businesses
         const answers = (app.applicant_data ?? {}) as Record<string, any>;
-        if (answers.business_name) {
-          const bizSlug = slugify(answers.business_name) || `biz-${Date.now().toString().slice(-6)}`;
+        if (answers["business_name"]) {
+          const bizSlug = slugify(answers["business_name"]) || `biz-${Date.now().toString().slice(-6)}`;
           const { data: existingBiz } = await supabase
             .from("wcbn_businesses")
             .select("id")
@@ -220,15 +220,15 @@ function ApplicationsPipeline() {
             await supabase
               .from("wcbn_businesses")
               .update({
-                display_name: answers.business_name,
-                legal_name: answers.business_name,
-                sector: answers.sector || "General",
-                city: answers.city || null,
-                country: answers.country || "Cameroon",
-                summary: answers.business_summary || null,
-                description: answers.business_summary || null,
-                website_url: answers.website_url || null,
-                registration_number: answers.registration_number || null,
+                display_name: answers["business_name"],
+                legal_name: answers["business_name"],
+                sector: answers["sector"] || "General",
+                city: answers["city"] || null,
+                country: answers["country"] || "Cameroon",
+                summary: answers["business_summary"] || null,
+                description: answers["business_summary"] || null,
+                website_url: answers["website_url"] || null,
+                registration_number: answers["registration_number"] || null,
                 vetting_status: "approved",
                 is_active: true,
                 approved_at: now,
@@ -238,16 +238,16 @@ function ApplicationsPipeline() {
           } else {
             await supabase.from("wcbn_businesses").insert({
               owner_member_id: app.wcbn_member_id,
-              display_name: answers.business_name,
-              legal_name: answers.business_name,
+              display_name: answers["business_name"],
+              legal_name: answers["business_name"],
               slug: bizSlug,
-              sector: answers.sector || "General",
-              city: answers.city || null,
-              country: answers.country || "Cameroon",
-              summary: answers.business_summary || null,
-              description: answers.business_summary || null,
-              website_url: answers.website_url || null,
-              registration_number: answers.registration_number || null,
+              sector: answers["sector"] || "General",
+              city: answers["city"] || null,
+              country: answers["country"] || "Cameroon",
+              summary: answers["business_summary"] || null,
+              description: answers["business_summary"] || null,
+              website_url: answers["website_url"] || null,
+              registration_number: answers["registration_number"] || null,
               listing_type: "business",
               vetting_status: "approved",
               is_active: true,
@@ -356,10 +356,10 @@ function ApplicationsPipeline() {
         const nameMatch = `${p?.first_name ?? ""} ${p?.last_name ?? ""}`.toLowerCase().includes(q);
         const emailMatch = p?.email?.toLowerCase().includes(q);
         const wcaMatch = app.wcbn_members?.members?.member_id?.toLowerCase().includes(q);
-        const ventureMatch = (answers.business_name || answers.organization || "")
+        const ventureMatch = (answers["business_name"] || answers["organization"] || "")
           .toLowerCase()
           .includes(q);
-        const sectorMatch = (answers.sector || answers.preferred_sectors || "")
+        const sectorMatch = (answers["sector"] || answers["preferred_sectors"] || "")
           .toLowerCase()
           .includes(q);
 
@@ -496,7 +496,7 @@ function ApplicationsPipeline() {
                   <div>
                     <span className="text-muted-foreground block">Location:</span>
                     <span className="font-semibold text-foreground flex items-center gap-1.5 mt-0.5">
-                      <MapPin className="size-3 text-muted-foreground" /> {[answers.city || p?.city, answers.country || p?.country].filter(Boolean).join(", ") || "—"}
+                      <MapPin className="size-3 text-muted-foreground" /> {[answers["city"] || p?.city, answers["country"] || p?.country].filter(Boolean).join(", ") || "—"}
                     </span>
                   </div>
                   <div>
@@ -530,33 +530,33 @@ function ApplicationsPipeline() {
                   <div className="grid gap-4 sm:grid-cols-2 text-xs">
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
                       <span className="text-muted-foreground block">Professional Title / Role</span>
-                      <p className="font-semibold text-foreground mt-1 text-sm">{answers.investor_role || "—"}</p>
+                      <p className="font-semibold text-foreground mt-1 text-sm">{answers["investor_role"] || "—"}</p>
                     </div>
 
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
                       <span className="text-muted-foreground block">Organization / Firm</span>
-                      <p className="font-semibold text-foreground mt-1 text-sm">{answers.organization || "—"}</p>
+                      <p className="font-semibold text-foreground mt-1 text-sm">{answers["organization"] || "—"}</p>
                     </div>
 
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
                       <span className="text-muted-foreground block">Investment Ticket Size / Capacity</span>
-                      <p className="font-semibold text-foreground mt-1 text-sm">{answers.ticket_size || "—"}</p>
+                      <p className="font-semibold text-foreground mt-1 text-sm">{answers["ticket_size"] || "—"}</p>
                     </div>
 
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
                       <span className="text-muted-foreground block">Mentorship Availability</span>
-                      <p className="font-semibold text-foreground mt-1 text-sm">{answers.mentorship_availability || "—"}</p>
+                      <p className="font-semibold text-foreground mt-1 text-sm">{answers["mentorship_availability"] || "—"}</p>
                     </div>
                   </div>
 
-                  {answers.linkedin_url && (
+                  {answers["linkedin_url"] && (
                     <div className="rounded-2xl border border-border p-4 bg-muted/20 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
                         <Linkedin className="size-4 text-blue-600" />
                         <span className="font-medium text-foreground">LinkedIn Profile:</span>
-                        <span className="text-muted-foreground">{answers.linkedin_url}</span>
+                        <span className="text-muted-foreground">{answers["linkedin_url"]}</span>
                       </div>
-                      <a href={answers.linkedin_url} target="_blank" rel="noreferrer">
+                      <a href={answers["linkedin_url"]} target="_blank" rel="noreferrer">
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
                           Open <ExternalLink className="size-3" />
                         </Button>
@@ -564,11 +564,11 @@ function ApplicationsPipeline() {
                     </div>
                   )}
 
-                  {answers.advisory_areas?.length > 0 && (
+                  {answers["advisory_areas"]?.length > 0 && (
                     <div className="space-y-1.5 text-xs">
                       <span className="text-muted-foreground block font-medium">Advisory Expertise Areas:</span>
                       <div className="flex flex-wrap gap-1.5">
-                        {answers.advisory_areas.map((area: string) => (
+                        {answers["advisory_areas"].map((area: string) => (
                           <Badge key={area} variant="secondary" className="text-xs">
                             {area}
                           </Badge>
@@ -577,20 +577,20 @@ function ApplicationsPipeline() {
                     </div>
                   )}
 
-                  {answers.experience_summary && (
+                  {answers["experience_summary"] && (
                     <div className="space-y-1.5 text-xs">
                       <span className="text-muted-foreground block font-medium">Professional Experience Summary:</span>
                       <div className="rounded-2xl bg-muted/30 p-4 border border-border text-foreground leading-relaxed">
-                        {answers.experience_summary}
+                        {answers["experience_summary"]}
                       </div>
                     </div>
                   )}
 
-                  {answers.kingdom_vision && (
+                  {answers["kingdom_vision"] && (
                     <div className="space-y-1.5 text-xs">
                       <span className="text-muted-foreground block font-medium">Kingdom & Business Network Vision:</span>
                       <div className="rounded-2xl bg-muted/30 p-4 border border-border text-foreground leading-relaxed">
-                        {answers.kingdom_vision}
+                        {answers["kingdom_vision"]}
                       </div>
                     </div>
                   )}
@@ -606,12 +606,12 @@ function ApplicationsPipeline() {
                   <div className="grid gap-4 sm:grid-cols-2 text-xs">
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
                       <span className="text-muted-foreground block">Enterprise Name</span>
-                      <p className="font-bold text-foreground mt-1 text-sm">{answers.business_name || "—"}</p>
+                      <p className="font-bold text-foreground mt-1 text-sm">{answers["business_name"] || "—"}</p>
                     </div>
 
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
                       <span className="text-muted-foreground block">Industry / Sector</span>
-                      <p className="font-semibold text-foreground mt-1 text-sm">{answers.sector || "—"}</p>
+                      <p className="font-semibold text-foreground mt-1 text-sm">{answers["sector"] || "—"}</p>
                     </div>
 
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
