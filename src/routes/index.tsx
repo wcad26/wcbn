@@ -102,7 +102,7 @@ function Index() {
 
       <section className="bg-ink py-24 lg:py-32">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <SectionHeading light eyebrow="A credible business community" title="Trust is earned. Impact is measured." copy="Every member passes a rigorous, values-led validation grounded in active WCA and DCG membership, Christian character, business integrity and measurable impact." />
+          <SectionHeading light eyebrow="A credible business community" title="Trust is earned. Impact is measured." copy="Every member passes a rigorous, values-led validation grounded in active WCA and Destiny Care Group (DCG) membership, Christian character, business integrity and measurable impact." />
           <div className="mt-14 grid gap-5 md:grid-cols-3">
             <Feature image={enterpriseImage} icon={<Building2 />} title="Vetted businesses" copy="Discover enterprises reviewed for legitimacy, integrity and excellence." />
             <Feature image={impactImage} icon={<Globe2 />} title="Global impact" copy="See how members advance practical outcomes aligned to the SDGs." />
@@ -190,7 +190,7 @@ function Index() {
         <div className="absolute inset-0 gradient-brand opacity-90" />
         <div className="relative mx-auto max-w-4xl px-5 py-24 text-center text-primary-foreground lg:px-8">
           <h2 className="text-4xl font-bold md:text-5xl">Already a World Changers Association member?</h2>
-          <p className="mt-5 text-primary-foreground/85">You do not create a new account. Sign in with the credentials you already have and your membership, region and DCG are verified for you.</p>
+          <p className="mt-5 text-primary-foreground/85">You do not create a new account. Sign in with the credentials you already have and your membership, region and Destiny Care Group (DCG) are verified for you.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg" variant="secondary"><Link to="/auth">Member sign in</Link></Button>
             <Button asChild size="lg" variant="outline" className="border-primary-foreground/40 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 hover:text-primary-foreground"><Link to="/membership">How membership works</Link></Button>

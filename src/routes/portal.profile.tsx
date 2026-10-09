@@ -55,12 +55,12 @@ function ProfilePage() {
               <dl className="mt-4 space-y-2 text-sm">
                 <Item label="Member ID" value={identity?.member?.member_id ?? "—"} />
                 <Item label="Region" value={identity?.regionName ?? "—"} />
-                <Item label="DCG" value={identity?.dcgName ?? "No DCG assignment"} />
+                <Item label="Destiny Care Group (DCG)" value={identity?.dcgName ?? "No DCG assignment"} />
                 <Item label="Joined" value={identity?.member?.join_date ?? "—"} />
               </dl>
               <ul className="mt-4 space-y-2 text-sm">
                 <li className="flex items-center gap-2">{identity?.wcaActive ? <BadgeCheck className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active WCA membership</li>
-                <li className="flex items-center gap-2">{identity?.dcgActive ? <BadgeCheck className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active DCG participation</li>
+                <li className="flex items-center gap-2">{identity?.dcgActive ? <BadgeCheck className="size-4 text-primary" /> : <XCircle className="size-4 text-destructive" />}Active Destiny Care Group (DCG) participation</li>
               </ul>
             </div>
             <div className="rounded-3xl border border-border bg-card p-6 shadow-card">

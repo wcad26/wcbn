@@ -15,7 +15,7 @@ const CLAUSES = [
   ["Excellence in enterprise", "I will pursue quality, sound governance and sustainable growth so that my business is worth imitating."],
   ["People before profit", "I will treat employees, suppliers and customers with dignity, paying fairly and developing others."],
   ["Measurable impact", "I will pursue the impact commitment I have made and report it honestly each year."],
-  ["Loyalty to the family", "I will remain active in the World Changers Association and my DCG, and contribute to the network, not only draw from it."],
+  ["Loyalty to the family", "I will remain active in the World Changers Association and my Destiny Care Group (DCG), and contribute to the network, not only draw from it."],
 ];
 
 function CovenantPage() {

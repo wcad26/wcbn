@@ -7,7 +7,7 @@ import { fetchCategories } from "@/lib/fees";
 import { money } from "@/lib/wcbn";
 
 const pillars = [
-  "WCA & DCG alignment",
+  "WCA & Destiny Care Group (DCG) alignment",
   "Christian character",
   "Business capacity",
   "Leadership & influence",
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/membership")({
       { title: "WCBN Membership | Selective Christian Business Network" },
       { name: "description", content: "Explore WCBN eligibility, validation criteria, membership categories, regional fees and covenant." },
       { property: "og:title", content: "WCBN Membership" },
-      { property: "og:description", content: "A rigorous pathway for WCA members and DCG participants creating measurable impact." },
+      { property: "og:description", content: "A rigorous pathway for WCA members and Destiny Care Group (DCG) participants creating measurable impact." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -39,7 +39,7 @@ function Membership() {
     <PublicPage
       eyebrow="Membership"
       title="Belonging begins with alignment."
-      intro="WCA membership and active DCG participation establish eligibility. Character, capacity, leadership and measurable impact earn selection."
+      intro="WCA membership and active Destiny Care Group (DCG) participation establish eligibility. Character, capacity, leadership and measurable impact earn selection."
     >
       <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
         {/* Core Pillars */}
@@ -113,7 +113,7 @@ function Membership() {
         <div className="mt-20 rounded-3xl bg-secondary p-8 md:flex md:items-center md:justify-between">
           <div>
             <h2 className="text-3xl font-bold">Already a WCA member?</h2>
-            <p className="mt-2 text-muted-foreground">Sign in with your existing credentials. Your WCA and DCG credentials are automatically verified to begin your onboarding.</p>
+            <p className="mt-2 text-muted-foreground">Sign in with your existing credentials. Your WCA and Destiny Care Group (DCG) credentials are automatically verified to begin your onboarding.</p>
           </div>
           <Button asChild size="lg" className="mt-6 md:mt-0">
             <Link to="/auth">Begin application</Link>

@@ -511,7 +511,7 @@ function ApplicationPage() {
           ? "Review your invoice and complete your payment to activate membership."
           : submitted
           ? "Your application is being processed by leadership."
-          : "Complete the streamlined onboarding steps and join the Kingdom Business Network."
+          : "Complete the streamlined onboarding steps and join World Changers Business Network."
       }
     >
       <div className="space-y-6">
@@ -544,7 +544,7 @@ function ApplicationPage() {
             <div className="mt-4 rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
               <Info className="size-4 shrink-0 mt-0.5" />
               <span>
-                <strong>DCG Assignment in Progress:</strong> You can complete and submit your application now. Your Discipleship Cell Group (DCG) connection will be verified by regional leadership during onboarding review.
+                <strong>DCG Assignment in Progress:</strong> You can complete and submit your application now. Your Destiny Care Group (DCG) connection will be verified by regional leadership during onboarding review.
               </span>
             </div>
           )}
