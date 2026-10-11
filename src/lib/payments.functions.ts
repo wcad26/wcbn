@@ -303,3 +303,67 @@ export const unregisterWcbnMembers = createServerFn({ method: "POST" })
 
     return { ok: true, deletedCount };
   });
+
+async function confirmIfPaid(context: { supabase: any }, invoiceId: string, secret: string, q: { transactionId?: string; txRef?: string }) {
+  const { data: invoice } = await context.supabase.from("wcbn_invoices").select("id, invoice_number, amount, currency_code, status").eq("id", invoiceId).maybeSingle();
+  if (!invoice) throw new Error("Invoice not found for this account.");
+  if (invoice.status === "paid") return "successful" as const;
+  const url = q.transactionId
+    ? `${FLW}/transactions/${encodeURIComponent(q.transactionId)}/verify`
+    : `${FLW}/transactions/verify_by_reference?tx_ref=${encodeURIComponent(q.txRef ?? "")}`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${secret}` } });
+  const body = (await res.json().catch(() => ({}))) as { data?: { id?: number; status?: string; tx_ref?: string; amount?: number; currency?: string; flw_ref?: string; payment_type?: string } };
+  const tx = body.data;
+  if (!tx || !tx.status) return "pending" as const;
+  if (tx.status === "failed" || tx.status === "cancelled") return "failed" as const;
+  if (tx.status !== "successful") return "pending" as const;
+  if (!String(tx.tx_ref ?? "").startsWith(invoice.invoice_number) || tx.currency !== invoice.currency_code || Number(tx.amount) < Number(invoice.amount)) return "failed" as const;
+  const args = { _invoice_id: invoice.id, _method: tx.payment_type === "card" ? "card" : "mobile_money", _provider: "flutterwave", _reference: `${tx.id}${tx.flw_ref ? `/${tx.flw_ref}` : ""}`, _amount: Number(tx.amount) };
+  let client = context.supabase;
+  if (process.env['SUPABASE_SERVICE_ROLE_KEY']) client = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
+  const { error } = await client.rpc("wcbn_confirm_payment", args);
+  if (error) throw new Error(error.message);
+  return "successful" as const;
+}
+
+/** Triggers an in-app mobile money push (customer approves on their phone). */
+export const chargeMobileMoney = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ invoiceId: z.string().uuid(), phone: z.string().min(8).max(20), network: z.string().max(20).optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const secret = process.env['FLUTTERWAVE_SECRET_KEY'];
+    if (!secret) throw new Error("Online payments are not configured.");
+    const { data: invoice } = await context.supabase.from("wcbn_invoices").select("invoice_number, amount, currency_code, status").eq("id", data.invoiceId).single();
+    if (!invoice) throw new Error("Invoice not found.");
+    if (invoice.status === "paid") return { txRef: invoice.invoice_number, redirect: null as string | null };
+    const { data: profile } = await context.supabase.from("profiles").select("first_name, last_name, email").eq("id", context.userId).maybeSingle();
+    const cur = invoice.currency_code;
+    const type = cur === "GHS" ? "mobile_money_ghana" : cur === "UGX" ? "mobile_money_uganda" : cur === "RWF" ? "mobile_money_rwanda" : cur === "ZMW" ? "mobile_money_zambia" : cur === "KES" ? "mpesa" : "mobile_money_franco";
+    const txRef = `${invoice.invoice_number}-${Date.now()}`;
+    const phone = data.phone.replace(/[^\d]/g, "");
+    const res = await fetch(`${FLW}/charges?type=${type}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tx_ref: txRef, amount: Number(invoice.amount), currency: cur, phone_number: phone,
+        email: profile?.email ?? "member@wcbn.org", fullname: [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || "WCBN member",
+        country: cur === "XAF" ? "CM" : cur === "XOF" ? "CI" : undefined, network: data.network || undefined,
+        meta: { invoice_id: data.invoiceId },
+      }),
+    });
+    const body = (await res.json().catch(() => ({}))) as { status?: string; message?: string; meta?: { authorization?: { mode?: string; redirect?: string } } };
+    if (!res.ok || body.status !== "success") throw new Error(body.message ?? "Could not start the mobile money payment.");
+    const auth = body.meta?.authorization;
+    return { txRef, redirect: auth?.mode === "redirect" ? auth.redirect ?? null : null };
+  });
+
+/** Checks a pending in-app payment and activates membership once successful. */
+export const checkPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ invoiceId: z.string().uuid(), txRef: z.string().max(120).optional(), transactionId: z.string().max(40).optional() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const secret = process.env['FLUTTERWAVE_SECRET_KEY'];
+    if (!secret) throw new Error("Online payments are not configured.");
+    const status = await confirmIfPaid(context, data.invoiceId, secret, { txRef: data.txRef, transactionId: data.transactionId });
+    return { status };
+  });
