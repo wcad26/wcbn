@@ -183,20 +183,29 @@ function AdminOverview() {
   const { chartData, categoryKeys } = useMemo(() => {
     // Generate buckets depending on period preset
     const now = new Date();
-    const buckets: { key: string; label: string; date: Date }[] = [];
+    const buckets: { key: string; label: string; startDate: Date; endDate: Date }[] = [];
 
     const numBuckets = period.preset === "1M" ? 4 : period.preset === "3M" ? 6 : period.preset === "6M" ? 6 : 12;
 
     for (let i = numBuckets - 1; i >= 0; i--) {
-      const d = new Date(now);
       if (period.preset === "1M") {
-        d.setDate(d.getDate() - i * 7);
+        const end = new Date(now.getTime() - i * 7 * 86400000);
+        const start = new Date(end.getTime() - 7 * 86400000);
         const label = `W-${numBuckets - i}`;
-        buckets.push({ key: d.toISOString().slice(0, 10), label, date: d });
+        buckets.push({ key: end.toISOString().slice(0, 10), label, startDate: start, endDate: end });
       } else {
-        d.setMonth(d.getMonth() - i);
-        const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-        buckets.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label, date: d });
+        const targetMonth = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = targetMonth.getFullYear();
+        const m = targetMonth.getMonth();
+        const startDate = new Date(y, m, 1, 0, 0, 0, 0);
+        const endDate = new Date(y, m + 1, 0, 23, 59, 59, 999);
+        const label = targetMonth.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+        buckets.push({
+          key: `${y}-${String(m + 1).padStart(2, "0")}`,
+          label,
+          startDate,
+          endDate,
+        });
       }
     }
 
@@ -236,30 +245,27 @@ function AdminOverview() {
     }
 
     // Build bucket rows
-    const rows = buckets.map((bucket, bIdx) => {
+    const rows = buckets.map((bucket) => {
       const row: Record<string, any> = {
         name: bucket.label,
-        date: bucket.date,
+        date: bucket.endDate,
       };
 
       keys.forEach((k) => {
         row[k.key] = 0;
       });
 
-      const nextBucket = buckets[bIdx + 1];
-
       allMembers.forEach((m) => {
         const mDate = new Date(m.created_at || m.inducted_at || new Date());
-        const isBeforeEnd = mDate <= (nextBucket ? nextBucket.date : new Date());
-        const isCurrentPeriod =
-          mDate <= (nextBucket ? nextBucket.date : new Date()) &&
-          mDate >= bucket.date;
+        const isCumulative = mDate <= bucket.endDate;
+        const isCurrentPeriod = mDate >= bucket.startDate && mDate <= bucket.endDate;
 
-        const countThis = viewMode === "cumulative" ? isBeforeEnd : isCurrentPeriod;
+        const countThis = viewMode === "cumulative" ? isCumulative : isCurrentPeriod;
         if (!countThis) return;
 
         // Resolve member archetype with full hierarchy
-        const memberArch = resolveMemberArchetype(m, categories, applicationsByMember.get(m.id));
+        const app = applicationsByMember.get(m.id);
+        const memberArch = resolveMemberArchetype(m, categories, app);
 
         // CRITICAL FILTER: If trackFilter is selected (entrepreneur or investor_mentor)
         // and member does not match the track filter, strictly skip this member!
@@ -267,15 +273,22 @@ function AdminOverview() {
           return;
         }
 
+        // Resolve target category ID and name (check member record first, then application)
+        const appData = (app?.applicant_data ?? {}) as Record<string, any>;
+        const targetCatId = m.category_id || appData["category_id"] || null;
+        const targetCatName = m.category || appData["category_name"] || null;
+
         // Attribute strictly to matching key
-        if (m.category_id && keys.some((k) => k.key === `cat_${m.category_id}`)) {
-          row[`cat_${m.category_id}`] = (row[`cat_${m.category_id}`] || 0) + 1;
+        if (targetCatId && keys.some((k) => k.key === `cat_${targetCatId}`)) {
+          row[`cat_${targetCatId}`] = (row[`cat_${targetCatId}`] || 0) + 1;
         } else {
           // Check if category name or code matches any key in keys
           const matchedCat = categories.find(
             (c) =>
-              c.name?.toLowerCase() === m.category?.toLowerCase() ||
-              c.code?.toLowerCase() === m.category?.toLowerCase()
+              (targetCatName && c.name?.toLowerCase() === targetCatName.toLowerCase()) ||
+              (targetCatName && c.code?.toLowerCase() === targetCatName.toLowerCase()) ||
+              (m.category && c.name?.toLowerCase() === m.category.toLowerCase()) ||
+              (m.category && c.code?.toLowerCase() === m.category.toLowerCase())
           );
           if (matchedCat && keys.some((k) => k.key === `cat_${matchedCat.id}`)) {
             row[`cat_${matchedCat.id}`] = (row[`cat_${matchedCat.id}`] || 0) + 1;
@@ -283,6 +296,17 @@ function AdminOverview() {
             row["investors"] = (row["investors"] || 0) + 1;
           } else if (memberArch === "entrepreneur" && row["entrepreneurs"] !== undefined) {
             row["entrepreneurs"] = (row["entrepreneurs"] || 0) + 1;
+          } else {
+            // Track fallback: attribute to the primary category of this archetype so NO member is dropped
+            const trackCatKeys = keys.filter((k) => {
+              const cat = categories.find((c) => `cat_${c.id}` === k.key);
+              return cat ? getCategoryArchetype(cat) === memberArch : false;
+            });
+            if (trackCatKeys.length > 0) {
+              row[trackCatKeys[0].key] = (row[trackCatKeys[0].key] || 0) + 1;
+            } else if (keys[0]) {
+              row[keys[0].key] = (row[keys[0].key] || 0) + 1;
+            }
           }
         }
       });
