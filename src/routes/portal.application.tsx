@@ -25,7 +25,7 @@ import {
   instalment, getCategoryArchetype, archetypeToDbType,
   type BillingCycle, type PaymentMethod, type CategoryArchetype, type Category
 } from "@/lib/fees";
-import { createFlutterwavePaymentLink, startOnboardingPayment, verifyFlutterwavePayment } from "@/lib/payments.functions";
+import { startOnboardingPayment, verifyFlutterwavePayment } from "@/lib/payments.functions";
 import { InvoiceCard, type InvoiceRow } from "@/components/wcbn/invoice-card";
 import { PayDialog } from "@/components/wcbn/pay-dialog";
 
@@ -159,6 +159,7 @@ function ApplicationPage() {
   const [transferProof, setTransferProof] = useState<File | null>(null);
   const [editingPlan, setEditingPlan] = useState(false);
   const [momoPhone, setMomoPhone] = useState("");
+  useEffect(() => { if (identity?.profile?.phone) setMomoPhone((p) => p || identity.profile!.phone!); }, [identity?.profile?.phone]);
   const [payInvoice, setPayInvoice] = useState<{ id: string; method: "mobile_money" | "card" } | null>(null);
   const [agreeCovenant, setAgreeCovenant] = useState(false);
   const currency = identity?.regionCurrency ?? "XAF";
@@ -513,6 +514,15 @@ function ApplicationPage() {
   }
 
   return (
+    <>
+    <PayDialog
+      invoiceId={payInvoice?.id ?? null}
+      method={payInvoice?.method ?? "mobile_money"}
+      phone={momoPhone}
+      publicKey={settings?.flutterwave_public_key ?? null}
+      customer={{ email: identity?.email ?? "member@wcbn.org", name: identity?.profile ? [identity.profile.first_name, identity.profile.last_name].filter(Boolean).join(" ") : "WCBN member", phone: momoPhone || identity?.profile?.phone || "" }}
+      onClose={() => { setPayInvoice(null); queryClient.invalidateQueries({ queryKey: ["portal"] }); }}
+    />
     <MemberPage
       title="WCBN Membership Onboarding"
       description={
@@ -1674,6 +1684,7 @@ function ApplicationPage() {
         )}
       </div>
     </MemberPage>
+    </>
   );
 }
 
