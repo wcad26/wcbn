@@ -115,7 +115,7 @@ export function encryptCardPayload(encryptionKey: string, payload: Record<string
   }
 }
 
-/** Normalizes mobile money phone numbers and detects carrier (e.g. MTN vs Orange for Cameroon/XAF) */
+/** Normalizes mobile money phone numbers and intelligently detects carrier (e.g. MTN vs Orange for Cameroon/XAF) */
 export function sanitizeMobileMoneyPhone(rawPhone: string, currency: string = "XAF"): {
   formattedPhone: string;
   detectedNetwork: "MTN" | "ORANGE" | undefined;
@@ -123,18 +123,26 @@ export function sanitizeMobileMoneyPhone(rawPhone: string, currency: string = "X
 } {
   const digits = rawPhone.replace(/\D/g, "");
   if (currency === "XAF") {
+    // Strip international dialing prefixes (e.g. 00237, 237) or trunk zero
     let localDigits = digits;
-    if (digits.startsWith("237") && digits.length >= 12) {
-      localDigits = digits.slice(3);
+    if (localDigits.startsWith("00237")) {
+      localDigits = localDigits.slice(5);
+    } else if (localDigits.startsWith("237") && localDigits.length >= 12) {
+      localDigits = localDigits.slice(3);
+    } else if (localDigits.startsWith("0") && localDigits.length === 10) {
+      localDigits = localDigits.slice(1);
     }
-    const clean12 = localDigits.length === 9 ? `237${localDigits}` : digits;
+
+    const clean12 = localDigits.length === 9 ? `237${localDigits}` : (localDigits.length === 12 && localDigits.startsWith("237") ? localDigits : digits);
 
     let detected: "MTN" | "ORANGE" | undefined;
-    if (localDigits.length === 9 && localDigits.startsWith("6")) {
+    if (localDigits.startsWith("6")) {
       const p2 = localDigits.slice(0, 2);
       const p3 = localDigits.slice(0, 3);
+      // MTN Cameroon: 67x (670-679), 68x (680-689), 650-654
       if (p2 === "67" || p2 === "68" || ["650", "651", "652", "653", "654"].includes(p3)) {
         detected = "MTN";
+      // Orange Cameroon: 69x (690-699), 655-659
       } else if (p2 === "69" || ["655", "656", "657", "658", "659"].includes(p3)) {
         detected = "ORANGE";
       }
@@ -561,9 +569,8 @@ export const chargeMobileMoney = createServerFn({ method: "POST" })
     const txRef = `${invoice.invoice_number}-${Date.now()}`;
 
     const { formattedPhone, detectedNetwork, country } = sanitizeMobileMoneyPhone(data.phone, cur);
-    const chosenNetwork = (data.network && data.network.trim().length > 0)
-      ? data.network.trim().toUpperCase()
-      : (detectedNetwork ?? "MTN");
+    // Intelligent auto-detection has highest priority, ensuring correct operator is always used
+    const chosenNetwork = detectedNetwork || (data.network && data.network.trim().length > 0 ? data.network.trim().toUpperCase() : "MTN");
 
     const payload: Record<string, any> = {
       tx_ref: txRef,

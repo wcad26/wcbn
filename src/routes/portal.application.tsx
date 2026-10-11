@@ -175,11 +175,16 @@ function ApplicationPage() {
 
   const handleMomoPhoneChange = (val: string) => {
     setMomoPhone(val);
-    const { detectedNetwork } = sanitizeMobileMoneyPhone(val, currency);
-    if (detectedNetwork) {
-      setMomoNetwork(detectedNetwork);
+    const { detectedNetwork: net } = sanitizeMobileMoneyPhone(val, currency);
+    if (net) {
+      setMomoNetwork(net);
     }
   };
+
+  const detectedNetwork = useMemo(() => {
+    const { detectedNetwork: net } = sanitizeMobileMoneyPhone(momoPhone, currency);
+    return net || momoNetwork;
+  }, [momoPhone, currency, momoNetwork]);
 
   // Temporary in-memory card inputs (never stored in database/localStorage for security)
   const [cardNumber, setCardNumber] = useState("");
@@ -1605,37 +1610,50 @@ function ApplicationPage() {
                         </p>
                       </div>
 
-                      <div className="grid gap-4 sm:grid-cols-2 items-end">
+                      <div className="space-y-2">
                         <Field label="Mobile Money Number *">
-                          <Input
-                            inputMode="tel"
-                            placeholder="e.g. 2376XXXXXXXX"
-                            value={momoPhone}
-                            onChange={(e) => handleMomoPhoneChange(e.target.value)}
-                          />
-                        </Field>
-
-                        <div>
-                          <Label className="text-xs font-semibold text-muted-foreground block mb-2">Network Operator</Label>
-                          <div className="flex gap-2">
-                            {(["MTN", "ORANGE"] as const).map((net) => {
-                              const on = momoNetwork === net;
-                              return (
-                                <button
-                                  type="button"
-                                  key={net}
-                                  onClick={() => setMomoNetwork(net)}
-                                  className={`flex-1 rounded-lg py-2 px-3 text-xs font-semibold border transition ${
-                                    on
-                                      ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                                      : "border-border bg-card text-muted-foreground hover:bg-muted"
+                          <div className="relative">
+                            <Input
+                              inputMode="tel"
+                              placeholder="e.g. 678135701 or 2376XXXXXXXX"
+                              value={momoPhone}
+                              onChange={(e) => handleMomoPhoneChange(e.target.value)}
+                              className="pr-36 font-mono text-sm"
+                            />
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                              {detectedNetwork ? (
+                                <span
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold shadow-2xs ${
+                                    detectedNetwork === "MTN"
+                                      ? "bg-amber-400 text-amber-950 dark:bg-amber-500 dark:text-amber-950"
+                                      : "bg-orange-500 text-white"
                                   }`}
                                 >
-                                  {net === "MTN" ? "MTN MoMo" : "Orange Money"}
-                                </button>
-                              );
-                            })}
+                                  ⚡ {detectedNetwork === "MTN" ? "MTN MoMo" : "Orange Money"}
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-muted-foreground font-medium px-1">
+                                  MTN / Orange
+                                </span>
+                              )}
+                            </div>
                           </div>
+                        </Field>
+
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {detectedNetwork ? (
+                            <span className="flex items-center gap-1.5 text-foreground font-medium">
+                              <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+                              Operator detected:{" "}
+                              <strong className={detectedNetwork === "MTN" ? "text-amber-600 dark:text-amber-400" : "text-orange-600"}>
+                                {detectedNetwork === "MTN" ? "MTN Mobile Money" : "Orange Money"}
+                              </strong>
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              Enter your mobile money number. The network operator is automatically detected.
+                            </span>
+                          )}
                         </div>
                       </div>
 

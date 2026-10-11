@@ -231,35 +231,25 @@ export function PayDialog({
                   <div className="space-y-2 pt-1 border-t border-border/60">
                     <div>
                       <Label className="text-[11px] text-muted-foreground">Change Phone Number</Label>
-                      <Input
-                        className="h-8 text-xs font-mono mt-1"
-                        inputMode="tel"
-                        value={activePhone}
-                        onChange={(e) => handlePhoneInputChange(e.target.value)}
-                        placeholder="e.g. 670000000 or 2376..."
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-[11px] text-muted-foreground">Select Network</Label>
-                      <div className="flex gap-2 mt-1">
-                        <button
-                          type="button"
-                          onClick={() => setActiveNetwork("MTN")}
-                          className={`flex-1 rounded-lg py-1 text-xs font-semibold border transition ${
-                            activeNetwork === "MTN" ? "bg-amber-400/20 border-amber-500 text-amber-900 dark:text-amber-300" : "bg-card border-border text-muted-foreground"
-                          }`}
-                        >
-                          MTN MoMo
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveNetwork("ORANGE")}
-                          className={`flex-1 rounded-lg py-1 text-xs font-semibold border transition ${
-                            activeNetwork === "ORANGE" ? "bg-orange-500/20 border-orange-500 text-orange-900 dark:text-orange-300" : "bg-card border-border text-muted-foreground"
-                          }`}
-                        >
-                          Orange Money
-                        </button>
+                      <div className="relative mt-1">
+                        <Input
+                          className="h-8 text-xs font-mono pr-28"
+                          inputMode="tel"
+                          value={activePhone}
+                          onChange={(e) => handlePhoneInputChange(e.target.value)}
+                          placeholder="e.g. 678135701 or 2376..."
+                        />
+                        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              activeNetwork === "MTN"
+                                ? "bg-amber-400 text-amber-950 dark:bg-amber-500 dark:text-amber-950"
+                                : "bg-orange-500 text-white"
+                            }`}
+                          >
+                            ⚡ {activeNetwork === "MTN" ? "MTN MoMo" : "Orange Money"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -271,7 +261,7 @@ export function PayDialog({
                     onClick={() => setIsEditingPhone(true)}
                     className="h-6 text-[11px] p-0 text-primary hover:underline"
                   >
-                    <Edit2 className="size-3 mr-1" /> Use a different mobile money number or network
+                    <Edit2 className="size-3 mr-1" /> Use a different mobile money number
                   </Button>
                 )}
               </div>
