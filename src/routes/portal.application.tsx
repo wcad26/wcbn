@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Briefcase, CheckCircle2, CreditCard, FileUp, Landmark, Loader2,
   Save, Send, Smartphone, Sparkles, UserRound, XCircle, ChevronRight, HelpCircle,
-  Clock, Info
+  Clock, Info, ShieldCheck, Lock, Pencil
 } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
@@ -25,7 +25,7 @@ import {
   instalment, getCategoryArchetype, archetypeToDbType,
   type BillingCycle, type PaymentMethod, type CategoryArchetype, type Category
 } from "@/lib/fees";
-import { startOnboardingPayment, verifyFlutterwavePayment } from "@/lib/payments.functions";
+import { startOnboardingPayment, verifyFlutterwavePayment, sanitizeMobileMoneyPhone } from "@/lib/payments.functions";
 import { InvoiceCard, type InvoiceRow } from "@/components/wcbn/invoice-card";
 import { PayDialog } from "@/components/wcbn/pay-dialog";
 
@@ -86,8 +86,8 @@ export const MENTORSHIP_AVAILABILITY = [
 const STEPS = [
   "Membership Category",
   "Registration Details",
-  "Billing & Payment Method",
-  "Review & Confirm",
+  "Review & Covenant",
+  "Payment & Submit",
 ] as const;
 
 type Answers = {
@@ -159,10 +159,67 @@ function ApplicationPage() {
   const [transferProof, setTransferProof] = useState<File | null>(null);
   const [editingPlan, setEditingPlan] = useState(false);
   const [momoPhone, setMomoPhone] = useState("");
-  useEffect(() => { if (identity?.profile?.phone) setMomoPhone((p) => p || identity.profile!.phone!); }, [identity?.profile?.phone]);
-  const [payInvoice, setPayInvoice] = useState<{ id: string; method: "mobile_money" | "card" } | null>(null);
-  const [agreeCovenant, setAgreeCovenant] = useState(false);
+  const [momoNetwork, setMomoNetwork] = useState<"MTN" | "ORANGE">("MTN");
   const currency = identity?.regionCurrency ?? "XAF";
+
+  useEffect(() => {
+    if (identity?.profile?.phone) {
+      setMomoPhone((p) => {
+        const val = p || identity.profile!.phone!;
+        const { detectedNetwork } = sanitizeMobileMoneyPhone(val, currency);
+        if (detectedNetwork) setMomoNetwork(detectedNetwork);
+        return val;
+      });
+    }
+  }, [identity?.profile?.phone, currency]);
+
+  const handleMomoPhoneChange = (val: string) => {
+    setMomoPhone(val);
+    const { detectedNetwork } = sanitizeMobileMoneyPhone(val, currency);
+    if (detectedNetwork) {
+      setMomoNetwork(detectedNetwork);
+    }
+  };
+
+  // Temporary in-memory card inputs (never stored in database/localStorage for security)
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [cardholderName, setCardholderName] = useState("");
+
+  useEffect(() => {
+    if (identity?.fullName && !cardholderName) {
+      setCardholderName(identity.fullName);
+    }
+  }, [identity?.fullName, cardholderName]);
+
+  const handleCardNumberChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, "").slice(0, 19);
+    const formatted = digits.replace(/(.{4})/g, "$1 ").trim();
+    setCardNumber(formatted);
+  };
+
+  const handleExpiryChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, "").slice(0, 4);
+    if (digits.length >= 3) {
+      setCardExpiry(`${digits.slice(0, 2)}/${digits.slice(2)}`);
+    } else {
+      setCardExpiry(digits);
+    }
+  };
+
+  const [payInvoice, setPayInvoice] = useState<{
+    id: string;
+    method: "mobile_money" | "card";
+    cardData?: {
+      cardNumber: string;
+      cvv: string;
+      expiryMonth: string;
+      expiryYear: string;
+      cardholderName: string;
+    } | null;
+  } | null>(null);
+  const [agreeCovenant, setAgreeCovenant] = useState(false);
 
   const draftKey = identity?.userId ? `${DRAFT_KEY_PREFIX}${identity.userId}` : null;
   const isInitializedRef = useRef(false);
@@ -210,6 +267,8 @@ function ApplicationPage() {
             if (parsed.categoryId) setCategoryId(parsed.categoryId);
             if (parsed.cycle) setCycle(parsed.cycle);
             if (parsed.method) setMethod(parsed.method);
+            if (parsed.momoPhone) setMomoPhone(parsed.momoPhone);
+            if (parsed.momoNetwork) setMomoNetwork(parsed.momoNetwork);
             if (typeof parsed.step === "number" && parsed.step >= 0 && parsed.step <= 3) {
               setStep(parsed.step);
             }
@@ -226,11 +285,15 @@ function ApplicationPage() {
         category_id?: string;
         billing_cycle?: BillingCycle;
         payment_method?: PaymentMethod;
+        momo_phone?: string;
+        momo_network?: "MTN" | "ORANGE";
       };
       setAnswers({ ...EMPTY, ...d });
       if (d.category_id) setCategoryId(d.category_id);
       if (d.billing_cycle) setCycle(d.billing_cycle);
       if (d.payment_method) setMethod(d.payment_method);
+      if (d.momo_phone) setMomoPhone(d.momo_phone);
+      if (d.momo_network) setMomoNetwork(d.momo_network);
     }
 
     isInitializedRef.current = true;
@@ -293,6 +356,8 @@ function ApplicationPage() {
         categoryId,
         cycle,
         method,
+        momoPhone,
+        momoNetwork,
         answers,
         updatedAt: Date.now(),
       };
@@ -300,7 +365,7 @@ function ApplicationPage() {
     } catch {
       // ignore
     }
-  }, [draftKey, step, categoryId, cycle, method, answers, submitted, awaitingPayment]);
+  }, [draftKey, step, categoryId, cycle, method, momoPhone, momoNetwork, answers, submitted, awaitingPayment]);
 
   // Clear draft on successful payment or submission
   useEffect(() => {
@@ -391,6 +456,8 @@ function ApplicationPage() {
           category_id: categoryId,
           billing_cycle: cycle,
           payment_method: method,
+          momo_phone: momoPhone,
+          momo_network: momoNetwork,
           archetype,
         },
         wca_verified: !!identity.wcaActive,
@@ -409,7 +476,21 @@ function ApplicationPage() {
 
       if (submit) {
         if (!method) throw new Error("Please choose a payment method.");
-        if (method === "mobile_money" && momoPhone.replace(/\D/g, "").length < 8) throw new Error("Enter your mobile money number.");
+        if (method === "mobile_money" && momoPhone.replace(/\D/g, "").length < 8) {
+          throw new Error("Enter a valid mobile money number.");
+        }
+        if (method === "card") {
+          if (cardNumber.replace(/\D/g, "").length < 15) {
+            throw new Error("Please enter a valid card number.");
+          }
+          const [m, y] = cardExpiry.split("/");
+          if (!m || !y || m.trim().length === 0 || y.trim().length === 0) {
+            throw new Error("Please enter a valid card expiration date (MM/YY).");
+          }
+          if (cardCvv.trim().length < 3) {
+            throw new Error("Please enter the CVV / security code on your card.");
+          }
+        }
         const res = await startOnboardingPayment({
           data: {
             applicationId: applicationId!,
@@ -417,15 +498,20 @@ function ApplicationPage() {
             cycle,
             method,
             origin: window.location.origin,
+            momoPhone: method === "mobile_money" ? momoPhone : undefined,
+            momoNetwork: method === "mobile_money" ? momoNetwork : undefined,
           },
         });
-        if (method !== "bank_transfer" && !res.link) {
-          setPayInvoice({ id: res.invoiceId, method });
+        if (method !== "bank_transfer") {
+          const cardDataPayload = method === "card" ? {
+            cardNumber,
+            cardholderName: cardholderName.trim() || identity?.fullName || "WCBN Member",
+            expiryMonth: cardExpiry.split("/")[0].trim(),
+            expiryYear: cardExpiry.split("/")[1].trim(),
+            cvv: cardCvv.trim(),
+          } : null;
+          setPayInvoice({ id: res.invoiceId, method, cardData: cardDataPayload });
           return "pay";
-        }
-        if (res.link) {
-          window.location.href = res.link;
-          return "redirect";
         }
         return "invoice";
       }
@@ -477,12 +563,14 @@ function ApplicationPage() {
   const payExistingInvoice = useMutation({
     mutationFn: async (m: "mobile_money" | "card") => {
       if (!firstInvoice) throw new Error("No invoice found");
-      if (m === "mobile_money" && momoPhone.replace(/\D/g, "").length < 8) {
-        const p = window.prompt("Mobile money number", momoPhone || identity?.profile?.phone || "");
-        if (!p) return;
-        setMomoPhone(p);
-      }
-      setPayInvoice({ id: firstInvoice.id, method: m });
+      const cardDataPayload = m === "card" && cardNumber ? {
+        cardNumber,
+        cardholderName: cardholderName.trim() || identity?.fullName || "WCBN Member",
+        expiryMonth: cardExpiry.split("/")[0]?.trim() || "",
+        expiryYear: cardExpiry.split("/")[1]?.trim() || "",
+        cvv: cardCvv.trim(),
+      } : null;
+      setPayInvoice({ id: firstInvoice.id, method: m, cardData: cardDataPayload });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -519,9 +607,24 @@ function ApplicationPage() {
       invoiceId={payInvoice?.id ?? null}
       method={payInvoice?.method ?? "mobile_money"}
       phone={momoPhone}
+      network={momoNetwork}
+      cardData={payInvoice?.cardData ?? null}
       publicKey={settings?.flutterwave_public_key ?? null}
-      customer={{ email: identity?.email ?? "member@wcbn.org", name: identity?.profile ? [identity.profile.first_name, identity.profile.last_name].filter(Boolean).join(" ") : "WCBN member", phone: momoPhone || identity?.profile?.phone || "" }}
+      customer={{
+        email: identity?.email ?? "member@wcbn.org",
+        name: identity?.profile ? [identity.profile.first_name, identity.profile.last_name].filter(Boolean).join(" ") : "WCBN member",
+        phone: momoPhone || identity?.profile?.phone || "",
+      }}
       onClose={() => { setPayInvoice(null); queryClient.invalidateQueries({ queryKey: ["portal"] }); }}
+      onSwitchToBankTransfer={() => {
+        setPayInvoice(null);
+        setMethod("bank_transfer");
+        queryClient.invalidateQueries({ queryKey: ["portal"] });
+      }}
+      onPhoneChange={(p, n) => {
+        setMomoPhone(p);
+        if (n === "MTN" || n === "ORANGE") setMomoNetwork(n);
+      }}
     />
     <MemberPage
       title="WCBN Membership Onboarding"
@@ -749,12 +852,12 @@ function ApplicationPage() {
                           toast.error("Please select a membership category first.");
                           return;
                         }
-                        if (step === 1 && missingFormFields.length > 0 && i > 1) {
+                        if (missingFormFields.length > 0 && i > 1) {
                           toast.error("Please complete the required registration fields first.");
                           return;
                         }
-                        if (step === 2 && (!cycle || !method) && i > 2) {
-                          toast.error("Please select a billing plan and payment method.");
+                        if (i === 3 && !agreeCovenant) {
+                          toast.error("Please review your application and agree to the WCBN Covenant first.");
                           return;
                         }
                       }
@@ -1217,8 +1320,116 @@ function ApplicationPage() {
                 </div>
               )}
 
-              {/* STEP 2: MERGED BILLING PLAN & PAYMENT METHOD */}
+              {/* STEP 2: REVIEW & COVENANT */}
               {step === 2 && (
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-foreground">Review & Confirm Your Membership</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Please verify your registration details below and agree to the WCBN Covenant before proceeding to payment.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setStep(1)}
+                      className="text-xs h-8 shrink-0 self-start sm:self-auto"
+                    >
+                      <Pencil className="size-3.5 mr-1.5" />
+                      Edit Details
+                    </Button>
+                  </div>
+
+                  {missingFormFields.length > 0 && (
+                    <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <strong className="font-semibold">Required fields missing:</strong>{" "}
+                        {missingFormFields.map((f) => f.replace(/_/g, " ")).join(", ")}
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setStep(1)} className="shrink-0 text-xs h-7 self-start sm:self-auto">
+                        Complete in Step 2
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="rounded-2xl border border-border bg-card p-5 space-y-3 text-sm">
+                    <Row label="Applicant Name" value={identity?.fullName ?? "—"} />
+                    <Row label="WCA Member ID" value={identity?.member?.member_id ?? "—"} />
+                    <Row label="WCA Region" value={`${identity?.regionName ?? "—"} (${currency})`} />
+                    <Row
+                      label="Membership Category"
+                      value={`${selectedCategory?.name ?? "—"} (${isInvestorMentor ? "Investor & Mentor Track" : "Entrepreneur Track"})`}
+                    />
+
+                    {!isInvestorMentor ? (
+                      <>
+                        <Row label="Business Name" value={answers.business_name || "—"} />
+                        <Row label="Industry / Sector" value={answers.sector || "—"} />
+                        <Row label="Operating Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
+                        <Row label="Business Stage" value={answers.business_stage || "—"} />
+                        {answers.business_summary && (
+                          <Row label="Business Summary" value={answers.business_summary} />
+                        )}
+                        {answers.impact_statement && (
+                          <Row label="Kingdom Impact Commitment" value={answers.impact_statement} />
+                        )}
+                        {answers.website_url && <Row label="Website" value={answers.website_url} />}
+                        {answers.registration_number && (
+                          <Row label="Registration / Tax ID" value={answers.registration_number} />
+                        )}
+                        {answers.growth_priorities.length > 0 && (
+                          <Row label="Growth Priorities" value={answers.growth_priorities.join(", ")} />
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Row label="Primary Role" value={answers.investor_role || "—"} />
+                        {answers.organization && <Row label="Organization / Fund" value={answers.organization} />}
+                        <Row label="Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
+                        <Row label="LinkedIn Profile" value={answers.linkedin_url || "—"} />
+                        {answers.ticket_size && <Row label="Capital Capacity" value={answers.ticket_size} />}
+                        {answers.mentorship_availability && (
+                          <Row label="Mentorship Availability" value={answers.mentorship_availability} />
+                        )}
+                        {answers.preferred_sectors && (
+                          <Row label="Preferred Sectors" value={answers.preferred_sectors} />
+                        )}
+                        {answers.experience_summary && (
+                          <Row label="Executive Experience" value={answers.experience_summary} />
+                        )}
+                        {answers.kingdom_vision && (
+                          <Row label="Kingdom Vision" value={answers.kingdom_vision} />
+                        )}
+                        {answers.advisory_areas.length > 0 && (
+                          <Row label="Mentorship Domains" value={answers.advisory_areas.join(", ")} />
+                        )}
+                      </>
+                    )}
+
+                    {answers.sdgs.length > 0 && (
+                      <Row label="Aligned SDGs" value={answers.sdgs.map((n) => `SDG ${n}`).join(", ")} />
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="covenant"
+                      checked={agreeCovenant}
+                      onChange={(e) => setAgreeCovenant(e.target.checked)}
+                      className="mt-1 size-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                    />
+                    <label htmlFor="covenant" className="text-xs text-muted-foreground cursor-pointer select-none">
+                      <strong className="text-foreground">WCBN Covenant Agreement:</strong> By proceeding, I confirm that all submitted details are truthful, align with Biblical ethics in marketplace leadership, and agree to uphold the World Changers Business Network covenant.
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: PAYMENT & SUBMIT */}
+              {step === 3 && (
                 <div className="space-y-8">
                   {/* Part 1: Payment Plan */}
                   <div className="space-y-4">
@@ -1324,18 +1535,11 @@ function ApplicationPage() {
                   </div>
 
                   {/* Part 2: Payment Method */}
-                  {method === "mobile_money" && (
-                    <div className="max-w-sm">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mobile money number</Label>
-                      <Input className="mt-1.5" inputMode="tel" placeholder="e.g. 2376XXXXXXXX" value={momoPhone} onChange={(e) => setMomoPhone(e.target.value)} />
-                      <p className="mt-1 text-xs text-muted-foreground">On submit, you will approve the payment on this phone.</p>
-                    </div>
-                  )}
                   <div className="space-y-4 border-t border-border pt-6">
                     <div>
                       <h3 className="text-base font-bold text-foreground">2. Select Your Payment Method</h3>
                       <p className="text-xs text-muted-foreground">
-                        An official WCBN invoice (WCBN-INV-2026-XXXX) is generated for all payment options.
+                        Select how you would like to initiate your registration payment today.
                       </p>
                     </div>
 
@@ -1373,8 +1577,8 @@ function ApplicationPage() {
 
                             <div className="mt-3 pt-2.5 border-t border-border text-[11px] text-muted-foreground">
                               {m.value === "bank_transfer"
-                                ? "Official bank details displayed on generated invoice."
-                                : "Instant digital checkout via Flutterwave."}
+                                ? "Official bank details provided on invoice."
+                                : "Instant in-app payment initiation."}
                             </div>
                           </div>
                         );
@@ -1387,120 +1591,162 @@ function ApplicationPage() {
                       )}
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* STEP 3: REVIEW & CONFIRM */}
-              {step === 3 && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-base font-bold text-foreground">Review & Confirm Your Membership</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Please verify your registration details below before generating your official invoice.
-                    </p>
-                  </div>
-
-                  {missingFormFields.length > 0 && (
-                    <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-xs text-destructive flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  {/* Part 3: Contextual Sub-Forms (Strictly BELOW the payment option cards) */}
+                  {method === "mobile_money" && (
+                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 space-y-4">
                       <div>
-                        <strong className="font-semibold">Required fields missing:</strong>{" "}
-                        {missingFormFields.map((f) => f.replace(/_/g, " ")).join(", ")}
+                        <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                          <Smartphone className="size-4 text-primary" />
+                          Mobile Money Account Confirmation
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Confirm or update the phone number to be debited for this payment. A direct push prompt will be sent to your handset.
+                        </p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => setStep(1)} className="shrink-0 text-xs h-7 self-start sm:self-auto">
-                        Complete in Step 2
-                      </Button>
+
+                      <div className="grid gap-4 sm:grid-cols-2 items-end">
+                        <Field label="Mobile Money Number *">
+                          <Input
+                            inputMode="tel"
+                            placeholder="e.g. 2376XXXXXXXX"
+                            value={momoPhone}
+                            onChange={(e) => handleMomoPhoneChange(e.target.value)}
+                          />
+                        </Field>
+
+                        <div>
+                          <Label className="text-xs font-semibold text-muted-foreground block mb-2">Network Operator</Label>
+                          <div className="flex gap-2">
+                            {(["MTN", "ORANGE"] as const).map((net) => {
+                              const on = momoNetwork === net;
+                              return (
+                                <button
+                                  type="button"
+                                  key={net}
+                                  onClick={() => setMomoNetwork(net)}
+                                  className={`flex-1 rounded-lg py-2 px-3 text-xs font-semibold border transition ${
+                                    on
+                                      ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                                      : "border-border bg-card text-muted-foreground hover:bg-muted"
+                                  }`}
+                                >
+                                  {net === "MTN" ? "MTN MoMo" : "Orange Money"}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background/50 rounded-xl p-3 border border-border/50">
+                        <Info className="size-4 text-primary shrink-0" />
+                        <span>
+                          When you click <strong>Submit</strong>, you will receive an in-app payment prompt and a direct push notification on your handset. Enter your PIN to approve the transfer.
+                        </span>
+                      </div>
                     </div>
                   )}
 
-                  <div className="rounded-2xl border border-border bg-card p-5 space-y-3 text-sm">
-                    <Row label="Applicant Name" value={identity?.fullName ?? "—"} />
-                    <Row label="WCA Member ID" value={identity?.member?.member_id ?? "—"} />
-                    <Row label="WCA Region" value={`${identity?.regionName ?? "—"} (${currency})`} />
-                    <Row
-                      label="Membership Category"
-                      value={`${selectedCategory?.name ?? "—"} (${isInvestorMentor ? "Investor & Mentor Track" : "Entrepreneur Track"})`}
-                    />
-
-                    {!isInvestorMentor ? (
-                      <>
-                        <Row label="Business Name" value={answers.business_name || "—"} />
-                        <Row label="Industry / Sector" value={answers.sector || "—"} />
-                        <Row label="Operating Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
-                        <Row label="Business Stage" value={answers.business_stage || "—"} />
-                        {answers.business_summary && (
-                          <Row label="Business Summary" value={answers.business_summary} />
-                        )}
-                        {answers.impact_statement && (
-                          <Row label="Kingdom Impact Commitment" value={answers.impact_statement} />
-                        )}
-                        {answers.website_url && <Row label="Website" value={answers.website_url} />}
-                        {answers.registration_number && (
-                          <Row label="Registration / Tax ID" value={answers.registration_number} />
-                        )}
-                        {answers.growth_priorities.length > 0 && (
-                          <Row label="Growth Priorities" value={answers.growth_priorities.join(", ")} />
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Row label="Primary Role" value={answers.investor_role || "—"} />
-                        {answers.organization && <Row label="Organization / Fund" value={answers.organization} />}
-                        <Row label="Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
-                        <Row label="LinkedIn Profile" value={answers.linkedin_url || "—"} />
-                        {answers.ticket_size && <Row label="Capital Capacity" value={answers.ticket_size} />}
-                        {answers.mentorship_availability && (
-                          <Row label="Mentorship Availability" value={answers.mentorship_availability} />
-                        )}
-                        {answers.preferred_sectors && (
-                          <Row label="Preferred Sectors" value={answers.preferred_sectors} />
-                        )}
-                        {answers.experience_summary && (
-                          <Row label="Executive Experience" value={answers.experience_summary} />
-                        )}
-                        {answers.kingdom_vision && (
-                          <Row label="Kingdom Vision" value={answers.kingdom_vision} />
-                        )}
-                        {answers.advisory_areas.length > 0 && (
-                          <Row label="Mentorship Domains" value={answers.advisory_areas.join(", ")} />
-                        )}
-                      </>
-                    )}
-
-                    {answers.sdgs.length > 0 && (
-                      <Row label="Aligned SDGs" value={answers.sdgs.map((n) => `SDG ${n}`).join(", ")} />
-                    )}
-
-                    <Row
-                      label="Payment Plan"
-                      value={CYCLES.find((c) => c.value === cycle)?.label ?? "Annual"}
-                    />
-                    <Row
-                      label="Selected Payment Method"
-                      value={method ? METHOD_LABELS[method] : "—"}
-                    />
-
-                    <div className="flex justify-between items-center border-t border-border pt-3">
-                      <div>
-                        <span className="text-sm font-bold text-foreground">Amount Due Today</span>
-                        <p className="text-xs text-muted-foreground">In your local regional currency</p>
+                  {method === "card" && (
+                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                            <CreditCard className="size-4 text-primary" />
+                            Card Payment Details
+                          </h4>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Enter your Visa, Mastercard, or Verve card details below. Card data is sent directly to Flutterwave and never saved.
+                          </p>
+                        </div>
+                        <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full font-medium border border-emerald-500/20">
+                          <ShieldCheck className="size-3.5" />
+                          <span>PCI-DSS Level 1</span>
+                        </div>
                       </div>
-                      <span className="text-xl font-extrabold text-primary">
-                        {fee != null ? money(instalment(fee, cycle, currency), currency) : "—"}
-                      </span>
-                    </div>
-                  </div>
 
-                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-start gap-3">
-                    <input
-                      type="checkbox"
-                      id="covenant"
-                      checked={agreeCovenant}
-                      onChange={(e) => setAgreeCovenant(e.target.checked)}
-                      className="mt-1 size-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
-                    />
-                    <label htmlFor="covenant" className="text-xs text-muted-foreground cursor-pointer select-none">
-                      <strong className="text-foreground">WCBN Covenant Agreement:</strong> By proceeding, I confirm that all submitted details are truthful, align with Biblical ethics in marketplace leadership, and agree to uphold the World Changers Business Network covenant.
-                    </label>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field label="Cardholder Name *" className="sm:col-span-2">
+                          <Input
+                            placeholder="Name as it appears on your card"
+                            value={cardholderName}
+                            onChange={(e) => setCardholderName(e.target.value)}
+                          />
+                        </Field>
+
+                        <Field label="Card Number *" className="sm:col-span-2">
+                          <div className="relative">
+                            <Input
+                              placeholder="0000 0000 0000 0000"
+                              value={cardNumber}
+                              maxLength={23}
+                              onChange={(e) => handleCardNumberChange(e.target.value)}
+                              className="pr-10 font-mono tracking-wider"
+                            />
+                            <CreditCard className="size-4 text-muted-foreground absolute right-3 top-3 pointer-events-none" />
+                          </div>
+                        </Field>
+
+                        <Field label="Expiration Date *">
+                          <Input
+                            placeholder="MM/YY"
+                            value={cardExpiry}
+                            maxLength={5}
+                            onChange={(e) => handleExpiryChange(e.target.value)}
+                            className="font-mono"
+                          />
+                        </Field>
+
+                        <Field label="Security Code (CVV) *">
+                          <div className="relative">
+                            <Input
+                              type="password"
+                              placeholder="123"
+                              value={cardCvv}
+                              maxLength={4}
+                              onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                              className="font-mono tracking-widest pr-10"
+                            />
+                            <Lock className="size-4 text-muted-foreground absolute right-3 top-3 pointer-events-none" />
+                          </div>
+                        </Field>
+                      </div>
+
+                      <div className="flex items-start gap-2.5 rounded-xl bg-background/50 border border-border/50 p-3 text-xs text-muted-foreground">
+                        <ShieldCheck className="size-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-foreground">Strict PCI-DSS Security:</strong> Your card details are processed with 256-bit encryption directly via Flutterwave. WCBN never saves or stores your card number, CVV, or expiry date on its servers or local storage.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {method === "bank_transfer" && (
+                    <div className="rounded-2xl border border-border bg-muted/20 p-4 text-xs text-muted-foreground">
+                      <div className="flex items-start gap-3">
+                        <Landmark className="size-5 text-primary shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-semibold text-foreground text-sm">Official Bank Transfer Invoice</p>
+                          <p className="mt-1 leading-relaxed">
+                            Upon clicking <strong>Submit</strong>, an official WCBN invoice with complete bank details (Ecobank, UBA, etc.) will be issued. You will be able to transfer the funds and upload your bank slip reference directly from your portal dashboard.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Part 4: Amount Due Today Summary */}
+                  <div className="flex justify-between items-center rounded-2xl border border-border bg-card p-5">
+                    <div>
+                      <span className="text-sm font-bold text-foreground">Amount Due Today</span>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Tier: <strong className="text-foreground">{selectedCategory?.name}</strong> · Plan: <strong className="text-foreground">{CYCLES.find((c) => c.value === cycle)?.label ?? "Annual"}</strong>
+                      </p>
+                    </div>
+                    <span className="text-2xl font-black text-primary">
+                      {fee != null ? money(instalment(fee, cycle, currency), currency) : "—"}
+                    </span>
                   </div>
                 </div>
               )}
@@ -1544,12 +1790,13 @@ function ApplicationPage() {
                           return;
                         }
                       } else if (step === 2) {
-                        if (!cycle) {
-                          toast.error("Please select a payment plan.");
+                        if (missingFormFields.length > 0) {
+                          toast.error(`Please complete all required fields: ${missingFormFields.map((f) => f.replace(/_/g, " ")).join(", ")}`);
+                          setStep(1);
                           return;
                         }
-                        if (!method) {
-                          toast.error("Please select a payment method.");
+                        if (!agreeCovenant) {
+                          toast.error("Please tick the WCBN Covenant Agreement box to proceed to payment.");
                           return;
                         }
                       }
@@ -1575,14 +1822,41 @@ function ApplicationPage() {
                         setStep(0);
                         return;
                       }
-                      if (!method) {
-                        toast.error("Please select a payment method in Step 3.");
+                      if (!agreeCovenant) {
+                        toast.error("Please tick the WCBN Covenant Agreement box in Step 3.");
                         setStep(2);
                         return;
                       }
-                      if (!agreeCovenant) {
-                        toast.error("Please tick the WCBN Covenant Agreement box to validate and submit your application.");
+                      if (!cycle) {
+                        toast.error("Please select a payment plan.");
                         return;
+                      }
+                      if (!method) {
+                        toast.error("Please select a payment method.");
+                        return;
+                      }
+                      if (method === "mobile_money") {
+                        const digits = momoPhone.replace(/\D/g, "");
+                        if (digits.length < 8) {
+                          toast.error("Please enter a valid mobile money number.");
+                          return;
+                        }
+                      }
+                      if (method === "card") {
+                        const cleanNum = cardNumber.replace(/\D/g, "");
+                        if (cleanNum.length < 15) {
+                          toast.error("Please enter a valid card number (15–19 digits).");
+                          return;
+                        }
+                        const [m, y] = cardExpiry.split("/");
+                        if (!m || !y || m.trim().length === 0 || y.trim().length === 0) {
+                          toast.error("Please enter a valid card expiry date (MM/YY).");
+                          return;
+                        }
+                        if (cardCvv.trim().length < 3) {
+                          toast.error("Please enter the card security code (CVV).");
+                          return;
+                        }
                       }
                       save.mutate(true);
                     }}

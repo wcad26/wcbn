@@ -679,6 +679,7 @@ function PaymentsTabContent() {
   const [flutterwaveMode, setFlutterwaveMode] = useState<"test" | "live">("test");
   const [publicKey, setPublicKey] = useState("");
   const [secretKey, setSecretKey] = useState("");
+  const [encryptionKey, setEncryptionKey] = useState("");
   const [serviceRoleKey, setServiceRoleKey] = useState("");
   const [mobileMoneyEnabled, setMobileMoneyEnabled] = useState(true);
   const [cardEnabled, setCardEnabled] = useState(true);
@@ -720,6 +721,7 @@ function PaymentsTabContent() {
           flutterwave_mode: flutterwaveMode,
           flutterwave_public_key: publicKey.trim() || null,
           flutterwave_secret_key: secretKey.trim() || null,
+          flutterwave_encryption_key: encryptionKey.trim() || null,
           supabase_service_role_key: serviceRoleKey.trim() || null,
           mobile_money_enabled: mobileMoneyEnabled,
           card_enabled: cardEnabled,
@@ -732,6 +734,7 @@ function PaymentsTabContent() {
     onSuccess: () => {
       toast.success("Payment gateway & bank settings updated.");
       setSecretKey("");
+      setEncryptionKey("");
       setServiceRoleKey("");
       queryClient.invalidateQueries({ queryKey: ["admin", "payment-settings"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "flutterwave-key-status"] });
@@ -888,6 +891,50 @@ function PaymentsTabContent() {
                 placeholder={keyStatus?.configured ? "Leave blank to keep existing vault key" : "FLWSECK_TEST-... or FLWSECK-..."}
                 className="h-8 font-mono text-xs"
               />
+            </div>
+
+            {/* Flutterwave Encryption Key */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Flutterwave Encryption Key (Direct In-App Card Vault)</Label>
+                {keyStatus?.encryptionConfigured && (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] gap-1">
+                    <CheckCircle2 className="size-2.5" /> Encryption Key Saved
+                  </Badge>
+                )}
+              </div>
+              <Input
+                type="password"
+                value={encryptionKey}
+                onChange={(e) => setEncryptionKey(e.target.value)}
+                placeholder={keyStatus?.encryptionConfigured ? "Leave blank to keep existing encryption key" : "FLWSECK_... (From Flutterwave Dashboard)"}
+                className="h-8 font-mono text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Required for direct in-app card charge processing and 3DES payload encryption.
+              </p>
+            </div>
+
+            {/* Supabase Service Role Key */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Supabase Service Role Key (Admin / RPC Vault)</Label>
+                {keyStatus?.serviceRoleConfigured && (
+                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] gap-1">
+                    <CheckCircle2 className="size-2.5" /> Service Key Saved
+                  </Badge>
+                )}
+              </div>
+              <Input
+                type="password"
+                value={serviceRoleKey}
+                onChange={(e) => setServiceRoleKey(e.target.value)}
+                placeholder={keyStatus?.serviceRoleConfigured ? "Leave blank to keep existing service key" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
+                className="h-8 font-mono text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Required for automated member activation and instant transaction verification.
+              </p>
             </div>
 
             {/* Accepted Methods */}

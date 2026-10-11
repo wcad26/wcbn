@@ -131,7 +131,27 @@ export async function fetchExchangeRates() {
 }
 
 export async function fetchPaymentSettings() {
-  const { data, error } = await supabase.from("wcbn_payment_settings").select("*").eq("id", 1).maybeSingle();
+  const { data, error } = await supabase
+    .from("wcbn_payment_settings")
+    .select("id, flutterwave_enabled, flutterwave_mode, flutterwave_public_key, mobile_money_enabled, card_enabled, bank_transfer_enabled, bank_accounts, invoice_note")
+    .eq("id", 1)
+    .maybeSingle();
   if (error) throw error;
-  return (data ?? { flutterwave_enabled: false, flutterwave_mode: "test", flutterwave_public_key: null, mobile_money_enabled: true, card_enabled: true, bank_transfer_enabled: true, bank_accounts: [], invoice_note: null }) as unknown as PaymentSettings;
+  const raw = data ?? {
+    flutterwave_enabled: false,
+    flutterwave_mode: "test",
+    flutterwave_public_key: null,
+    mobile_money_enabled: true,
+    card_enabled: true,
+    bank_transfer_enabled: true,
+    bank_accounts: [],
+    invoice_note: null,
+  };
+  const filteredAccounts = Array.isArray(raw.bank_accounts)
+    ? (raw.bank_accounts as any[]).filter((b) => b && b._type !== "vault_secret")
+    : [];
+  return {
+    ...raw,
+    bank_accounts: filteredAccounts,
+  } as unknown as PaymentSettings;
 }
