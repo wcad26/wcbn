@@ -197,7 +197,7 @@ function AdminVenturesPage() {
           // Enrich the existing business item with detailed application dossier data if available
           const matchIndex = items.findIndex((i) => i.id === existing.id);
           if (matchIndex !== -1) {
-            const item = items[matchIndex];
+            const item = items[matchIndex]!;
             if (answers["business_stage"]) item.stage = String(answers["business_stage"]);
             if (answers["business_summary"] && !item.summary) item.summary = String(answers["business_summary"]);
             if (answers["impact_statement"]) item.impactStatement = String(answers["impact_statement"]);

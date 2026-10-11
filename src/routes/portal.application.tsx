@@ -25,8 +25,9 @@ import {
   instalment, getCategoryArchetype, archetypeToDbType,
   type BillingCycle, type PaymentMethod, type CategoryArchetype, type Category
 } from "@/lib/fees";
-import { createFlutterwavePaymentLink, startOnboardingPayment, verifyFlutterwavePayment } from "@/lib/payments.functions";
+import { startOnboardingPayment, verifyFlutterwavePayment } from "@/lib/payments.functions";
 import { InvoiceCard, type InvoiceRow } from "@/components/wcbn/invoice-card";
+import { PayDialog } from "@/components/wcbn/pay-dialog";
 
 export const Route = createFileRoute("/portal/application")({ component: ApplicationPage });
 
@@ -157,6 +158,9 @@ function ApplicationPage() {
   const [transferRef, setTransferRef] = useState("");
   const [transferProof, setTransferProof] = useState<File | null>(null);
   const [editingPlan, setEditingPlan] = useState(false);
+  const [momoPhone, setMomoPhone] = useState("");
+  useEffect(() => { if (identity?.profile?.phone) setMomoPhone((p) => p || identity.profile!.phone!); }, [identity?.profile?.phone]);
+  const [payInvoice, setPayInvoice] = useState<{ id: string; method: "mobile_money" | "card" } | null>(null);
   const [agreeCovenant, setAgreeCovenant] = useState(false);
   const currency = identity?.regionCurrency ?? "XAF";
 
@@ -405,6 +409,7 @@ function ApplicationPage() {
 
       if (submit) {
         if (!method) throw new Error("Please choose a payment method.");
+        if (method === "mobile_money" && momoPhone.replace(/\D/g, "").length < 8) throw new Error("Enter your mobile money number.");
         const res = await startOnboardingPayment({
           data: {
             applicationId: applicationId!,
@@ -414,6 +419,10 @@ function ApplicationPage() {
             origin: window.location.origin,
           },
         });
+        if (method !== "bank_transfer" && !res.link) {
+          setPayInvoice({ id: res.invoiceId, method });
+          return "pay";
+        }
         if (res.link) {
           window.location.href = res.link;
           return "redirect";
@@ -426,6 +435,7 @@ function ApplicationPage() {
       if (draftKey) {
         try { localStorage.removeItem(draftKey); } catch {}
       }
+      if (result === "pay") return;
       if (result === "redirect") {
         toast.message("Redirecting to secure Flutterwave checkout…");
         return;
@@ -467,10 +477,12 @@ function ApplicationPage() {
   const payExistingInvoice = useMutation({
     mutationFn: async (m: "mobile_money" | "card") => {
       if (!firstInvoice) throw new Error("No invoice found");
-      const res = await createFlutterwavePaymentLink({ data: { invoiceId: firstInvoice.id, method: m, origin: window.location.origin } });
-      if (res.link) {
-        window.location.href = res.link;
+      if (m === "mobile_money" && momoPhone.replace(/\D/g, "").length < 8) {
+        const p = window.prompt("Mobile money number", momoPhone || identity?.profile?.phone || "");
+        if (!p) return;
+        setMomoPhone(p);
       }
+      setPayInvoice({ id: firstInvoice.id, method: m });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -502,6 +514,15 @@ function ApplicationPage() {
   }
 
   return (
+    <>
+    <PayDialog
+      invoiceId={payInvoice?.id ?? null}
+      method={payInvoice?.method ?? "mobile_money"}
+      phone={momoPhone}
+      publicKey={settings?.flutterwave_public_key ?? null}
+      customer={{ email: identity?.email ?? "member@wcbn.org", name: identity?.profile ? [identity.profile.first_name, identity.profile.last_name].filter(Boolean).join(" ") : "WCBN member", phone: momoPhone || identity?.profile?.phone || "" }}
+      onClose={() => { setPayInvoice(null); queryClient.invalidateQueries({ queryKey: ["portal"] }); }}
+    />
     <MemberPage
       title="WCBN Membership Onboarding"
       description={
@@ -1303,6 +1324,13 @@ function ApplicationPage() {
                   </div>
 
                   {/* Part 2: Payment Method */}
+                  {method === "mobile_money" && (
+                    <div className="max-w-sm">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Mobile money number</Label>
+                      <Input className="mt-1.5" inputMode="tel" placeholder="e.g. 2376XXXXXXXX" value={momoPhone} onChange={(e) => setMomoPhone(e.target.value)} />
+                      <p className="mt-1 text-xs text-muted-foreground">On submit, you will approve the payment on this phone.</p>
+                    </div>
+                  )}
                   <div className="space-y-4 border-t border-border pt-6">
                     <div>
                       <h3 className="text-base font-bold text-foreground">2. Select Your Payment Method</h3>
@@ -1656,6 +1684,7 @@ function ApplicationPage() {
         )}
       </div>
     </MemberPage>
+    </>
   );
 }
 
