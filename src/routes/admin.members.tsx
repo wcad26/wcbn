@@ -48,7 +48,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { PeriodFilter, PeriodFilterState, isDateInPeriod } from "@/components/wcbn/period-filter";
 import { unregisterWcbnMembers } from "@/lib/payments.functions";
-import { getCategoryArchetype, type Category } from "@/lib/fees";
+import { getCategoryArchetype, resolveMemberArchetype, type Category } from "@/lib/fees";
 
 function MembersErrorComponent({ error, reset }: ErrorComponentProps) {
   const message = error instanceof Error ? error.message : undefined;
@@ -268,11 +268,7 @@ function MembersPage() {
   const filteredMembers = useMemo(() => {
     return members.filter((m) => {
       // Track filter
-      const isInvestor =
-        m.member_type === "professional" ||
-        m.member_type === "investor" ||
-        m.member_type === "mentor" ||
-        m.member_type === "investor_mentor";
+      const isInvestor = resolveMemberArchetype(m, categories, m.wcbn_applications?.[0]) === "investor_mentor";
       if (trackFilter === "business" && isInvestor) return false;
       if (trackFilter === "professional" && !isInvestor) return false;
 
@@ -501,12 +497,7 @@ function MembersPage() {
                   filteredMembers.map((m) => {
                     const p = m.profiles;
                     const fullName = [p?.first_name, p?.last_name].filter(Boolean).join(" ") || p?.email || "Member";
-                    const isInvestor =
-                      m.member_type === "professional" ||
-                      m.member_type === "investor" ||
-                      m.member_type === "mentor" ||
-                      m.member_type === "investor_mentor" ||
-                      m.wcbn_membership_categories?.applicant_type === "professional";
+                    const isInvestor = resolveMemberArchetype(m, categories, m.wcbn_applications?.[0]) === "investor_mentor";
                     const appData = (m.wcbn_applications?.[0]?.applicant_data ?? {}) as Record<string, any>;
                     const enterpriseName = (appData["business_name"] as string | undefined) || (appData["organization"] as string | undefined) || null;
                     const enterpriseSector = (appData["sector"] as string | undefined) || (appData["preferred_sectors"] as string | undefined) || null;

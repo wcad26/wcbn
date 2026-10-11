@@ -42,6 +42,75 @@ export function dbTypeToArchetype(dbType?: string | null): CategoryArchetype {
   return dbType === "professional" || dbType === "investor_mentor" ? "investor_mentor" : "entrepreneur";
 }
 
+export function resolveMemberArchetype(
+  member: {
+    id?: string;
+    category?: string | null;
+    category_id?: string | null;
+    member_type?: string | null;
+    wcbn_membership_categories?: { applicant_type?: string | null; code?: string | null; name?: string | null } | null;
+  },
+  categories?: { id: string; name?: string; code?: string; applicant_type?: string | null }[],
+  application?: { applicant_type?: string | null; applicant_data?: any } | null
+): CategoryArchetype {
+  // 1. Direct joined category relation
+  if (member.wcbn_membership_categories) {
+    return getCategoryArchetype(member.wcbn_membership_categories);
+  }
+
+  // 2. Lookup in categories list by ID
+  if (member.category_id && categories && categories.length > 0) {
+    const cat = categories.find((c) => c.id === member.category_id);
+    if (cat) return getCategoryArchetype(cat);
+  }
+
+  // 3. Lookup in categories list by category name or code
+  if (member.category && categories && categories.length > 0) {
+    const cat = categories.find(
+      (c) =>
+        c.name?.toLowerCase() === member.category?.toLowerCase() ||
+        c.code?.toLowerCase() === member.category?.toLowerCase()
+    );
+    if (cat) return getCategoryArchetype(cat);
+  }
+
+  // 4. Look up associated application data
+  if (application) {
+    const data = (application.applicant_data ?? {}) as Record<string, any>;
+    if (data.archetype === "investor_mentor" || data.archetype === "professional") {
+      return "investor_mentor";
+    }
+    if (data.archetype === "entrepreneur" || data.archetype === "business") {
+      return "entrepreneur";
+    }
+    if (data.business_name || data.business_stage) {
+      return "entrepreneur";
+    }
+    if (application.applicant_type === "professional" || application.applicant_type === "investor_mentor") {
+      return "investor_mentor";
+    }
+    if (application.applicant_type === "business" || application.applicant_type === "entrepreneur") {
+      return "entrepreneur";
+    }
+  }
+
+  // 5. Explicit member_type only if it is explicitly investor or mentor
+  if (
+    member.member_type === "investor" ||
+    member.member_type === "mentor" ||
+    member.member_type === "investor_mentor"
+  ) {
+    return "investor_mentor";
+  }
+  if (member.member_type === "business" || member.member_type === "entrepreneur") {
+    return "entrepreneur";
+  }
+
+  // Default fallback to entrepreneur track
+  return "entrepreneur";
+}
+
+
 export type Category = {
   id: string; code: string; name: string; description: string | null; target_audience: string | null;
   applicant_type: "business" | "professional" | "any" | "entrepreneur" | "investor_mentor"; fees: Record<string, number>; benefits: string[];

@@ -26,7 +26,7 @@ import { MetricCard } from "@/components/wcbn/metric-card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { PeriodFilter, PeriodFilterState, isDateInPeriod } from "@/components/wcbn/period-filter";
-import { getCategoryArchetype, type Category } from "@/lib/fees";
+import { getCategoryArchetype, resolveMemberArchetype, type Category } from "@/lib/fees";
 
 export const Route = createFileRoute("/admin/")({ component: AdminOverview });
 
@@ -78,7 +78,7 @@ function AdminOverview() {
           .in("status", ["pending", "declared"]),
         supabase
           .from("wcbn_applications")
-          .select("id, status, applicant_type, applicant_data, current_stage, created_at"),
+          .select("id, status, applicant_type, applicant_data, current_stage, created_at, wcbn_member_id"),
       ]);
 
       return {
@@ -97,6 +97,18 @@ function AdminOverview() {
   const categories = data?.categories ?? [];
   const pendingPayments = data?.pendingPayments ?? [];
 
+  // Map applications by member id for accurate archetype resolution
+  const applicationsByMember = useMemo(() => {
+    const map = new Map<string, (typeof allApplications)[0]>();
+    for (const app of allApplications) {
+      const memId = (app as any).wcbn_member_id;
+      if (memId && !map.has(memId)) {
+        map.set(memId, app);
+      }
+    }
+    return map;
+  }, [allApplications]);
+
   // Filter members and businesses based on selected date period
   const filteredMembers = useMemo(() => {
     return allMembers.filter((m) => isDateInPeriod(m.created_at, period));
@@ -114,31 +126,18 @@ function AdminOverview() {
   // 2. Total Entrepreneurs
   const entrepreneurMembers = useMemo(() => {
     return allMembers.filter((m) => {
-      if (m.member_type === "business" || m.member_type === "entrepreneur") return true;
-      if (m.wcbn_membership_categories) {
-        return getCategoryArchetype(m.wcbn_membership_categories as unknown as Category) === "entrepreneur";
-      }
-      return true; // default track
+      const app = applicationsByMember.get(m.id);
+      return resolveMemberArchetype(m, categories, app) === "entrepreneur";
     });
-  }, [allMembers]);
+  }, [allMembers, categories, applicationsByMember]);
 
   // 3. Total Investors / Mentors
   const investorMembers = useMemo(() => {
     return allMembers.filter((m) => {
-      if (
-        m.member_type === "professional" ||
-        m.member_type === "investor" ||
-        m.member_type === "mentor" ||
-        m.member_type === "investor_mentor"
-      ) {
-        return true;
-      }
-      if (m.wcbn_membership_categories) {
-        return getCategoryArchetype(m.wcbn_membership_categories as unknown as Category) === "investor_mentor";
-      }
-      return false;
+      const app = applicationsByMember.get(m.id);
+      return resolveMemberArchetype(m, categories, app) === "investor_mentor";
     });
-  }, [allMembers]);
+  }, [allMembers, categories, applicationsByMember]);
 
   // 4. Total Businesses
   const totalBusinessesCount = useMemo(() => {
@@ -168,30 +167,17 @@ function AdminOverview() {
   // Track breakdown in selected period
   const periodEntrepreneurs = useMemo(() => {
     return filteredMembers.filter((m) => {
-      if (m.member_type === "business" || m.member_type === "entrepreneur") return true;
-      if (m.wcbn_membership_categories) {
-        return getCategoryArchetype(m.wcbn_membership_categories as unknown as Category) === "entrepreneur";
-      }
-      return true;
+      const app = applicationsByMember.get(m.id);
+      return resolveMemberArchetype(m, categories, app) === "entrepreneur";
     }).length;
-  }, [filteredMembers]);
+  }, [filteredMembers, categories, applicationsByMember]);
 
   const periodInvestors = useMemo(() => {
     return filteredMembers.filter((m) => {
-      if (
-        m.member_type === "professional" ||
-        m.member_type === "investor" ||
-        m.member_type === "mentor" ||
-        m.member_type === "investor_mentor"
-      ) {
-        return true;
-      }
-      if (m.wcbn_membership_categories) {
-        return getCategoryArchetype(m.wcbn_membership_categories as unknown as Category) === "investor_mentor";
-      }
-      return false;
+      const app = applicationsByMember.get(m.id);
+      return resolveMemberArchetype(m, categories, app) === "investor_mentor";
     }).length;
-  }, [filteredMembers]);
+  }, [filteredMembers, categories, applicationsByMember]);
 
   // Growth Chart Time Buckets
   const { chartData, categoryKeys } = useMemo(() => {
@@ -237,10 +223,16 @@ function AdminOverview() {
 
     // If categories are not assigned or filtered, fallback to tracks
     if (keys.length === 0) {
-      keys.push(
-        { key: "entrepreneurs", label: "Entrepreneurs", color: "#7c3aed" },
-        { key: "investors", label: "Investors & Mentors", color: "#2563eb" }
-      );
+      if (trackFilter === "investor_mentor") {
+        keys.push({ key: "investors", label: "Investors & Mentors", color: "#2563eb" });
+      } else if (trackFilter === "entrepreneur") {
+        keys.push({ key: "entrepreneurs", label: "Entrepreneurs", color: "#7c3aed" });
+      } else {
+        keys.push(
+          { key: "entrepreneurs", label: "Entrepreneurs", color: "#7c3aed" },
+          { key: "investors", label: "Investors & Mentors", color: "#2563eb" }
+        );
+      }
     }
 
     // Build bucket rows
@@ -266,22 +258,31 @@ function AdminOverview() {
         const countThis = viewMode === "cumulative" ? isBeforeEnd : isCurrentPeriod;
         if (!countThis) return;
 
-        // Attribute to key
+        // Resolve member archetype with full hierarchy
+        const memberArch = resolveMemberArchetype(m, categories, applicationsByMember.get(m.id));
+
+        // CRITICAL FILTER: If trackFilter is selected (entrepreneur or investor_mentor)
+        // and member does not match the track filter, strictly skip this member!
+        if (trackFilter !== "all" && memberArch !== trackFilter) {
+          return;
+        }
+
+        // Attribute strictly to matching key
         if (m.category_id && keys.some((k) => k.key === `cat_${m.category_id}`)) {
           row[`cat_${m.category_id}`] = (row[`cat_${m.category_id}`] || 0) + 1;
         } else {
-          // Track fallback
-          const isInv =
-            m.member_type === "professional" ||
-            m.member_type === "investor" ||
-            m.member_type === "mentor" ||
-            m.member_type === "investor_mentor";
-          if (isInv && row["investors"] !== undefined) {
+          // Check if category name or code matches any key in keys
+          const matchedCat = categories.find(
+            (c) =>
+              c.name?.toLowerCase() === m.category?.toLowerCase() ||
+              c.code?.toLowerCase() === m.category?.toLowerCase()
+          );
+          if (matchedCat && keys.some((k) => k.key === `cat_${matchedCat.id}`)) {
+            row[`cat_${matchedCat.id}`] = (row[`cat_${matchedCat.id}`] || 0) + 1;
+          } else if (memberArch === "investor_mentor" && row["investors"] !== undefined) {
             row["investors"] = (row["investors"] || 0) + 1;
-          } else if (row["entrepreneurs"] !== undefined) {
+          } else if (memberArch === "entrepreneur" && row["entrepreneurs"] !== undefined) {
             row["entrepreneurs"] = (row["entrepreneurs"] || 0) + 1;
-          } else if (keys[0]) {
-            row[keys[0].key] = (row[keys[0].key] || 0) + 1;
           }
         }
       });
@@ -290,7 +291,7 @@ function AdminOverview() {
     });
 
     return { chartData: rows, categoryKeys: keys };
-  }, [period, trackFilter, viewMode, categories, allMembers]);
+  }, [period, trackFilter, viewMode, categories, allMembers, applicationsByMember]);
 
   return (
     <AdminPage

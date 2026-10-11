@@ -143,6 +143,114 @@ const EMPTY: Answers = {
   kingdom_vision: "",
 };
 
+type CardBrand = "visa" | "mastercard" | "verve" | "amex" | "generic";
+
+function detectCardBrand(number: string): CardBrand {
+  const digits = number.replace(/\D/g, "");
+  if (digits.startsWith("4")) return "visa";
+  if (/^(5[1-5]|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)/.test(digits)) {
+    return "mastercard";
+  }
+  if (/^(506|507|6500|504)/.test(digits)) {
+    return "verve";
+  }
+  if (/^3[47]/.test(digits)) {
+    return "amex";
+  }
+  return "generic";
+}
+
+function VisaBadge({ active = false, className = "h-4 w-auto" }: { active?: boolean; className?: string }) {
+  return (
+    <div
+      className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 transition-all ${
+        active
+          ? "bg-[#0E4595] text-white shadow-xs ring-2 ring-primary/40 scale-105"
+          : "bg-muted/70 text-muted-foreground/70 opacity-60 hover:opacity-100"
+      }`}
+      title="Visa"
+    >
+      <svg className={className} viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="48" height="32" rx="4" fill="#0E4595" />
+        <path
+          d="M18.8 21.5L20.8 9.5H23.9L21.9 21.5H18.8ZM33.6 9.8C33 9.6 32 9.4 30.8 9.4C27.8 9.4 25.7 10.9 25.7 13.1C25.7 14.7 27.2 15.6 28.3 16.1C29.4 16.6 29.8 17 29.8 17.6C29.8 18.5 28.7 18.9 27.6 18.9C26.5 18.9 25.8 18.7 25.1 18.4L24.7 18.2L24.3 20.8C25.1 21.2 26.5 21.5 28 21.5C31.2 21.5 33.3 19.9 33.3 17.5C33.3 15.6 32 14.7 30.3 13.9C29.3 13.4 28.7 13 28.7 12.4C28.7 11.8 29.4 11.3 30.7 11.3C31.7 11.3 32.5 11.5 33 11.7L33.3 11.8L33.6 9.8ZM39.6 17.2C39.8 16.2 40.5 12.6 40.5 12.6C40.5 12.6 40.7 11.8 40.8 11.4L41 12.5C41.2 13.4 41.8 17.2 41.8 17.2H39.6ZM43.4 9.5H41C40.2 9.5 39.6 9.7 39.3 10.5L34.5 21.5H37.8L38.5 19.5H42.4L42.8 21.5H45.7L43.4 9.5ZM17.1 9.5L14.1 17.6L13.8 16C13.2 14 11.4 11.8 9.2 10.6L12 21.5H15.3L20.3 9.5H17.1Z"
+          fill="white"
+        />
+        <path
+          d="M11.4 9.5H6.2L6 9.7C10.2 10.7 13.6 13.5 14.7 16.5L13.8 11.9C13.6 10.2 12.7 9.5 11.4 9.5Z"
+          fill="#F9A51A"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function MastercardBadge({ active = false, className = "h-4 w-auto" }: { active?: boolean; className?: string }) {
+  return (
+    <div
+      className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 transition-all ${
+        active
+          ? "bg-[#18181B] text-white shadow-xs ring-2 ring-primary/40 scale-105"
+          : "bg-muted/70 text-muted-foreground/70 opacity-60 hover:opacity-100"
+      }`}
+      title="Mastercard"
+    >
+      <svg className={className} viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="48" height="32" rx="4" fill="#18181B" />
+        <circle cx="18" cy="16" r="9" fill="#EB001B" />
+        <circle cx="30" cy="16" r="9" fill="#F79E1B" fillOpacity="0.95" />
+        <path
+          d="M24 9.87C25.86 11.52 27 13.64 27 16C27 18.36 25.86 20.48 24 22.13C22.14 20.48 21 18.36 21 16C21 13.64 22.14 11.52 24 9.87Z"
+          fill="#FF5F00"
+        />
+      </svg>
+    </div>
+  );
+}
+
+function VerveBadge({ active = false, className = "h-4 w-auto" }: { active?: boolean; className?: string }) {
+  return (
+    <div
+      className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 transition-all ${
+        active
+          ? "bg-[#0A3348] text-white shadow-xs ring-2 ring-primary/40 scale-105"
+          : "bg-muted/70 text-muted-foreground/70 opacity-60 hover:opacity-100"
+      }`}
+      title="Verve"
+    >
+      <svg className={className} viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="48" height="32" rx="4" fill="#0A3348" />
+        <circle cx="17" cy="14" r="7" fill="#E31837" />
+        <circle cx="27" cy="14" r="7" fill="#00A3E0" />
+        <text x="24" y="27" textAnchor="middle" fill="#FFFFFF" fontSize="6.5" fontWeight="800" fontFamily="system-ui, sans-serif" letterSpacing="0.6">
+          VERVE
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+function AmexBadge({ active = false, className = "h-4 w-auto" }: { active?: boolean; className?: string }) {
+  return (
+    <div
+      className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 transition-all ${
+        active
+          ? "bg-[#006FCF] text-white shadow-xs ring-2 ring-primary/40 scale-105"
+          : "bg-muted/70 text-muted-foreground/70 opacity-60 hover:opacity-100"
+      }`}
+      title="American Express"
+    >
+      <svg className={className} viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="48" height="32" rx="4" fill="#006FCF" />
+        <rect x="2" y="2" width="44" height="28" rx="2" stroke="#FFFFFF" strokeWidth="0.8" strokeDasharray="1 1" />
+        <text x="24" y="19" textAnchor="middle" fill="#FFFFFF" fontSize="8.5" fontWeight="900" fontFamily="system-ui, sans-serif" letterSpacing="0.8">
+          AMEX
+        </text>
+      </svg>
+    </div>
+  );
+}
+
 const DRAFT_KEY_PREFIX = "wcbn_application_draft_";
 
 function ApplicationPage() {
@@ -198,9 +306,20 @@ function ApplicationPage() {
     }
   }, [identity?.fullName, cardholderName]);
 
+  const detectedBrand = useMemo(() => detectCardBrand(cardNumber), [cardNumber]);
+
   const handleCardNumberChange = (raw: string) => {
     const digits = raw.replace(/\D/g, "").slice(0, 19);
-    const formatted = digits.replace(/(.{4})/g, "$1 ").trim();
+    const brand = detectCardBrand(digits);
+    let formatted = digits;
+    if (brand === "amex") {
+      const p1 = digits.slice(0, 4);
+      const p2 = digits.slice(4, 10);
+      const p3 = digits.slice(10, 15);
+      formatted = [p1, p2, p3].filter(Boolean).join(" ");
+    } else {
+      formatted = digits.replace(/(.{4})/g, "$1 ").trim();
+    }
     setCardNumber(formatted);
   };
 
@@ -486,11 +605,12 @@ function ApplicationPage() {
         }
         if (method === "card") {
           if (cardNumber.replace(/\D/g, "").length < 15) {
-            throw new Error("Please enter a valid card number.");
+            throw new Error("Please enter a valid card number (15–19 digits).");
           }
           const [m, y] = cardExpiry.split("/");
-          if (!m || !y || m.trim().length === 0 || y.trim().length === 0) {
-            throw new Error("Please enter a valid card expiration date (MM/YY).");
+          const monthNum = parseInt(m || "0", 10);
+          if (!m || !y || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+            throw new Error("Please enter a valid card expiration month (01–12) and year (MM/YY).");
           }
           if (cardCvv.trim().length < 3) {
             throw new Error("Please enter the CVV / security code on your card.");
@@ -1667,74 +1787,148 @@ function ApplicationPage() {
                   )}
 
                   {method === "card" && (
-                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 space-y-4">
-                      <div className="flex items-center justify-between">
+                    <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6 space-y-5">
+                      {/* Header: Title + Flutterwave Supported Brands Strip */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border/60">
                         <div>
                           <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                             <CreditCard className="size-4 text-primary" />
                             Card Payment Details
                           </h4>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Enter your Visa, Mastercard, or Verve card details below. Card data is sent directly to Flutterwave and never saved.
+                            Enter your Visa, Mastercard, Verve, or Amex card details below. Card data is tokenized securely via Flutterwave.
                           </p>
                         </div>
-                        <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full font-medium border border-emerald-500/20">
-                          <ShieldCheck className="size-3.5" />
-                          <span>PCI-DSS Level 1</span>
+
+                        {/* Supported cards strip */}
+                        <div className="flex items-center gap-1.5 self-start sm:self-auto bg-background/80 px-2.5 py-1.5 rounded-xl border border-border/60 shadow-2xs">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">
+                            Accepted:
+                          </span>
+                          <VisaBadge active={detectedBrand === "visa"} />
+                          <MastercardBadge active={detectedBrand === "mastercard"} />
+                          <VerveBadge active={detectedBrand === "verve"} />
+                          <AmexBadge active={detectedBrand === "amex"} />
                         </div>
                       </div>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <Field label="Cardholder Name *" className="sm:col-span-2">
-                          <Input
-                            placeholder="Name as it appears on your card"
-                            value={cardholderName}
-                            onChange={(e) => setCardholderName(e.target.value)}
-                          />
-                        </Field>
-
-                        <Field label="Card Number *" className="sm:col-span-2">
+                      <div className="space-y-4">
+                        {/* 1. Cardholder Name */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                            <span>Cardholder Full Name *</span>
+                            <span className="text-[11px] text-muted-foreground font-normal">
+                              Matches name on card or official ID
+                            </span>
+                          </label>
                           <div className="relative">
                             <Input
-                              placeholder="0000 0000 0000 0000"
-                              value={cardNumber}
-                              maxLength={23}
-                              onChange={(e) => handleCardNumberChange(e.target.value)}
-                              className="pr-10 font-mono tracking-wider"
+                              placeholder="e.g. John Doe"
+                              value={cardholderName}
+                              onChange={(e) => setCardholderName(e.target.value)}
+                              className="h-10 text-sm bg-card border-border pr-10"
                             />
-                            <CreditCard className="size-4 text-muted-foreground absolute right-3 top-3 pointer-events-none" />
+                            <UserRound className="size-4 text-muted-foreground/60 absolute right-3 top-3 pointer-events-none" />
                           </div>
-                        </Field>
+                        </div>
 
-                        <Field label="Expiration Date *">
-                          <Input
-                            placeholder="MM/YY"
-                            value={cardExpiry}
-                            maxLength={5}
-                            onChange={(e) => handleExpiryChange(e.target.value)}
-                            className="font-mono"
-                          />
-                        </Field>
+                        {/* 2. Stripe-style Segmented Card Box */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                            <span>Card Information *</span>
+                            {detectedBrand !== "generic" && (
+                              <span className="text-[11px] font-semibold text-primary capitalize flex items-center gap-1">
+                                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                {detectedBrand} card detected
+                              </span>
+                            )}
+                          </label>
 
-                        <Field label="Security Code (CVV) *">
-                          <div className="relative">
-                            <Input
-                              type="password"
-                              placeholder="123"
-                              value={cardCvv}
-                              maxLength={4}
-                              onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                              className="font-mono tracking-widest pr-10"
-                            />
-                            <Lock className="size-4 text-muted-foreground absolute right-3 top-3 pointer-events-none" />
+                          <div className="rounded-xl border border-border bg-card shadow-xs transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-hidden divide-y divide-border">
+                            {/* Top row: Card Number with dynamic brand badge */}
+                            <div className="relative flex items-center px-3.5 py-2.5 bg-card">
+                              <div className="mr-3 shrink-0 flex items-center justify-center">
+                                {detectedBrand === "visa" ? (
+                                  <VisaBadge active className="h-4.5 w-auto" />
+                                ) : detectedBrand === "mastercard" ? (
+                                  <MastercardBadge active className="h-4.5 w-auto" />
+                                ) : detectedBrand === "verve" ? (
+                                  <VerveBadge active className="h-4.5 w-auto" />
+                                ) : detectedBrand === "amex" ? (
+                                  <AmexBadge active className="h-4.5 w-auto" />
+                                ) : (
+                                  <CreditCard className="size-4.5 text-muted-foreground/60" />
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                autoComplete="cc-number"
+                                placeholder="1234  5678  9012  3456"
+                                value={cardNumber}
+                                maxLength={detectedBrand === "amex" ? 17 : 23}
+                                onChange={(e) => handleCardNumberChange(e.target.value)}
+                                className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm font-mono tracking-wider focus:outline-hidden"
+                              />
+                              {cardNumber && (
+                                <button
+                                  type="button"
+                                  onClick={() => setCardNumber("")}
+                                  className="text-muted-foreground/60 hover:text-foreground text-xs p-1"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Bottom row: Expiry + CVC */}
+                            <div className="grid grid-cols-2 divide-x divide-border bg-card">
+                              {/* Expiry */}
+                              <div className="flex items-center px-3.5 py-2.5">
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  autoComplete="cc-exp"
+                                  placeholder="MM / YY"
+                                  value={cardExpiry}
+                                  maxLength={5}
+                                  onChange={(e) => handleExpiryChange(e.target.value)}
+                                  className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm font-mono focus:outline-hidden"
+                                />
+                              </div>
+
+                              {/* CVC */}
+                              <div className="flex items-center px-3.5 py-2.5">
+                                <input
+                                  type="password"
+                                  inputMode="numeric"
+                                  autoComplete="cc-csc"
+                                  placeholder="CVC"
+                                  value={cardCvv}
+                                  maxLength={detectedBrand === "amex" ? 4 : 4}
+                                  onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                                  className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm font-mono tracking-widest focus:outline-hidden"
+                                />
+                                <Lock className="size-3.5 text-muted-foreground/50 shrink-0 ml-2" />
+                              </div>
+                            </div>
                           </div>
-                        </Field>
+                        </div>
                       </div>
 
-                      <div className="flex items-start gap-2.5 rounded-xl bg-background/50 border border-border/50 p-3 text-xs text-muted-foreground">
-                        <ShieldCheck className="size-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <div>
-                          <strong className="text-foreground">Strict PCI-DSS Security:</strong> Your card details are processed with 256-bit encryption directly via Flutterwave. WCBN never saves or stores your card number, CVV, or expiry date on its servers or local storage.
+                      {/* Security Reassurance Footer */}
+                      <div className="flex items-start gap-3 rounded-xl bg-background/60 border border-border/60 p-3.5 text-xs text-muted-foreground">
+                        <ShieldCheck className="size-4.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="space-y-0.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <strong className="text-foreground">Bank-Grade 256-Bit SSL Encryption</strong>
+                            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                              PCI-DSS Level 1 Compliant
+                            </span>
+                          </div>
+                          <p className="text-[11px] leading-relaxed">
+                            Card data is securely tokenized with Flutterwave. WCBN never saves, logs, or stores your card number or security code on its servers or local storage.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1867,12 +2061,13 @@ function ApplicationPage() {
                           return;
                         }
                         const [m, y] = cardExpiry.split("/");
-                        if (!m || !y || m.trim().length === 0 || y.trim().length === 0) {
-                          toast.error("Please enter a valid card expiry date (MM/YY).");
+                        const monthNum = parseInt(m || "0", 10);
+                        if (!m || !y || isNaN(monthNum) || monthNum < 1 || monthNum > 12) {
+                          toast.error("Please enter a valid card expiry month (01–12) and year (MM/YY).");
                           return;
                         }
                         if (cardCvv.trim().length < 3) {
-                          toast.error("Please enter the card security code (CVV).");
+                          toast.error("Please enter the card security code (CVC).");
                           return;
                         }
                       }
