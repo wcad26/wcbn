@@ -111,7 +111,7 @@ function AdminVenturesPage() {
             *,
             wcbn_members (
               id, status, member_type, category,
-              profiles (first_name, last_name, email, phone, city, country),
+              profiles (first_name, last_name, email, phone, avatar_url, address),
               members (member_id, status)
             )
           `)
@@ -122,7 +122,7 @@ function AdminVenturesPage() {
             id, status, current_stage, applicant_type, applicant_data, submitted_at, decided_at, created_at, wcbn_member_id,
             wcbn_members (
               id, status, member_type, category,
-              profiles (first_name, last_name, email, phone, city, country),
+              profiles (first_name, last_name, email, phone, avatar_url, address),
               members (member_id, status)
             )
           `)

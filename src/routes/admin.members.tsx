@@ -137,7 +137,7 @@ function MembersPage() {
           .from("wcbn_members")
           .select(`
             *,
-            profiles (first_name, last_name, email, phone, city, country),
+            profiles (first_name, last_name, email, phone, avatar_url, address),
             members (member_id, status, join_date),
             wcbn_membership_categories (id, name, code, applicant_type)
           `)
@@ -161,10 +161,20 @@ function MembersPage() {
         }
       }
 
-      return (membersRes.data ?? []).map((m) => {
+      return (membersRes.data ?? []).map((m: any) => {
         const app = appsByMember.get(m.id);
+        const appData = (app?.applicant_data as any) || {};
+        const city = appData.city || appData.business_city || appData.personal_info?.city || null;
+        const country = appData.country || appData.business_country || appData.personal_info?.country || null;
         return {
           ...m,
+          profiles: m.profiles
+            ? {
+                ...m.profiles,
+                city: city || m.profiles.address || null,
+                country: country || null,
+              }
+            : null,
           wcbn_applications: app ? [app] : [],
         };
       }) as unknown as MemberItem[];
