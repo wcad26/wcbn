@@ -23,7 +23,7 @@ export const startOnboardingPayment = createServerFn({ method: "POST" })
     // Ensure application is marked awaiting_payment for all payment options
     await supabase.from("wcbn_applications").update({ status: "awaiting_payment" }).eq("id", data.applicationId);
 
-    if (data.method === "bank_transfer") {
+    if (data.method === "bank_transfer" || process.env["FLUTTERWAVE_SECRET_KEY"]) {
       return { invoiceId: invoiceId as string, link: null as string | null };
     }
 
