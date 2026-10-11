@@ -304,7 +304,7 @@ export const unregisterWcbnMembers = createServerFn({ method: "POST" })
     return { ok: true, deletedCount };
   });
 
-async function confirmIfPaid(context: { supabase: any }, invoiceId: string, secret: string, q: { transactionId?: string; txRef?: string }) {
+async function confirmIfPaid(context: { supabase: any }, invoiceId: string, secret: string, q: { transactionId?: string | undefined; txRef?: string | undefined }) {
   const { data: invoice } = await context.supabase.from("wcbn_invoices").select("id, invoice_number, amount, currency_code, status").eq("id", invoiceId).maybeSingle();
   if (!invoice) throw new Error("Invoice not found for this account.");
   if (invoice.status === "paid") return "successful" as const;

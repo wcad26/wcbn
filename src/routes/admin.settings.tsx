@@ -55,7 +55,7 @@ type SettingsTab = "categories" | "payments" | "roles";
 
 export const Route = createFileRoute("/admin/settings")({
   validateSearch: (search: Record<string, unknown>): { tab?: SettingsTab } => {
-    const tab = search.tab as SettingsTab | undefined;
+    const tab = search["tab"] as SettingsTab | undefined;
     if (tab === "categories" || tab === "payments" || tab === "roles") {
       return { tab };
     }
@@ -875,7 +875,7 @@ function PaymentsTabContent() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label className="text-xs">Secret Key (Encrypted server vault)</Label>
-                {keyStatus?.has_secret_key && (
+                {keyStatus?.configured && (
                   <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] gap-1">
                     <CheckCircle2 className="size-2.5" /> Vault Key Saved
                   </Badge>
@@ -885,7 +885,7 @@ function PaymentsTabContent() {
                 type="password"
                 value={secretKey}
                 onChange={(e) => setSecretKey(e.target.value)}
-                placeholder={keyStatus?.has_secret_key ? "Leave blank to keep existing vault key" : "FLWSECK_TEST-... or FLWSECK-..."}
+                placeholder={keyStatus?.configured ? "Leave blank to keep existing vault key" : "FLWSECK_TEST-... or FLWSECK-..."}
                 className="h-8 font-mono text-xs"
               />
             </div>
