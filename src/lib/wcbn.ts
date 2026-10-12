@@ -98,7 +98,19 @@ export const COUNTRIES = [
 ] as const;
 
 export function money(amount: number, currency = "XAF") {
-  return new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: currency === "XAF" ? 0 : 2 }).format(amount);
+  const safeCurr =
+    currency && typeof currency === "string" && currency.trim().length === 3
+      ? currency.trim().toUpperCase()
+      : "XAF";
+  try {
+    return new Intl.NumberFormat("en", {
+      style: "currency",
+      currency: safeCurr,
+      maximumFractionDigits: safeCurr === "XAF" ? 0 : 2,
+    }).format(Number(amount) || 0);
+  } catch {
+    return `${safeCurr} ${(Number(amount) || 0).toLocaleString()}`;
+  }
 }
 
 export function slugify(value: string) {

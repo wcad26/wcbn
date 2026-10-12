@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { createFileRoute, type ErrorComponentProps } from "@tanstack/react-router";
+import * as React from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -49,7 +50,31 @@ import { documentUrl, money, useIdentity } from "@/lib/wcbn";
 import { getCategoryArchetype, type Category } from "@/lib/fees";
 import { PeriodFilter, PeriodFilterState, isDateInPeriod } from "@/components/wcbn/period-filter";
 
-export const Route = createFileRoute("/admin/contributions")({ component: ContributionsAdmin });
+function ContributionsErrorComponent({ error, reset }: ErrorComponentProps) {
+  const message = error instanceof Error ? error.message : undefined;
+  return (
+    <AdminPage
+      title="Finance & Invoices"
+      description="Bank transfer slip verification queue, membership dues collections, and grouped applicant billing ledger."
+    >
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center max-w-lg mx-auto my-8">
+        <AlertCircle className="size-8 text-destructive mx-auto mb-3" />
+        <h3 className="font-semibold text-foreground text-base">Unable to load Finance & Invoices</h3>
+        <p className="text-xs text-muted-foreground mt-1 mb-4">
+          {message || "An unexpected error occurred while loading financial records."}
+        </p>
+        <Button size="sm" onClick={() => reset()} className="text-xs">
+          Try Again
+        </Button>
+      </div>
+    </AdminPage>
+  );
+}
+
+export const Route = createFileRoute("/admin/contributions")({
+  component: ContributionsAdmin,
+  errorComponent: ContributionsErrorComponent,
+});
 
 interface MemberProfile {
   first_name: string | null;
@@ -850,7 +875,14 @@ function ContributionsAdmin() {
         {/* =========================================================================
             3. TWO DISTINCT TABS (Under KPIs, no table-level duplicate filters)
         ========================================================================== */}
-        <Tabs defaultValue="transfers" className="space-y-6">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-border bg-card text-center">
+            <Loader2 className="size-8 animate-spin text-primary mb-3" />
+            <p className="font-semibold text-foreground text-sm">Loading finance & invoices ledger...</p>
+            <p className="text-xs text-muted-foreground mt-1">Retrieving payments, invoices, and applicant categories.</p>
+          </div>
+        ) : (
+          <Tabs defaultValue="transfers" className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-3">
             <TabsList className="bg-muted/70 p-1 rounded-xl h-auto flex flex-wrap gap-1 border border-border">
               <TabsTrigger
@@ -1086,7 +1118,7 @@ function ContributionsAdmin() {
                         const remainingBalance = Math.max(0, group.totalAmount - group.totalPaid);
 
                         return (
-                          <React.Fragment key={group.key}>
+                          <Fragment key={group.key}>
                             {/* Master Applicant Row */}
                             <tr
                               className={`hover:bg-muted/20 transition-colors cursor-pointer ${
@@ -1365,7 +1397,7 @@ function ContributionsAdmin() {
                                 </td>
                               </tr>
                             )}
-                          </React.Fragment>
+                          </Fragment>
                         );
                       })
                     )}
@@ -1375,6 +1407,7 @@ function ContributionsAdmin() {
             </section>
           </TabsContent>
         </Tabs>
+        )}
       </div>
 
       {/* =========================================================================
