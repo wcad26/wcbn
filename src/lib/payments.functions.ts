@@ -585,9 +585,9 @@ export const chargeMobileMoney = createServerFn({ method: "POST" })
 
     if (cur === "XAF" || cur === "XOF") {
       // Franco Mobile Money requires explicit network (MTN or ORANGE)
-      payload.network = chosenNetwork;
+      payload["network"] = chosenNetwork;
     } else if (data.network) {
-      payload.network = data.network;
+      payload["network"] = data.network;
     }
 
     const res = await fetch(`${FLW}/charges?type=${type}`, {

@@ -304,8 +304,8 @@ function ContributionsAdmin() {
           .filter(Boolean)
           .join(" ")
           .toLowerCase();
-        const applicantName = (appData.full_name || appData.first_name || "").toLowerCase();
-        const email = (member?.profiles?.email || appData.email || "").toLowerCase();
+        const applicantName = (appData["full_name"] || appData["first_name"] || "").toLowerCase();
+        const email = (member?.profiles?.email || appData["email"] || "").toLowerCase();
         const methodMatch = (i.payment_method || "").toLowerCase().includes(q);
 
         if (!numMatch && !memberName.includes(q) && !applicantName.includes(q) && !email.includes(q) && !methodMatch) {
@@ -366,29 +366,29 @@ function ContributionsAdmin() {
       let group = groupsMap.get(groupKey);
       if (!group) {
         const appData = (app?.applicant_data as Record<string, any>) || {};
-        const appPersonal = (appData.personal_info as Record<string, any>) || {};
+        const appPersonal = (appData["personal_info"] as Record<string, any>) || {};
 
         const firstName =
           member?.profiles?.first_name ||
-          appData.first_name ||
-          appPersonal.first_name ||
+          appData["first_name"] ||
+          appPersonal["first_name"] ||
           "";
         const lastName =
           member?.profiles?.last_name ||
-          appData.last_name ||
-          appPersonal.last_name ||
+          appData["last_name"] ||
+          appPersonal["last_name"] ||
           "";
         const email =
           member?.profiles?.email ||
-          appData.email ||
-          appPersonal.email ||
+          appData["email"] ||
+          appPersonal["email"] ||
           "";
 
         const applicantName =
           [firstName, lastName].filter(Boolean).join(" ") ||
-          appData.full_name ||
-          appData.organization ||
-          appData.business_name ||
+          appData["full_name"] ||
+          appData["organization"] ||
+          appData["business_name"] ||
           email ||
           "Network Applicant";
 
@@ -706,7 +706,7 @@ function ContributionsAdmin() {
       const appData = (app?.applicant_data as Record<string, any>) || {};
       const name =
         [member?.profiles?.first_name, member?.profiles?.last_name].filter(Boolean).join(" ") ||
-        appData.full_name ||
+        appData["full_name"] ||
         "Applicant";
       const instalmentStr = i.installment_number
         ? `${i.installment_number}/${i.installments_total || 1}`
@@ -715,7 +715,7 @@ function ContributionsAdmin() {
       return [
         `"${i.invoice_number}"`,
         `"${name}"`,
-        `"${member?.profiles?.email || appData.email || ""}"`,
+        `"${member?.profiles?.email || appData["email"] || ""}"`,
         `"${cat?.name || member?.category || "General"}"`,
         `"${i.billing_cycle || "annual"}"`,
         `"${instalmentStr}"`,
