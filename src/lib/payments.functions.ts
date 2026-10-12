@@ -384,7 +384,7 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
 
     const combinedBankAccounts = [...regularAccounts, ...vaultEntries];
 
-    const payload: TablesUpdate<"wcbn_payment_settings"> = {
+    const payload: Record<string, any> = {
       flutterwave_enabled: dbFields.flutterwave_enabled,
       flutterwave_mode: dbFields.flutterwave_mode,
       mobile_money_enabled: dbFields.mobile_money_enabled,
@@ -393,37 +393,37 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
       bank_accounts: combinedBankAccounts,
     };
     if (dbFields.flutterwave_public_key !== undefined) {
-      payload.flutterwave_public_key = dbFields.flutterwave_public_key;
+      payload["flutterwave_public_key"] = dbFields.flutterwave_public_key;
     }
     if (dbFields.invoice_note !== undefined) {
-      payload.invoice_note = dbFields.invoice_note;
+      payload["invoice_note"] = dbFields.invoice_note;
     }
     if (flwKeyToSave) {
-      payload.flutterwave_secret_key = flwKeyToSave;
+      payload["flutterwave_secret_key"] = flwKeyToSave;
     }
     if (flwEncToSave) {
-      payload.flutterwave_encryption_key = flwEncToSave;
+      payload["flutterwave_encryption_key"] = flwEncToSave;
     }
     if (srvKeyToSave) {
-      payload.supabase_service_role_key = srvKeyToSave;
+      payload["supabase_service_role_key"] = srvKeyToSave;
     }
 
     let updateError: { message: string } | null = null;
-    const { error: userError } = await supabase.from("wcbn_payment_settings").update(payload).eq("id", 1);
+    const { error: userError } = await supabase.from("wcbn_payment_settings").update(payload as never).eq("id", 1);
     if (userError) {
       // If column doesn't exist yet on remote table, try without the dedicated secret columns, retaining vault in bank_accounts
       if (userError.message?.includes("column") || userError.message?.includes("does not exist")) {
         const fallbackPayload = { ...payload };
-        delete fallbackPayload.flutterwave_secret_key;
-        delete fallbackPayload.flutterwave_encryption_key;
-        delete fallbackPayload.supabase_service_role_key;
-        const { error: fallbackErr } = await supabase.from("wcbn_payment_settings").update(fallbackPayload).eq("id", 1);
+        delete fallbackPayload["flutterwave_secret_key"];
+        delete fallbackPayload["flutterwave_encryption_key"];
+        delete fallbackPayload["supabase_service_role_key"];
+        const { error: fallbackErr } = await supabase.from("wcbn_payment_settings").update(fallbackPayload as never).eq("id", 1);
         if (fallbackErr) updateError = fallbackErr;
       } else {
         const serviceKey = await getServiceRoleKey(supabase);
         if (serviceKey) {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(payload).eq("id", 1);
+          const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(payload as never).eq("id", 1);
           updateError = adminError;
         } else {
           updateError = userError;
@@ -585,9 +585,9 @@ export const chargeMobileMoney = createServerFn({ method: "POST" })
 
     if (cur === "XAF" || cur === "XOF") {
       // Franco Mobile Money requires explicit network (MTN or ORANGE)
-      payload.network = chosenNetwork;
+      payload["network"] = chosenNetwork;
     } else if (data.network) {
-      payload.network = data.network;
+      payload["network"] = data.network;
     }
 
     const res = await fetch(`${FLW}/charges?type=${type}`, {

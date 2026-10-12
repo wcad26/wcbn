@@ -77,13 +77,13 @@ export function resolveMemberArchetype(
   // 4. Look up associated application data
   if (application) {
     const data = (application.applicant_data ?? {}) as Record<string, any>;
-    if (data.archetype === "investor_mentor" || data.archetype === "professional") {
+    if (data["archetype"] === "investor_mentor" || data["archetype"] === "professional") {
       return "investor_mentor";
     }
-    if (data.archetype === "entrepreneur" || data.archetype === "business") {
+    if (data["archetype"] === "entrepreneur" || data["archetype"] === "business") {
       return "entrepreneur";
     }
-    if (data.business_name || data.business_stage) {
+    if (data["business_name"] || data["business_stage"]) {
       return "entrepreneur";
     }
     if (application.applicant_type === "professional" || application.applicant_type === "investor_mentor") {
