@@ -393,10 +393,10 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
       bank_accounts: combinedBankAccounts,
     };
     if (dbFields.flutterwave_public_key !== undefined) {
-      payload.flutterwave_public_key = dbFields.flutterwave_public_key;
+      payload["flutterwave_public_key"] = dbFields.flutterwave_public_key;
     }
     if (dbFields.invoice_note !== undefined) {
-      payload.invoice_note = dbFields.invoice_note;
+      payload["invoice_note"] = dbFields.invoice_note;
     }
     if (flwKeyToSave) {
       payload["flutterwave_secret_key"] = flwKeyToSave;
@@ -423,7 +423,7 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
         const serviceKey = await getServiceRoleKey(supabase);
         if (serviceKey) {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(payload).eq("id", 1);
+          const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(payload as never).eq("id", 1);
           updateError = adminError;
         } else {
           updateError = userError;
