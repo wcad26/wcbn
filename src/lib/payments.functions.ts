@@ -384,7 +384,7 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
 
     const combinedBankAccounts = [...regularAccounts, ...vaultEntries];
 
-    const payload: TablesUpdate<"wcbn_payment_settings"> & Record<string, unknown> = {
+    const payload: Record<string, any> = {
       flutterwave_enabled: dbFields.flutterwave_enabled,
       flutterwave_mode: dbFields.flutterwave_mode,
       mobile_money_enabled: dbFields.mobile_money_enabled,
@@ -399,25 +399,25 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
       payload.invoice_note = dbFields.invoice_note;
     }
     if (flwKeyToSave) {
-      payload.flutterwave_secret_key = flwKeyToSave;
+      payload["flutterwave_secret_key"] = flwKeyToSave;
     }
     if (flwEncToSave) {
-      payload.flutterwave_encryption_key = flwEncToSave;
+      payload["flutterwave_encryption_key"] = flwEncToSave;
     }
     if (srvKeyToSave) {
-      payload.supabase_service_role_key = srvKeyToSave;
+      payload["supabase_service_role_key"] = srvKeyToSave;
     }
 
     let updateError: { message: string } | null = null;
-    const { error: userError } = await supabase.from("wcbn_payment_settings").update(payload).eq("id", 1);
+    const { error: userError } = await supabase.from("wcbn_payment_settings").update(payload as never).eq("id", 1);
     if (userError) {
       // If column doesn't exist yet on remote table, try without the dedicated secret columns, retaining vault in bank_accounts
       if (userError.message?.includes("column") || userError.message?.includes("does not exist")) {
         const fallbackPayload = { ...payload };
-        delete fallbackPayload.flutterwave_secret_key;
-        delete fallbackPayload.flutterwave_encryption_key;
-        delete fallbackPayload.supabase_service_role_key;
-        const { error: fallbackErr } = await supabase.from("wcbn_payment_settings").update(fallbackPayload).eq("id", 1);
+        delete fallbackPayload["flutterwave_secret_key"];
+        delete fallbackPayload["flutterwave_encryption_key"];
+        delete fallbackPayload["supabase_service_role_key"];
+        const { error: fallbackErr } = await supabase.from("wcbn_payment_settings").update(fallbackPayload as never).eq("id", 1);
         if (fallbackErr) updateError = fallbackErr;
       } else {
         const serviceKey = await getServiceRoleKey(supabase);
