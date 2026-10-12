@@ -23,8 +23,90 @@ export function InvoiceCard({ invoice, memberName, bankAccounts, note, showBank 
   const cycle = CYCLES.find((c) => c.value === invoice.billing_cycle);
   const unpaid = Number(invoice.paid_amount) < Number(invoice.amount);
   const bank = showBank && unpaid && invoice.payment_method === "bank_transfer" && (bankAccounts?.length ?? 0) > 0;
+
+  const handlePrint = () => {
+    const cardEl = document.getElementById(`invoice-card-${invoice.id}`);
+    if (!cardEl) {
+      window.print();
+      return;
+    }
+
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    // Collect all stylesheets from current document
+    const headHtml = Array.from(document.querySelectorAll("link[rel='stylesheet'], style"))
+      .map((el) => el.outerHTML)
+      .join("\n");
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>WCBN Invoice - ${invoice.invoice_number}</title>
+          ${headHtml}
+          <style>
+            @page { margin: 12mm; size: auto; }
+            body { 
+              background: #ffffff !important; 
+              color: #111827 !important; 
+              padding: 0 !important; 
+              margin: 0 !important; 
+              font-family: Inter, ui-sans-serif, system-ui, sans-serif; 
+            }
+            .print\\:hidden { display: none !important; }
+            article { 
+              border: 1px solid #e5e7eb !important; 
+              box-shadow: none !important; 
+              border-radius: 1.5rem !important; 
+              overflow: hidden !important; 
+              margin: 0 auto !important;
+              max-width: 800px !important;
+            }
+            header { 
+              background: linear-gradient(135deg, hsl(284 32% 35%), hsl(267 54% 36%)) !important; 
+              color: #ffffff !important; 
+              -webkit-print-color-adjust: exact !important; 
+              print-color-adjust: exact !important; 
+            }
+          </style>
+        </head>
+        <body>
+          ${cardEl.outerHTML}
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    iframe.contentWindow?.focus();
+    setTimeout(() => {
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 1000);
+    }, 350);
+  };
+
   return (
-    <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-card print:shadow-none">
+    <article
+      id={`invoice-card-${invoice.id}`}
+      className="wcbn-printable-invoice overflow-hidden rounded-3xl border border-border bg-card shadow-card print:shadow-none"
+    >
       <header className="gradient-brand flex flex-wrap items-start justify-between gap-4 p-6 text-primary-foreground">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-80">WCBN invoice</p>
@@ -64,7 +146,7 @@ export function InvoiceCard({ invoice, memberName, bankAccounts, note, showBank 
       )}
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-6 py-4 print:hidden">
         <p className="text-xs text-muted-foreground">{note ?? "World Changers Business Network"}</p>
-        <Button size="sm" variant="outline" onClick={() => window.print()}><Printer className="size-4" />Print</Button>
+        <Button size="sm" variant="outline" onClick={handlePrint}><Printer className="size-4" />Print</Button>
       </footer>
     </article>
   );

@@ -145,38 +145,12 @@ export function PayDialog({
               await poll(res.txRef);
               return;
             } catch (cardErr: any) {
-              console.warn("Direct chargeCard fallback to in-app inline form:", cardErr);
-              if (!publicKey) throw cardErr;
+              console.error("Direct chargeCard error:", cardErr);
+              throw cardErr;
             }
+          } else {
+            throw new Error("Card information is required to initiate direct payment.");
           }
-          if (!publicKey) throw new Error("Card payments are not configured yet.");
-          const { data: inv } = await supabase.from("wcbn_invoices").select("invoice_number, amount, currency_code").eq("id", invoiceId).single();
-          if (!inv) throw new Error("Invoice not found.");
-          await loadInline();
-          setStage("waiting");
-          const txRef = `${inv.invoice_number}-${Date.now()}`;
-          let done = false;
-          const modal = window.FlutterwaveCheckout!({
-            public_key: publicKey,
-            tx_ref: txRef,
-            amount: Number(inv.amount),
-            currency: inv.currency_code,
-            payment_options: "card",
-            customer: { email: customer.email, name: customer.name, phone_number: customer.phone },
-            customizations: { title: "WCBN membership fee", description: `Invoice ${inv.invoice_number}` },
-            meta: { invoice_id: invoiceId },
-            callback: (r: { transaction_id?: number }) => {
-              done = true;
-              modal.close();
-              void poll(txRef, r.transaction_id ? String(r.transaction_id) : undefined);
-            },
-            onclose: () => {
-              if (!done && alive.current) {
-                setError("Card payment was closed before completion.");
-                setStage("failed");
-              }
-            },
-          });
         }
       } catch (e) {
         if (alive.current) {

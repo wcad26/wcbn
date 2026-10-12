@@ -688,14 +688,35 @@ function ApplicationPage() {
   const payExistingInvoice = useMutation({
     mutationFn: async (m: "mobile_money" | "card") => {
       if (!firstInvoice) throw new Error("No invoice found");
-      const cardDataPayload = m === "card" && cardNumber ? {
-        cardNumber,
-        cardholderName: cardholderName.trim() || identity?.fullName || "WCBN Member",
-        expiryMonth: cardExpiry.split("/")[0]?.trim() || "",
-        expiryYear: cardExpiry.split("/")[1]?.trim() || "",
-        cvv: cardCvv.trim(),
-      } : null;
-      setPayInvoice({ id: firstInvoice.id, method: m, cardData: cardDataPayload });
+      if (m === "card") {
+        const rawNum = cardNumber.replace(/\s+/g, "");
+        if (!rawNum || rawNum.length < 12) {
+          throw new Error("Please enter a valid card number.");
+        }
+        const parts = cardExpiry.split("/");
+        const expMonth = parts[0]?.trim() || "";
+        const expYear = parts[1]?.trim() || "";
+        if (!expMonth || !expYear || expMonth.length !== 2 || expYear.length !== 2) {
+          throw new Error("Please enter card expiration date in MM/YY format.");
+        }
+        if (!cardCvv.trim() || cardCvv.trim().length < 3) {
+          throw new Error("Please enter your card CVV / CVC.");
+        }
+        const cardDataPayload = {
+          cardNumber: rawNum,
+          cardholderName: cardholderName.trim() || identity?.fullName || "WCBN Member",
+          expiryMonth: expMonth,
+          expiryYear: expYear,
+          cvv: cardCvv.trim(),
+        };
+        setPayInvoice({ id: firstInvoice.id, method: "card", cardData: cardDataPayload });
+      } else {
+        const cleanPhone = momoPhone.trim();
+        if (!cleanPhone || cleanPhone.replace(/\D/g, "").length < 8) {
+          throw new Error("Please enter a valid mobile money number.");
+        }
+        setPayInvoice({ id: firstInvoice.id, method: "mobile_money", cardData: null });
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -866,65 +887,373 @@ function ApplicationPage() {
               </section>
             )}
 
-            <section className="rounded-3xl border border-border bg-card p-6 shadow-card">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Complete Payment</h3>
+            <section className="rounded-3xl border border-border bg-card p-6 shadow-card space-y-6">
+              <div>
+                <h3 className="text-base font-bold text-foreground">Complete Payment</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Select your preferred payment method below to complete payment and activate your membership for Invoice #{firstInvoice.invoice_number}.
+                </p>
+              </div>
 
-              {onlineOn && (
-                <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              {/* Payment Method Selector Cards */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                {settings?.mobile_money_enabled && (
+                  <button
+                    type="button"
+                    onClick={() => setMethod("mobile_money")}
+                    className={`flex items-center gap-3.5 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+                      (method || firstInvoice.payment_method) === "mobile_money"
+                        ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary"
+                        : "border-border hover:border-primary/40 bg-card"
+                    }`}
+                  >
+                    <div
+                      className={`p-2.5 rounded-xl ${
+                        (method || firstInvoice.payment_method) === "mobile_money"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      <Smartphone className="size-5" />
+                    </div>
                     <div>
-                      <p className="font-semibold text-sm">Instant Online Payment (Flutterwave)</p>
-                      <p className="text-xs text-muted-foreground">
-                        Instant activation upon payment. Supports Orange Money, MTN MoMo, Moov, Visa, and Mastercard.
+                      <p className="font-semibold text-sm text-foreground">Mobile Money</p>
+                      <p className="text-[11px] text-muted-foreground">MTN MoMo, Orange Money</p>
+                    </div>
+                  </button>
+                )}
+
+                {settings?.card_enabled && (
+                  <button
+                    type="button"
+                    onClick={() => setMethod("card")}
+                    className={`flex items-center gap-3.5 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+                      (method || firstInvoice.payment_method) === "card"
+                        ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary"
+                        : "border-border hover:border-primary/40 bg-card"
+                    }`}
+                  >
+                    <div
+                      className={`p-2.5 rounded-xl ${
+                        (method || firstInvoice.payment_method) === "card"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      <CreditCard className="size-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-foreground">Credit / Debit Card</p>
+                      <p className="text-[11px] text-muted-foreground">Visa, Mastercard, Verve</p>
+                    </div>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setMethod("bank_transfer")}
+                  className={`flex items-center gap-3.5 rounded-2xl border p-4 text-left transition-all cursor-pointer ${
+                    (method || firstInvoice.payment_method) === "bank_transfer"
+                      ? "border-primary bg-primary/10 shadow-sm ring-1 ring-primary"
+                      : "border-border hover:border-primary/40 bg-card"
+                  }`}
+                >
+                  <div
+                    className={`p-2.5 rounded-xl ${
+                      (method || firstInvoice.payment_method) === "bank_transfer"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    <Landmark className="size-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-foreground">Bank Wire / Transfer</p>
+                    <p className="text-[11px] text-muted-foreground">Direct bank deposit</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Form 1: Mobile Money Direct Payment */}
+              {(method || firstInvoice.payment_method) === "mobile_money" && (
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <Smartphone className="size-4 text-primary" /> Mobile Money Payment
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Confirm or update the phone number to be debited for this invoice.
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {settings?.mobile_money_enabled && (
-                        <Button size="sm" disabled={payExistingInvoice.isPending} onClick={() => payExistingInvoice.mutate("mobile_money")}>
-                          {payExistingInvoice.isPending ? <Loader2 className="size-4 animate-spin" /> : <Smartphone className="size-4" />}
-                          Pay with Mobile Money
-                        </Button>
-                      )}
-                      {settings?.card_enabled && (
-                        <Button size="sm" variant="outline" disabled={payExistingInvoice.isPending} onClick={() => payExistingInvoice.mutate("card")}>
-                          {payExistingInvoice.isPending ? <Loader2 className="size-4 animate-spin" /> : <CreditCard className="size-4" />}
-                          Pay with Card
-                        </Button>
-                      )}
+                    {detectedNetwork && (
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                          detectedNetwork === "MTN"
+                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30"
+                            : "bg-orange-500/15 text-orange-700 dark:text-orange-300 border border-orange-500/30"
+                        }`}
+                      >
+                        ⚡ {detectedNetwork === "MTN" ? "MTN Mobile Money" : "Orange Money"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <Field label="Mobile Money Phone Number">
+                      <div className="relative">
+                        <Input
+                          placeholder="e.g. 675681310 or +237675681310"
+                          value={momoPhone}
+                          onChange={(e) => handleMomoPhoneChange(e.target.value)}
+                          className="h-10 text-sm font-mono pr-28"
+                        />
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                          {detectedNetwork ? (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-background border border-border">
+                              {detectedNetwork}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground">MTN / Orange</span>
+                          )}
+                        </div>
+                      </div>
+                    </Field>
+
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background/60 rounded-xl p-3 border border-border/50">
+                      <Info className="size-4 text-primary shrink-0" />
+                      <span>
+                        When you click <strong>Pay with Mobile Money</strong>, an in-app prompt will appear and you will receive a push authorization prompt on your handset. Enter your PIN to approve the debit.
+                      </span>
+                    </div>
+
+                    <div className="pt-2">
+                      <Button
+                        disabled={payExistingInvoice.isPending || !momoPhone.trim()}
+                        onClick={() => payExistingInvoice.mutate("mobile_money")}
+                        className="gap-2 w-full sm:w-auto h-11 px-6 text-sm font-semibold"
+                      >
+                        {payExistingInvoice.isPending ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Smartphone className="size-4" />
+                        )}
+                        Pay {money(Number(firstInvoice.amount), firstInvoice.currency_code)} with Mobile Money
+                      </Button>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="font-semibold text-sm">Pay by Bank Transfer</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Transfer to any of the official bank accounts listed on your invoice above, then submit your slip reference here.
-                </p>
+              {/* Form 2: Direct Credit / Debit Card Form */}
+              {(method || firstInvoice.payment_method) === "card" && (
+                <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6 space-y-5">
+                  {/* Header: Title + Flutterwave Supported Brands Strip */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border/60">
+                    <div>
+                      <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                        <CreditCard className="size-4 text-primary" /> Card Payment Details
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Enter your card details below for direct in-app payment. Card data is tokenized securely via Flutterwave.
+                      </p>
+                    </div>
 
-                {declared ? (
-                  <p className="mt-4 flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-sm text-primary font-medium">
-                    <CheckCircle2 className="size-4" /> Transfer details received. Leadership will verify and activate your membership shortly.
-                  </p>
-                ) : (
-                  <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-                    <Field label="Bank transfer reference">
-                      <Input value={transferRef} onChange={(e) => setTransferRef(e.target.value)} placeholder="Reference on your bank slip" />
-                    </Field>
-                    <Field label="Receipt / Slip (optional)">
-                      <label className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-dashed border-border px-3 text-sm hover:border-primary/50">
-                        <FileUp className="size-4" />
-                        <span className="truncate">{transferProof ? transferProof.name : "Attach receipt"}</span>
-                        <input type="file" className="hidden" onChange={(e) => setTransferProof(e.target.files?.[0] ?? null)} />
-                      </label>
-                    </Field>
-                    <Button disabled={declareTransfer.isPending || !transferRef} onClick={() => declareTransfer.mutate()}>
-                      {declareTransfer.isPending ? <Loader2 className="animate-spin" /> : <Send className="size-4" />}
-                      Submit transfer details
-                    </Button>
+                    {/* Supported cards strip */}
+                    <div className="flex items-center gap-1.5 self-start sm:self-auto bg-background/80 px-2.5 py-1.5 rounded-xl border border-border/60 shadow-2xs">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">
+                        Accepted:
+                      </span>
+                      <VisaBadge active={detectedBrand === "visa"} />
+                      <MastercardBadge active={detectedBrand === "mastercard"} />
+                      <VerveBadge active={detectedBrand === "verve"} />
+                      <AmexBadge active={detectedBrand === "amex"} />
+                    </div>
                   </div>
-                )}
-              </div>
+
+                  <div className="space-y-4">
+                    {/* Cardholder Name */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                        <span>Cardholder Full Name *</span>
+                        <span className="text-[11px] text-muted-foreground font-normal">
+                          Matches name on card or official ID
+                        </span>
+                      </label>
+                      <div className="relative">
+                        <Input
+                          placeholder="e.g. John Doe"
+                          value={cardholderName}
+                          onChange={(e) => setCardholderName(e.target.value)}
+                          className="h-10 text-sm bg-card border-border pr-10"
+                        />
+                        <UserRound className="size-4 text-muted-foreground/60 absolute right-3 top-3 pointer-events-none" />
+                      </div>
+                    </div>
+
+                    {/* Stripe-style Segmented Card Box */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                        <span>Card Information *</span>
+                        {detectedBrand !== "generic" && (
+                          <span className="text-[11px] font-semibold text-primary capitalize flex items-center gap-1">
+                            <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            {detectedBrand} card detected
+                          </span>
+                        )}
+                      </label>
+
+                      <div className="rounded-xl border border-border bg-card shadow-xs transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 overflow-hidden divide-y divide-border">
+                        {/* Top row: Card Number with dynamic brand badge */}
+                        <div className="relative flex items-center px-3.5 py-2.5 bg-card">
+                          <div className="mr-3 shrink-0 flex items-center justify-center">
+                            {detectedBrand === "visa" ? (
+                              <VisaBadge active className="h-4.5 w-auto" />
+                            ) : detectedBrand === "mastercard" ? (
+                              <MastercardBadge active className="h-4.5 w-auto" />
+                            ) : detectedBrand === "verve" ? (
+                              <VerveBadge active className="h-4.5 w-auto" />
+                            ) : detectedBrand === "amex" ? (
+                              <AmexBadge active className="h-4.5 w-auto" />
+                            ) : (
+                              <CreditCard className="size-4.5 text-muted-foreground/60" />
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            autoComplete="cc-number"
+                            placeholder="1234  5678  9012  3456"
+                            value={cardNumber}
+                            maxLength={detectedBrand === "amex" ? 17 : 23}
+                            onChange={(e) => handleCardNumberChange(e.target.value)}
+                            className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm font-mono tracking-wider focus:outline-hidden"
+                          />
+                          {cardNumber && (
+                            <button
+                              type="button"
+                              onClick={() => setCardNumber("")}
+                              className="text-muted-foreground/60 hover:text-foreground text-xs p-1"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Bottom row: Expiry + CVC */}
+                        <div className="grid grid-cols-2 divide-x divide-border bg-card">
+                          <div className="flex items-center px-3.5 py-2.5">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              autoComplete="cc-exp"
+                              placeholder="MM / YY"
+                              value={cardExpiry}
+                              maxLength={5}
+                              onChange={(e) => handleExpiryChange(e.target.value)}
+                              className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm font-mono focus:outline-hidden"
+                            />
+                          </div>
+
+                          <div className="flex items-center px-3.5 py-2.5">
+                            <input
+                              type="password"
+                              inputMode="numeric"
+                              autoComplete="cc-csc"
+                              placeholder="CVC"
+                              value={cardCvv}
+                              maxLength={4}
+                              onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                              className="w-full bg-transparent text-foreground placeholder:text-muted-foreground/40 text-sm font-mono tracking-widest focus:outline-hidden"
+                            />
+                            <Lock className="size-3.5 text-muted-foreground/50 shrink-0 ml-2" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Security Notice */}
+                    <div className="flex items-start gap-3 rounded-xl bg-background/60 border border-border/60 p-3.5 text-xs text-muted-foreground">
+                      <ShieldCheck className="size-4.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <strong className="text-foreground">Bank-Grade 256-Bit SSL Encryption</strong>
+                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            PCI-DSS Level 1 Compliant
+                          </span>
+                        </div>
+                        <p className="text-[11px] leading-relaxed">
+                          Card data is securely tokenized with Flutterwave. WCBN never saves, logs, or stores your card number or security code on its servers or local storage.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Submit Card Payment Button */}
+                    <div className="pt-2">
+                      <Button
+                        disabled={payExistingInvoice.isPending || !cardNumber.trim() || !cardExpiry.trim() || !cardCvv.trim()}
+                        onClick={() => payExistingInvoice.mutate("card")}
+                        className="gap-2 w-full sm:w-auto h-11 px-6 text-sm font-semibold"
+                      >
+                        {payExistingInvoice.isPending ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <CreditCard className="size-4" />
+                        )}
+                        Pay {money(Number(firstInvoice.amount), firstInvoice.currency_code)} by Card
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Form 3: Official Bank Transfer */}
+              {(method || firstInvoice.payment_method) === "bank_transfer" && (
+                <div className="rounded-2xl border border-border bg-muted/20 p-5 space-y-4">
+                  <div>
+                    <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Landmark className="size-4 text-primary" /> Official Bank Transfer
+                    </h4>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Transfer to any of the official bank accounts listed on your invoice above, then submit your slip reference here.
+                    </p>
+                  </div>
+
+                  {declared ? (
+                    <p className="flex items-center gap-2 rounded-xl bg-primary/10 p-3 text-sm text-primary font-medium">
+                      <CheckCircle2 className="size-4" /> Transfer details received. Leadership will verify and activate your membership shortly.
+                    </p>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                      <Field label="Bank transfer reference">
+                        <Input
+                          value={transferRef}
+                          onChange={(e) => setTransferRef(e.target.value)}
+                          placeholder="Reference on your bank slip"
+                        />
+                      </Field>
+                      <Field label="Receipt / Slip (optional)">
+                        <label className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-dashed border-border px-3 text-sm hover:border-primary/50">
+                          <FileUp className="size-4" />
+                          <span className="truncate">{transferProof ? transferProof.name : "Attach receipt"}</span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={(e) => setTransferProof(e.target.files?.[0] ?? null)}
+                          />
+                        </label>
+                      </Field>
+                      <Button
+                        disabled={declareTransfer.isPending || !transferRef}
+                        onClick={() => declareTransfer.mutate()}
+                      >
+                        {declareTransfer.isPending ? <Loader2 className="animate-spin" /> : <Send className="size-4" />}
+                        Submit transfer details
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
           </div>
         )}
