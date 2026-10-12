@@ -554,7 +554,7 @@ function ApplicationPage() {
   }, [categories, isDiasporaApplicant]);
 
   const save = useMutation({
-    mutationFn: async (submit: boolean) => {
+    mutationFn: async (submit: boolean): Promise<"pay" | "invoice" | "saved" | "redirect"> => {
       if (!identity) throw new Error("Not signed in");
       if (!categoryId) throw new Error("Please select a membership category first.");
 
@@ -631,8 +631,8 @@ function ApplicationPage() {
           const cardDataPayload = method === "card" ? {
             cardNumber,
             cardholderName: cardholderName.trim() || identity?.fullName || "WCBN Member",
-            expiryMonth: cardExpiry.split("/")[0].trim(),
-            expiryYear: cardExpiry.split("/")[1].trim(),
+            expiryMonth: cardExpiry.split("/")[0]?.trim() ?? "",
+            expiryYear: cardExpiry.split("/")[1]?.trim() ?? "",
             cvv: cardCvv.trim(),
           } : null;
           setPayInvoice({ id: res.invoiceId, method, cardData: cardDataPayload });

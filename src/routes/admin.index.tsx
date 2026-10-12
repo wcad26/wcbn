@@ -303,7 +303,7 @@ function AdminOverview() {
               return cat ? getCategoryArchetype(cat) === memberArch : false;
             });
             if (trackCatKeys.length > 0) {
-              row[trackCatKeys[0].key] = (row[trackCatKeys[0].key] || 0) + 1;
+              row[trackCatKeys[0]!.key] = (row[trackCatKeys[0]!.key] || 0) + 1;
             } else if (keys[0]) {
               row[keys[0].key] = (row[keys[0].key] || 0) + 1;
             }

@@ -384,7 +384,7 @@ export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
 
     const combinedBankAccounts = [...regularAccounts, ...vaultEntries];
 
-    const payload: TablesUpdate<"wcbn_payment_settings"> = {
+    const payload: TablesUpdate<"wcbn_payment_settings"> & Record<string, unknown> = {
       flutterwave_enabled: dbFields.flutterwave_enabled,
       flutterwave_mode: dbFields.flutterwave_mode,
       mobile_money_enabled: dbFields.mobile_money_enabled,
