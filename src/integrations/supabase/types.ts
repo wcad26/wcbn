@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.3"
   }
   public: {
     Tables: {
@@ -3923,14 +3923,11 @@ export type Database = {
           bank_transfer_enabled: boolean
           card_enabled: boolean
           flutterwave_enabled: boolean
-          flutterwave_encryption_key: string | null
           flutterwave_mode: string
           flutterwave_public_key: string | null
-          flutterwave_secret_key: string | null
           id: number
           invoice_note: string | null
           mobile_money_enabled: boolean
-          supabase_service_role_key: string | null
           updated_at: string
         }
         Insert: {
@@ -3938,14 +3935,11 @@ export type Database = {
           bank_transfer_enabled?: boolean
           card_enabled?: boolean
           flutterwave_enabled?: boolean
-          flutterwave_encryption_key?: string | null
           flutterwave_mode?: string
           flutterwave_public_key?: string | null
-          flutterwave_secret_key?: string | null
           id?: number
           invoice_note?: string | null
           mobile_money_enabled?: boolean
-          supabase_service_role_key?: string | null
           updated_at?: string
         }
         Update: {
@@ -3953,14 +3947,11 @@ export type Database = {
           bank_transfer_enabled?: boolean
           card_enabled?: boolean
           flutterwave_enabled?: boolean
-          flutterwave_encryption_key?: string | null
           flutterwave_mode?: string
           flutterwave_public_key?: string | null
-          flutterwave_secret_key?: string | null
           id?: number
           invoice_note?: string | null
           mobile_money_enabled?: boolean
-          supabase_service_role_key?: string | null
           updated_at?: string
         }
         Relationships: []
