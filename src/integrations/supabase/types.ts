@@ -3000,7 +3000,9 @@ export type Database = {
           jobs_created: number
           next_objectives: string | null
           people_trained: number
+          review_feedback: string | null
           review_year: number
+          reviewed_at: string | null
           reviewed_by: string | null
           sdg_evidence: Json
           status: string
@@ -3019,7 +3021,9 @@ export type Database = {
           jobs_created?: number
           next_objectives?: string | null
           people_trained?: number
+          review_feedback?: string | null
           review_year: number
+          reviewed_at?: string | null
           reviewed_by?: string | null
           sdg_evidence?: Json
           status?: string
@@ -3038,7 +3042,9 @@ export type Database = {
           jobs_created?: number
           next_objectives?: string | null
           people_trained?: number
+          review_feedback?: string | null
           review_year?: number
+          reviewed_at?: string | null
           reviewed_by?: string | null
           sdg_evidence?: Json
           status?: string
