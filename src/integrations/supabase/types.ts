@@ -3786,9 +3786,9 @@ export type Database = {
           benefits: string | null
           business_id: string
           city: string | null
-          country: string | null
+          country: string
           created_at: string
-          currency_code: string | null
+          currency_code: string
           deadline: string | null
           department: string | null
           description: string
@@ -3811,9 +3811,9 @@ export type Database = {
           benefits?: string | null
           business_id: string
           city?: string | null
-          country?: string | null
+          country?: string
           created_at?: string
-          currency_code?: string | null
+          currency_code?: string
           deadline?: string | null
           department?: string | null
           description: string
@@ -3836,9 +3836,9 @@ export type Database = {
           benefits?: string | null
           business_id?: string
           city?: string | null
-          country?: string | null
+          country?: string
           created_at?: string
-          currency_code?: string | null
+          currency_code?: string
           deadline?: string | null
           department?: string | null
           description?: string
