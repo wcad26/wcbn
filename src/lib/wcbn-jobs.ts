@@ -30,6 +30,8 @@ export interface WcbnJob {
     sector: string;
     country: string;
     city: string | null;
+    summary?: string | null;
+    description?: string | null;
   } | null;
 }
 

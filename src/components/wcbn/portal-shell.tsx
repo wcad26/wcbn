@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   BadgeCheck, BarChart3, Briefcase, BriefcaseBusiness, CalendarDays, CircleDollarSign, ClipboardCheck, FileText,
-  LogOut, Menu, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, UserRound, Users, X,
+  LogOut, Menu, Newspaper, PanelLeftClose, PanelLeftOpen, ScrollText, Settings2, UserRound, Users, X,
 } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";

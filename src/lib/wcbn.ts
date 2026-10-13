@@ -5,7 +5,7 @@ export type Identity = {
   userId: string;
   email: string | null;
   fullName: string;
-  profile: { id: string; first_name: string | null; last_name: string | null; email: string | null; phone: string | null; region_id: string | null } | null;
+  profile: { id: string; first_name: string | null; last_name: string | null; email: string | null; phone: string | null; address: string | null; region_id: string | null } | null;
   member: { id: string; member_id: string; status: string | null; join_date: string | null; region_id: string } | null;
   regionId: string | null;
   regionCode: string | null;
@@ -123,7 +123,7 @@ export async function fetchIdentity(): Promise<Identity | null> {
   if (!user) return null;
 
   const [{ data: profile }, { data: member }, { data: roleRows }] = await Promise.all([
-    supabase.from("profiles").select("id, first_name, last_name, email, phone, region_id").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("id, first_name, last_name, email, phone, address, region_id").eq("id", user.id).maybeSingle(),
     supabase.from("members").select("id, member_id, status, join_date, region_id").eq("profile_id", user.id).limit(1).maybeSingle(),
     supabase.from("wcbn_user_roles").select("is_active, wcbn_roles(name, permissions, is_active)").eq("user_id", user.id).eq("is_active", true),
   ]);
