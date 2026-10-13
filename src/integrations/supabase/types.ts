@@ -3000,9 +3000,7 @@ export type Database = {
           jobs_created: number
           next_objectives: string | null
           people_trained: number
-          review_feedback: string | null
           review_year: number
-          reviewed_at: string | null
           reviewed_by: string | null
           sdg_evidence: Json
           status: string
@@ -3021,9 +3019,7 @@ export type Database = {
           jobs_created?: number
           next_objectives?: string | null
           people_trained?: number
-          review_feedback?: string | null
           review_year: number
-          reviewed_at?: string | null
           reviewed_by?: string | null
           sdg_evidence?: Json
           status?: string
@@ -3042,9 +3038,7 @@ export type Database = {
           jobs_created?: number
           next_objectives?: string | null
           people_trained?: number
-          review_feedback?: string | null
           review_year?: number
-          reviewed_at?: string | null
           reviewed_by?: string | null
           sdg_evidence?: Json
           status?: string
@@ -3548,12 +3542,9 @@ export type Database = {
           created_by: string | null
           description: string | null
           end_datetime: string | null
-          event_format: string
           id: string
           image_url: string | null
           is_featured: boolean
-          meeting_id: string | null
-          meeting_passcode: string | null
           organizer_email: string | null
           organizer_name: string | null
           organizer_phone: string | null
@@ -3565,7 +3556,6 @@ export type Database = {
           title: string
           updated_at: string
           venue_name: string | null
-          virtual_url: string | null
         }
         Insert: {
           address?: string | null
@@ -3580,12 +3570,9 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           end_datetime?: string | null
-          event_format?: string
           id?: string
           image_url?: string | null
           is_featured?: boolean
-          meeting_id?: string | null
-          meeting_passcode?: string | null
           organizer_email?: string | null
           organizer_name?: string | null
           organizer_phone?: string | null
@@ -3597,7 +3584,6 @@ export type Database = {
           title: string
           updated_at?: string
           venue_name?: string | null
-          virtual_url?: string | null
         }
         Update: {
           address?: string | null
@@ -3612,12 +3598,9 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           end_datetime?: string | null
-          event_format?: string
           id?: string
           image_url?: string | null
           is_featured?: boolean
-          meeting_id?: string | null
-          meeting_passcode?: string | null
           organizer_email?: string | null
           organizer_name?: string | null
           organizer_phone?: string | null
@@ -3629,7 +3612,6 @@ export type Database = {
           title?: string
           updated_at?: string
           venue_name?: string | null
-          virtual_url?: string | null
         }
         Relationships: []
       }
@@ -3772,99 +3754,6 @@ export type Database = {
           },
           {
             foreignKeyName: "wcbn_invoices_wcbn_member_id_fkey"
-            columns: ["wcbn_member_id"]
-            isOneToOne: false
-            referencedRelation: "wcbn_members"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      wcbn_jobs: {
-        Row: {
-          application_email: string | null
-          application_url: string | null
-          benefits: string | null
-          business_id: string
-          city: string | null
-          country: string | null
-          created_at: string
-          currency_code: string | null
-          deadline: string | null
-          department: string | null
-          description: string
-          employment_type: string
-          id: string
-          location_type: string
-          requirements: string | null
-          salary_max: number | null
-          salary_min: number | null
-          slug: string
-          status: string
-          title: string
-          updated_at: string
-          views_count: number
-          wcbn_member_id: string
-        }
-        Insert: {
-          application_email?: string | null
-          application_url?: string | null
-          benefits?: string | null
-          business_id: string
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          currency_code?: string | null
-          deadline?: string | null
-          department?: string | null
-          description: string
-          employment_type?: string
-          id?: string
-          location_type?: string
-          requirements?: string | null
-          salary_max?: number | null
-          salary_min?: number | null
-          slug: string
-          status?: string
-          title: string
-          updated_at?: string
-          views_count?: number
-          wcbn_member_id: string
-        }
-        Update: {
-          application_email?: string | null
-          application_url?: string | null
-          benefits?: string | null
-          business_id?: string
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          currency_code?: string | null
-          deadline?: string | null
-          department?: string | null
-          description?: string
-          employment_type?: string
-          id?: string
-          location_type?: string
-          requirements?: string | null
-          salary_max?: number | null
-          salary_min?: number | null
-          slug?: string
-          status?: string
-          title?: string
-          updated_at?: string
-          views_count?: number
-          wcbn_member_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "wcbn_jobs_business_id_fkey"
-            columns: ["business_id"]
-            isOneToOne: false
-            referencedRelation: "wcbn_businesses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "wcbn_jobs_wcbn_member_id_fkey"
             columns: ["wcbn_member_id"]
             isOneToOne: false
             referencedRelation: "wcbn_members"
