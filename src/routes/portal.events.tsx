@@ -137,7 +137,7 @@ export function PortalEventsPage() {
       description="Gatherings, clinics and masterclasses convened for WCBN members. Join virtual sessions directly online or register for in-person summits."
     >
       {/* Top Metrics Cards */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <MetricCard
           label="Upcoming Gatherings"
           value={upcoming.length}
@@ -165,10 +165,10 @@ export function PortalEventsPage() {
       </div>
 
       {/* Main Events Explorer */}
-      <div className="rounded-3xl border border-border bg-card p-6 shadow-card space-y-6">
+      <div className="rounded-3xl border border-border bg-card p-4 sm:p-6 shadow-card space-y-6">
         {/* Filter Navigation Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-5">
-          <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-5">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
             {[
               { id: "all", label: "Upcoming (All)" },
               { id: "online", label: "Virtual Sessions" },

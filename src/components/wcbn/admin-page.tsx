@@ -11,14 +11,14 @@ export function AdminPage({ action, children }: { title?: string; description?: 
 
 export function MemberPage({ title, description, action, children }: { title: string; description: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <div className="space-y-8 animate-in fade-in-50 duration-150">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Member portal</p>
-          <h1 className="mt-2 text-3xl font-bold">{title}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p>
+    <div className="space-y-6 animate-in fade-in-50 duration-150">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-primary">Member Portal</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">{title}</h1>
+          <p className="max-w-2xl text-xs sm:text-sm text-muted-foreground">{description}</p>
         </div>
-        {action}
+        {action ? <div className="flex flex-wrap items-center gap-2 shrink-0">{action}</div> : null}
       </div>
       <div>{children}</div>
     </div>
