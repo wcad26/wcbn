@@ -83,7 +83,9 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
   const labelFor = (label: string, to: string) =>
     professional && to === "/portal/business" ? "My professional profile" : label;
 
-  const currentItem = links.find((l) => l.to === path);
+  const currentItem =
+    links.find((l) => l.to === path) ??
+    links.find((l) => l.to !== "/portal" && l.to !== "/admin" && path.startsWith(`${l.to}/`));
   const currentTitle = currentItem ? labelFor(currentItem.label, currentItem.to) : admin ? "Leadership" : "Member Portal";
 
   async function signOut() {
@@ -354,10 +356,9 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
 
           {/* Right: Member pills & quick actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 sm:px-3 py-1 text-xs font-semibold text-primary">
-              <BadgeCheck className="size-3 sm:size-3.5" />
-              <span className="hidden sm:inline">{memberCategory} Track</span>
-              <span className="sm:hidden">{memberCategory}</span>
+            <span className="hidden items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary lg:inline-flex">
+              <BadgeCheck className="size-3.5" />
+              <span>{memberCategory} Track</span>
             </span>
 
             <Button
@@ -367,9 +368,17 @@ export function PortalShell({ children, admin = false }: { children: ReactNode; 
               onClick={() => setMobileDrawerOpen(true)}
               aria-label="Account details"
             >
-              <span className="grid size-8 sm:size-9 place-items-center rounded-full gradient-brand text-xs font-bold text-primary-foreground shadow-xs">
-                {memberInitials}
-              </span>
+              {identity?.profile?.avatar_url ? (
+                <img
+                  src={identity.profile.avatar_url}
+                  alt={identity.fullName}
+                  className="size-8 sm:size-9 rounded-full object-cover shadow-xs"
+                />
+              ) : (
+                <span className="grid size-8 sm:size-9 place-items-center rounded-full gradient-brand text-xs font-bold text-primary-foreground shadow-xs">
+                  {memberInitials}
+                </span>
+              )}
             </Button>
           </div>
         </header>

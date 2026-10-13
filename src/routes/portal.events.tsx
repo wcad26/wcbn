@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
-import { MetricCard } from "@/components/wcbn/metric-card";
+import { StatTile as MetricCard } from "@/components/wcbn/stat-tile";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";

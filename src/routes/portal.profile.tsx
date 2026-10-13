@@ -45,6 +45,7 @@ export function ProfilePage() {
     last_name: "",
     phone: "",
     address: "",
+    avatar_url: "",
   });
 
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
@@ -58,6 +59,7 @@ export function ProfilePage() {
         last_name: identity.profile.last_name ?? "",
         phone: identity.profile.phone ?? "",
         address: identity.profile.address ?? "",
+        avatar_url: identity.profile.avatar_url ?? "",
       });
     }
   }, [identity?.profile]);
@@ -72,6 +74,7 @@ export function ProfilePage() {
           last_name: form.last_name.trim(),
           phone: form.phone.trim() || null,
           address: form.address.trim() || null,
+          avatar_url: form.avatar_url.trim() || null,
         })
         .eq("id", identity.userId);
       if (error) throw error;
@@ -131,9 +134,17 @@ export function ProfilePage() {
             <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-card space-y-6">
               {/* Profile Card Header with Avatar */}
               <div className="flex flex-wrap items-center gap-5 border-b border-border/60 pb-6">
-                <div className="grid size-16 place-items-center rounded-2xl gradient-brand text-2xl font-bold text-primary-foreground shadow-md">
-                  {(identity?.fullName ?? "W").slice(0, 1).toUpperCase()}
-                </div>
+                {identity?.profile?.avatar_url ? (
+                  <img
+                    src={identity.profile.avatar_url}
+                    alt={identity.fullName ?? "Avatar"}
+                    className="size-16 rounded-2xl object-cover border border-border shadow-md"
+                  />
+                ) : (
+                  <div className="grid size-16 place-items-center rounded-2xl gradient-brand text-2xl font-bold text-primary-foreground shadow-md">
+                    {(identity?.fullName ?? "W").slice(0, 1).toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <h2 className="text-xl font-bold text-foreground">{identity?.fullName}</h2>
                   <p className="text-sm text-muted-foreground">{identity?.email}</p>
@@ -209,6 +220,21 @@ export function ProfilePage() {
                     className="rounded-xl h-11"
                     placeholder="Douala, Cameroon"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Profile Photo Link (URL)
+                  </Label>
+                  <Input
+                    value={form.avatar_url}
+                    onChange={(e) => setForm({ ...form, avatar_url: e.target.value })}
+                    className="rounded-xl h-11"
+                    placeholder="https://... direct image link"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Direct image link for your avatar photo in the member portal.
+                  </p>
                 </div>
 
                 <div className="pt-3">

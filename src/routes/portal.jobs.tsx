@@ -254,34 +254,6 @@ export function PortalJobsPage() {
         </div>
       }
     >
-      {/* Top Metrics Cards */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-        <MetricCard
-          label="Total Job Postings"
-          value={jobs.length}
-          detail="All career listings created"
-          icon={Briefcase}
-        />
-        <MetricCard
-          label="Active / Live Roles"
-          value={publishedCount}
-          detail="Live on public /jobs board"
-          icon={CheckCircle2}
-        />
-        <MetricCard
-          label="Drafts / Preparing"
-          value={draftCount}
-          detail="Unpublished roles"
-          icon={Clock}
-        />
-        <MetricCard
-          label="Closed / Filled"
-          value={closedCount}
-          detail="Archived opportunities"
-          icon={Users}
-        />
-      </div>
-
       {/* Main Content Area */}
       <div className="rounded-3xl border border-border bg-card p-6 shadow-card">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-5">
