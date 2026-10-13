@@ -153,9 +153,18 @@ export function PortalHome() {
         <div className="relative flex items-center justify-between gap-5">
           {/* Left: Greeting, Category & Status */}
           <div className="space-y-3 min-w-0">
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground truncate">
+                Hello, {firstName}
+              </h1>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                Welcome to your WCBN Member Portal. Connect, recruit talent, and track your kingdom enterprise impact.
+              </p>
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="border-primary/30 text-primary font-semibold text-xs px-3 py-1">
-                {category} Member
+                {category}
               </Badge>
               {isPaid ? (
                 <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 text-xs px-3 py-1 gap-1">
@@ -168,15 +177,6 @@ export function PortalHome() {
                   <span>Fees Pending</span>
                 </Badge>
               )}
-            </div>
-
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground truncate">
-                Hello, {firstName}
-              </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                Welcome to your WCBN Member Portal. Connect, recruit talent, and track your kingdom enterprise impact.
-              </p>
             </div>
           </div>
 
