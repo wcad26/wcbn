@@ -17,6 +17,7 @@ import { Route as BusinessesRouteImport } from './routes/businesses'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as ImpactRouteImport } from './routes/impact'
+import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as MembershipRouteImport } from './routes/membership'
 import { Route as NewsRouteImport } from './routes/news'
 import { Route as PortalRouteImport } from './routes/portal'
@@ -35,6 +36,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AuthAdminRouteImport } from './routes/auth_.admin'
 import { Route as BusinessesSlugRouteImport } from './routes/businesses.$slug'
 import { Route as EventsSlugRouteImport } from './routes/events_.$slug'
+import { Route as JobsSlugRouteImport } from './routes/jobs.$slug'
 import { Route as NewsSlugRouteImport } from './routes/news_.$slug'
 import { Route as PortalIndexRouteImport } from './routes/portal.index'
 import { Route as PortalApplicationRouteImport } from './routes/portal.application'
@@ -43,6 +45,7 @@ import { Route as PortalContributionsRouteImport } from './routes/portal.contrib
 import { Route as PortalCovenantRouteImport } from './routes/portal.covenant'
 import { Route as PortalEventsRouteImport } from './routes/portal.events'
 import { Route as PortalImpactRouteImport } from './routes/portal.impact'
+import { Route as PortalJobsRouteImport } from './routes/portal.jobs'
 import { Route as PortalNewsRouteImport } from './routes/portal.news'
 import { Route as PortalProfileRouteImport } from './routes/portal.profile'
 import { Route as PortalEventsSlugRouteImport } from './routes/portal.events.$slug'
@@ -86,6 +89,11 @@ const EventsRoute = EventsRouteImport.update({
 const ImpactRoute = ImpactRouteImport.update({
   id: '/impact',
   path: '/impact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JobsRoute = JobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MembershipRoute = MembershipRouteImport.update({
@@ -178,6 +186,11 @@ const EventsSlugRoute = EventsSlugRouteImport.update({
   path: '/events/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JobsSlugRoute = JobsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => JobsRoute,
+} as any)
 const NewsSlugRoute = NewsSlugRouteImport.update({
   id: '/news_/$slug',
   path: '/news/$slug',
@@ -218,6 +231,11 @@ const PortalImpactRoute = PortalImpactRouteImport.update({
   path: '/impact',
   getParentRoute: () => PortalRoute,
 } as any)
+const PortalJobsRoute = PortalJobsRouteImport.update({
+  id: '/jobs',
+  path: '/jobs',
+  getParentRoute: () => PortalRoute,
+} as any)
 const PortalNewsRoute = PortalNewsRouteImport.update({
   id: '/news',
   path: '/news',
@@ -248,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
+  '/jobs': typeof JobsRouteWithChildren
   '/membership': typeof MembershipRoute
   '/news': typeof NewsRoute
   '/portal': typeof PortalRouteWithChildren
@@ -265,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/jobs/$slug': typeof JobsSlugRoute
   '/news/$slug': typeof NewsSlugRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
@@ -272,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/portal/covenant': typeof PortalCovenantRoute
   '/portal/events': typeof PortalEventsRouteWithChildren
   '/portal/impact': typeof PortalImpactRoute
+  '/portal/jobs': typeof PortalJobsRoute
   '/portal/news': typeof PortalNewsRouteWithChildren
   '/portal/profile': typeof PortalProfileRoute
   '/admin/': typeof AdminIndexRoute
@@ -287,6 +308,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
+  '/jobs': typeof JobsRouteWithChildren
   '/membership': typeof MembershipRoute
   '/news': typeof NewsRoute
   '/admin/applications': typeof AdminApplicationsRoute
@@ -303,6 +325,7 @@ export interface FileRoutesByTo {
   '/auth/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/jobs/$slug': typeof JobsSlugRoute
   '/news/$slug': typeof NewsSlugRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
@@ -310,6 +333,7 @@ export interface FileRoutesByTo {
   '/portal/covenant': typeof PortalCovenantRoute
   '/portal/events': typeof PortalEventsRouteWithChildren
   '/portal/impact': typeof PortalImpactRoute
+  '/portal/jobs': typeof PortalJobsRoute
   '/portal/news': typeof PortalNewsRouteWithChildren
   '/portal/profile': typeof PortalProfileRoute
   '/admin': typeof AdminIndexRoute
@@ -327,6 +351,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/events': typeof EventsRoute
   '/impact': typeof ImpactRoute
+  '/jobs': typeof JobsRouteWithChildren
   '/membership': typeof MembershipRoute
   '/news': typeof NewsRoute
   '/portal': typeof PortalRouteWithChildren
@@ -344,6 +369,7 @@ export interface FileRoutesById {
   '/auth_/admin': typeof AuthAdminRoute
   '/businesses/$slug': typeof BusinessesSlugRoute
   '/events_/$slug': typeof EventsSlugRoute
+  '/jobs/$slug': typeof JobsSlugRoute
   '/news_/$slug': typeof NewsSlugRoute
   '/portal/application': typeof PortalApplicationRoute
   '/portal/business': typeof PortalBusinessRoute
@@ -351,6 +377,7 @@ export interface FileRoutesById {
   '/portal/covenant': typeof PortalCovenantRoute
   '/portal/events': typeof PortalEventsRouteWithChildren
   '/portal/impact': typeof PortalImpactRoute
+  '/portal/jobs': typeof PortalJobsRoute
   '/portal/news': typeof PortalNewsRouteWithChildren
   '/portal/profile': typeof PortalProfileRoute
   '/admin/': typeof AdminIndexRoute
@@ -369,6 +396,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/events'
     | '/impact'
+    | '/jobs'
     | '/membership'
     | '/news'
     | '/portal'
@@ -386,6 +414,7 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/businesses/$slug'
     | '/events/$slug'
+    | '/jobs/$slug'
     | '/news/$slug'
     | '/portal/application'
     | '/portal/business'
@@ -393,6 +422,7 @@ export interface FileRouteTypes {
     | '/portal/covenant'
     | '/portal/events'
     | '/portal/impact'
+    | '/portal/jobs'
     | '/portal/news'
     | '/portal/profile'
     | '/admin/'
@@ -408,6 +438,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/events'
     | '/impact'
+    | '/jobs'
     | '/membership'
     | '/news'
     | '/admin/applications'
@@ -424,6 +455,7 @@ export interface FileRouteTypes {
     | '/auth/admin'
     | '/businesses/$slug'
     | '/events/$slug'
+    | '/jobs/$slug'
     | '/news/$slug'
     | '/portal/application'
     | '/portal/business'
@@ -431,6 +463,7 @@ export interface FileRouteTypes {
     | '/portal/covenant'
     | '/portal/events'
     | '/portal/impact'
+    | '/portal/jobs'
     | '/portal/news'
     | '/portal/profile'
     | '/admin'
@@ -447,6 +480,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/events'
     | '/impact'
+    | '/jobs'
     | '/membership'
     | '/news'
     | '/portal'
@@ -464,6 +498,7 @@ export interface FileRouteTypes {
     | '/auth_/admin'
     | '/businesses/$slug'
     | '/events_/$slug'
+    | '/jobs/$slug'
     | '/news_/$slug'
     | '/portal/application'
     | '/portal/business'
@@ -471,6 +506,7 @@ export interface FileRouteTypes {
     | '/portal/covenant'
     | '/portal/events'
     | '/portal/impact'
+    | '/portal/jobs'
     | '/portal/news'
     | '/portal/profile'
     | '/admin/'
@@ -488,6 +524,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   EventsRoute: typeof EventsRoute
   ImpactRoute: typeof ImpactRoute
+  JobsRoute: typeof JobsRouteWithChildren
   MembershipRoute: typeof MembershipRoute
   NewsRoute: typeof NewsRoute
   PortalRoute: typeof PortalRouteWithChildren
@@ -552,6 +589,13 @@ declare module '@tanstack/react-router' {
       path: '/impact'
       fullPath: '/impact'
       preLoaderRoute: typeof ImpactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jobs': {
+      id: '/jobs'
+      path: '/jobs'
+      fullPath: '/jobs'
+      preLoaderRoute: typeof JobsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/membership': {
@@ -680,6 +724,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/jobs/$slug': {
+      id: '/jobs/$slug'
+      path: '/$slug'
+      fullPath: '/jobs/$slug'
+      preLoaderRoute: typeof JobsSlugRouteImport
+      parentRoute: typeof JobsRoute
+    }
     '/news_/$slug': {
       id: '/news_/$slug'
       path: '/news/$slug'
@@ -734,6 +785,13 @@ declare module '@tanstack/react-router' {
       path: '/impact'
       fullPath: '/portal/impact'
       preLoaderRoute: typeof PortalImpactRouteImport
+      parentRoute: typeof PortalRoute
+    }
+    '/portal/jobs': {
+      id: '/portal/jobs'
+      path: '/jobs'
+      fullPath: '/portal/jobs'
+      preLoaderRoute: typeof PortalJobsRouteImport
       parentRoute: typeof PortalRoute
     }
     '/portal/news': {
@@ -811,6 +869,16 @@ const BusinessesRouteWithChildren = BusinessesRoute._addFileChildren(
   BusinessesRouteChildren,
 )
 
+interface JobsRouteChildren {
+  JobsSlugRoute: typeof JobsSlugRoute
+}
+
+const JobsRouteChildren: JobsRouteChildren = {
+  JobsSlugRoute: JobsSlugRoute,
+}
+
+const JobsRouteWithChildren = JobsRoute._addFileChildren(JobsRouteChildren)
+
 interface PortalEventsRouteChildren {
   PortalEventsSlugRoute: typeof PortalEventsSlugRoute
 }
@@ -842,6 +910,7 @@ interface PortalRouteChildren {
   PortalCovenantRoute: typeof PortalCovenantRoute
   PortalEventsRoute: typeof PortalEventsRouteWithChildren
   PortalImpactRoute: typeof PortalImpactRoute
+  PortalJobsRoute: typeof PortalJobsRoute
   PortalNewsRoute: typeof PortalNewsRouteWithChildren
   PortalProfileRoute: typeof PortalProfileRoute
   PortalIndexRoute: typeof PortalIndexRoute
@@ -854,6 +923,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalCovenantRoute: PortalCovenantRoute,
   PortalEventsRoute: PortalEventsRouteWithChildren,
   PortalImpactRoute: PortalImpactRoute,
+  PortalJobsRoute: PortalJobsRoute,
   PortalNewsRoute: PortalNewsRouteWithChildren,
   PortalProfileRoute: PortalProfileRoute,
   PortalIndexRoute: PortalIndexRoute,
@@ -871,6 +941,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   EventsRoute: EventsRoute,
   ImpactRoute: ImpactRoute,
+  JobsRoute: JobsRouteWithChildren,
   MembershipRoute: MembershipRoute,
   NewsRoute: NewsRoute,
   PortalRoute: PortalRouteWithChildren,

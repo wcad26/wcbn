@@ -1,7 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
-export type WcbnEvent = Tables<"wcbn_events">;
+export type WcbnEvent = Tables<"wcbn_events"> & {
+  event_format?: "online" | "in_person" | "hybrid" | string | null;
+  virtual_url?: string | null;
+  meeting_id?: string | null;
+  meeting_passcode?: string | null;
+};
 export type WcbnPost = Tables<"wcbn_posts">;
 
 export const EVENT_CATEGORIES = [
@@ -54,7 +59,7 @@ export function postTypeLabel(type: string) {
 }
 
 export const EVENT_FIELDS =
-  "id, title, slug, summary, description, category, start_datetime, end_datetime, venue_name, address, city, country, image_url, capacity, cost, cost_currency_code, organizer_name, organizer_email, organizer_phone, requires_registration, is_featured, audience, status, created_at, updated_at";
+  "id, title, slug, summary, description, category, start_datetime, end_datetime, venue_name, address, city, country, image_url, capacity, cost, cost_currency_code, organizer_name, organizer_email, organizer_phone, requires_registration, is_featured, audience, status, created_at, updated_at, event_format, virtual_url, meeting_id, meeting_passcode";
 
 export const POST_FIELDS =
   "id, post_type, title, slug, summary, body, image_url, tags, is_pinned, audience, status, published_at, created_at, updated_at";

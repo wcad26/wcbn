@@ -22,6 +22,7 @@ const empty = {
   venue_name: "", address: "", city: "", country: "", capacity: "", cost: "", cost_currency_code: "XAF",
   organizer_name: "", organizer_email: "", organizer_phone: "",
   requires_registration: true, is_featured: false, audience: "public", status: "draft", image_url: "",
+  event_format: "hybrid", virtual_url: "", meeting_id: "", meeting_passcode: "",
 };
 type Form = typeof empty;
 
@@ -34,6 +35,7 @@ function toForm(e: WcbnEvent): Form {
     capacity: e.capacity ? String(e.capacity) : "", cost: e.cost ? String(e.cost) : "", cost_currency_code: e.cost_currency_code ?? "XAF",
     organizer_name: e.organizer_name ?? "", organizer_email: e.organizer_email ?? "", organizer_phone: e.organizer_phone ?? "",
     requires_registration: e.requires_registration, is_featured: e.is_featured, audience: e.audience, status: e.status, image_url: e.image_url ?? "",
+    event_format: e.event_format ?? "hybrid", virtual_url: e.virtual_url ?? "", meeting_id: e.meeting_id ?? "", meeting_passcode: e.meeting_passcode ?? "",
   };
 }
 
@@ -83,6 +85,10 @@ function AdminEvents() {
         audience: form.audience,
         status: form.status,
         image_url: form.image_url || null,
+        event_format: form.event_format || "hybrid",
+        virtual_url: form.virtual_url || null,
+        meeting_id: form.meeting_id || null,
+        meeting_passcode: form.meeting_passcode || null,
       };
       if (editing) {
         const { error } = await supabase.from("wcbn_events").update(payload).eq("id", editing.id);
@@ -181,7 +187,39 @@ function EventDialog({ initial, onSubmit, saving, editing }: { initial: Form; on
         <Field label="Status"><Native value={form.status} onChange={(v) => set("status", v)} options={EVENT_STATUSES.map((s) => [s, s])} /></Field>
         <Field label="Starts"><Input type="datetime-local" value={form.start_datetime} onChange={(e) => set("start_datetime", e.target.value)} /></Field>
         <Field label="Ends (optional)"><Input type="datetime-local" value={form.end_datetime} onChange={(e) => set("end_datetime", e.target.value)} /></Field>
-        <Field label="Venue"><Input value={form.venue_name} onChange={(e) => set("venue_name", e.target.value)} /></Field>
+        <Field label="Event Format">
+          <Native
+            value={form.event_format}
+            onChange={(v) => set("event_format", v)}
+            options={[
+              ["online", "Online / Virtual Session"],
+              ["in_person", "In-Person Only"],
+              ["hybrid", "Hybrid (Online & In-Person)"],
+            ]}
+          />
+        </Field>
+        <Field label="Virtual Meeting URL (Zoom/Meet/Teams)">
+          <Input
+            value={form.virtual_url}
+            onChange={(e) => set("virtual_url", e.target.value)}
+            placeholder="https://meet.google.com/... or https://zoom.us/j/..."
+          />
+        </Field>
+        <Field label="Meeting ID (optional)">
+          <Input
+            value={form.meeting_id}
+            onChange={(e) => set("meeting_id", e.target.value)}
+            placeholder="e.g. 849 2039 1029"
+          />
+        </Field>
+        <Field label="Meeting Passcode (optional)">
+          <Input
+            value={form.meeting_passcode}
+            onChange={(e) => set("meeting_passcode", e.target.value)}
+            placeholder="e.g. WCBN2026"
+          />
+        </Field>
+        <Field label="Venue"><Input value={form.venue_name} onChange={(e) => set("venue_name", e.target.value)} placeholder="Physical hall or virtual room" /></Field>
         <Field label="Address"><Input value={form.address} onChange={(e) => set("address", e.target.value)} /></Field>
         <Field label="City"><Input value={form.city} onChange={(e) => set("city", e.target.value)} /></Field>
         <Field label="Country"><Input value={form.country} onChange={(e) => set("country", e.target.value)} /></Field>

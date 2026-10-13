@@ -16,16 +16,17 @@ function PortalGate() {
   const correctDestination = !!identity && ((activated && !onApplication) || (!activated && onApplication));
 
   useEffect(() => {
-    if (isPending || isFetching) return;
+    if (isPending) return;
     if (!identity) {
       navigate({ to: "/auth", replace: true });
       return;
     }
     if (!activated && !onApplication) navigate({ to: "/portal/application", replace: true });
     if (activated && onApplication) navigate({ to: "/portal", replace: true });
-  }, [activated, identity, isFetching, isPending, navigate, onApplication]);
+  }, [activated, identity, isPending, navigate, onApplication]);
 
-  if (isPending || isFetching || !correctDestination) return <PortalLoading />;
+  if (isPending && !identity) return <PortalLoading />;
+  if (!identity) return <PortalLoading />;
   return <PortalShell><Outlet /></PortalShell>;
 }
 

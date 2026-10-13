@@ -374,6 +374,49 @@ function AdminVenturesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Mutation: Approve Annual Impact Review
+  const approveImpactMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("wcbn_annual_reviews")
+        .update({
+          status: "approved",
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: userRes.user?.id || null,
+        })
+        .eq("id", reviewId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Annual impact review approved! Verified metrics are now live in the public directory.");
+      queryClient.invalidateQueries({ queryKey: ["admin", "venture-reviews"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  // Mutation: Request Revision for Impact Review
+  const rejectImpactMutation = useMutation({
+    mutationFn: async ({ reviewId, feedback }: { reviewId: string; feedback: string }) => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const { error } = await supabase
+        .from("wcbn_annual_reviews")
+        .update({
+          status: "changes_requested",
+          review_feedback: feedback,
+          reviewed_at: new Date().toISOString(),
+          reviewed_by: userRes.user?.id || null,
+        })
+        .eq("id", reviewId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Revision requested. Feedback sent to the member portal.");
+      queryClient.invalidateQueries({ queryKey: ["admin", "venture-reviews"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const handleOpenEdit = (v: ValidatedVenture) => {
     setEditingVenture(v);
     setEditForm({
@@ -436,6 +479,16 @@ function AdminVenturesPage() {
     if (!selectedVentureId) return null;
     return ventures.find((v) => v.id === selectedVentureId) || null;
   }, [ventures, selectedVentureId]);
+
+  const { data: ventureReviews = [] } = useQuery({
+    queryKey: ["admin", "venture-reviews", selectedVenture?.ownerMemberId],
+    enabled: !!selectedVenture?.ownerMemberId,
+    queryFn: async () => (await supabase
+      .from("wcbn_annual_reviews")
+      .select("*")
+      .eq("wcbn_member_id", selectedVenture!.ownerMemberId)
+      .order("review_year", { ascending: false })).data ?? [],
+  });
 
   // Overall KPI Counters
   const totalCount = ventures.length;
@@ -610,6 +663,105 @@ function AdminVenturesPage() {
                 <div className="rounded-2xl bg-emerald-500/5 border border-emerald-500/20 p-4 text-xs text-foreground leading-relaxed">
                   {v.impactStatement}
                 </div>
+              </div>
+
+              {/* Annual Impact Reviews Card */}
+              <div className="rounded-3xl border border-border bg-card p-6 shadow-card space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+                  <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                    <Sparkles className="size-4 text-primary" /> Annual Impact Reports & Review Queue
+                  </h3>
+                  <Badge variant="outline" className="text-xs">
+                    {ventureReviews.length} Report(s) on File
+                  </Badge>
+                </div>
+
+                {!ventureReviews.length ? (
+                  <p className="text-xs text-muted-foreground py-2">
+                    No annual impact reviews submitted by this member yet.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {ventureReviews.map((rev: any) => (
+                      <div key={rev.id} className="rounded-2xl border border-border bg-muted/20 p-4 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm">{rev.review_year} Impact Report</span>
+                            <Badge
+                              className={`text-xs capitalize ${
+                                rev.status === "approved"
+                                  ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                                  : rev.status === "submitted"
+                                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {rev.status === "submitted" ? "Pending Review" : rev.status}
+                            </Badge>
+                          </div>
+                          {rev.submitted_at && (
+                            <span className="text-[11px] text-muted-foreground">
+                              Submitted: {new Date(rev.submitted_at).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                          <div className="rounded-xl bg-card p-2 border border-border text-center">
+                            <span className="font-bold text-primary block text-sm">{rev.jobs_created || 0}</span>
+                            <span className="text-[10px] text-muted-foreground">Jobs Created</span>
+                          </div>
+                          <div className="rounded-xl bg-card p-2 border border-border text-center">
+                            <span className="font-bold text-primary block text-sm">{rev.people_trained || 0}</span>
+                            <span className="text-[10px] text-muted-foreground">People Trained</span>
+                          </div>
+                          <div className="rounded-xl bg-card p-2 border border-border text-center">
+                            <span className="font-bold text-primary block text-sm">{rev.businesses_supported || 0}</span>
+                            <span className="text-[10px] text-muted-foreground">Biz Supported</span>
+                          </div>
+                          <div className="rounded-xl bg-card p-2 border border-border text-center">
+                            <span className="font-bold text-primary block text-sm">{rev.community_initiatives || 0}</span>
+                            <span className="text-[10px] text-muted-foreground">Initiatives</span>
+                          </div>
+                        </div>
+
+                        {rev.achievements && (
+                          <div className="text-xs">
+                            <span className="font-semibold text-muted-foreground block text-[11px]">Achievements:</span>
+                            <p className="mt-0.5 text-foreground">{rev.achievements}</p>
+                          </div>
+                        )}
+
+                        <div className="pt-2 border-t border-border/60 flex flex-wrap items-center gap-2">
+                          {rev.status !== "approved" && (
+                            <Button
+                              size="sm"
+                              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                              disabled={approveImpactMutation.isPending}
+                              onClick={() => approveImpactMutation.mutate(rev.id)}
+                            >
+                              <Check className="size-3.5" /> Approve & Publish Live
+                            </Button>
+                          )}
+                          {rev.status === "submitted" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 text-xs text-rose-600 border-rose-500/30 hover:bg-rose-500/10 gap-1.5"
+                              disabled={rejectImpactMutation.isPending}
+                              onClick={() => {
+                                const fb = window.prompt("Enter revision guidance notes for the member:");
+                                if (fb) rejectImpactMutation.mutate({ reviewId: rev.id, feedback: fb });
+                              }}
+                            >
+                              Request Revision
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

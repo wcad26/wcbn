@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Building2, CalendarDays, CheckCircle2, ExternalLink, Globe, Loader2, Mail, MapPin,
+  Briefcase, Building2, CalendarDays, CheckCircle2, ExternalLink, Globe, Loader2, Mail, MapPin,
   Pencil, Phone, Plus, ShieldCheck, Sparkles, Target, Trash2, Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -160,7 +160,22 @@ function BusinessPage() {
       description={pro
         ? "Your professional profile as the network sees it. Keep it current — leadership vets every change before it appears in the public directory."
         : "Your business profile as the network sees it. Keep it current — leadership vets every change before it appears in the public catalog."}
-      action={businesses?.length && !pro ? <Button variant="outline" onClick={() => openEditor(null)}><Plus />Add another business</Button> : undefined}
+      action={
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="gap-2 rounded-xl">
+            <Link to="/portal/jobs">
+              <Briefcase className="size-3.5" />
+              <span>Post & Manage Jobs</span>
+            </Link>
+          </Button>
+          {businesses?.length && !pro ? (
+            <Button variant="outline" size="sm" onClick={() => openEditor(null)}>
+              <Plus className="size-3.5" />
+              <span>Add another business</span>
+            </Button>
+          ) : null}
+        </div>
+      }
     >
       {isLoading && (
         <div className="space-y-6">
