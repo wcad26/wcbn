@@ -5,100 +5,36 @@ import type { TablesUpdate } from "@/integrations/supabase/types";
 
 const FLW = "https://api.flutterwave.com/v3";
 
-/** Helper to retrieve Flutterwave secret key with priority: process.env -> database columns -> database vault */
-export async function getFlutterwaveSecretKey(supabaseClient: any): Promise<string | null> {
-  const envKey = process.env['FLUTTERWAVE_SECRET_KEY'];
-  if (envKey && envKey.trim().length > 0) return envKey.trim();
+type FlwCreds = { mode: "test" | "live"; publicKey: string | null; secretKey: string | null; encryptionKey: string | null };
 
-  try {
-    const { data } = await supabaseClient
-      .from("wcbn_payment_settings")
-      .select("flutterwave_secret_key, bank_accounts")
-      .eq("id", 1)
-      .maybeSingle();
-
-    if (data?.flutterwave_secret_key && typeof data.flutterwave_secret_key === "string" && data.flutterwave_secret_key.trim().length > 0) {
-      const val = data.flutterwave_secret_key.trim();
-      process.env['FLUTTERWAVE_SECRET_KEY'] = val;
-      return val;
-    }
-
-    if (Array.isArray(data?.bank_accounts)) {
-      const vault = (data.bank_accounts as any[]).find((b) => b && b._type === "vault_secret" && b.key === "FLUTTERWAVE_SECRET_KEY");
-      if (vault?.value && typeof vault.value === "string" && vault.value.trim().length > 0) {
-        const val = vault.value.trim();
-        process.env['FLUTTERWAVE_SECRET_KEY'] = val;
-        return val;
-      }
-    }
-  } catch (err) {
-    console.warn("Could not retrieve flutterwave secret key from database:", err);
+/** Loads the Flutterwave credentials for the environment currently selected by leadership (sandbox or live). */
+export async function getActiveFlutterwaveCreds(): Promise<FlwCreds> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: settings } = await supabaseAdmin.from("wcbn_payment_settings").select("flutterwave_mode").eq("id", 1).maybeSingle();
+  const mode = (settings?.flutterwave_mode === "live" ? "live" : "test") as "test" | "live";
+  const { data: row } = await (supabaseAdmin as any).from("wcbn_payment_credentials").select("public_key, secret_key, encryption_key").eq("mode", mode).maybeSingle();
+  const clean = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+  let secretKey = clean(row?.secret_key);
+  let encryptionKey = clean(row?.encryption_key);
+  // Live mode falls back to the secure server secrets configured outside the database.
+  if (mode === "live") {
+    secretKey = secretKey ?? clean(process.env['FLUTTERWAVE_SECRET_KEY']);
+    encryptionKey = encryptionKey ?? clean(process.env['FLUTTERWAVE_ENCRYPTION_KEY']);
   }
-  return null;
+  return { mode, publicKey: clean(row?.public_key), secretKey, encryptionKey };
 }
 
-/** Helper to retrieve Supabase service role key with priority: process.env -> database columns -> database vault */
-export async function getServiceRoleKey(supabaseClient: any): Promise<string | null> {
-  const envKey = process.env['SUPABASE_SERVICE_ROLE_KEY'];
-  if (envKey && envKey.trim().length > 0) return envKey.trim();
-
-  try {
-    const { data } = await supabaseClient
-      .from("wcbn_payment_settings")
-      .select("supabase_service_role_key, bank_accounts")
-      .eq("id", 1)
-      .maybeSingle();
-
-    if (data?.supabase_service_role_key && typeof data.supabase_service_role_key === "string" && data.supabase_service_role_key.trim().length > 0) {
-      const val = data.supabase_service_role_key.trim();
-      process.env['SUPABASE_SERVICE_ROLE_KEY'] = val;
-      return val;
-    }
-
-    if (Array.isArray(data?.bank_accounts)) {
-      const vault = (data.bank_accounts as any[]).find((b) => b && b._type === "vault_secret" && b.key === "SUPABASE_SERVICE_ROLE_KEY");
-      if (vault?.value && typeof vault.value === "string" && vault.value.trim().length > 0) {
-        const val = vault.value.trim();
-        process.env['SUPABASE_SERVICE_ROLE_KEY'] = val;
-        return val;
-      }
-    }
-  } catch (err) {
-    console.warn("Could not retrieve service role key from database:", err);
-  }
-  return null;
+export async function getFlutterwaveSecretKey(_supabaseClient?: any): Promise<string | null> {
+  return (await getActiveFlutterwaveCreds()).secretKey;
 }
 
-/** Helper to retrieve Flutterwave encryption key with priority: process.env -> database columns -> database vault */
-export async function getFlutterwaveEncryptionKey(supabaseClient: any): Promise<string | null> {
-  const envKey = process.env['FLUTTERWAVE_ENCRYPTION_KEY'];
-  if (envKey && envKey.trim().length > 0) return envKey.trim();
+export async function getFlutterwaveEncryptionKey(_supabaseClient?: any): Promise<string | null> {
+  return (await getActiveFlutterwaveCreds()).encryptionKey;
+}
 
-  try {
-    const { data } = await supabaseClient
-      .from("wcbn_payment_settings")
-      .select("flutterwave_encryption_key, bank_accounts")
-      .eq("id", 1)
-      .maybeSingle();
-
-    if (data?.flutterwave_encryption_key && typeof data.flutterwave_encryption_key === "string" && data.flutterwave_encryption_key.trim().length > 0) {
-      const val = data.flutterwave_encryption_key.trim();
-      process.env['FLUTTERWAVE_ENCRYPTION_KEY'] = val;
-      return val;
-    }
-
-    if (Array.isArray(data?.bank_accounts)) {
-      const vault = (data.bank_accounts as any[]).find((b) => b && b._type === "vault_secret" && b.key === "FLUTTERWAVE_ENCRYPTION_KEY");
-      if (vault?.value && typeof vault.value === "string" && vault.value.trim().length > 0) {
-        const val = vault.value.trim();
-        process.env['FLUTTERWAVE_ENCRYPTION_KEY'] = val;
-        return val;
-      }
-    }
-  } catch (err) {
-    console.warn("Could not retrieve flutterwave encryption key from database:", err);
-  }
-  return null;
+export async function getServiceRoleKey(_supabaseClient?: any): Promise<string | null> {
+  const k = process.env['SUPABASE_SERVICE_ROLE_KEY'];
+  return k && k.trim() ? k.trim() : null;
 }
 
 /** Flutterwave 3DES payload encryption for direct card charge */
@@ -312,162 +248,81 @@ export const verifyFlutterwavePayment = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Tells leadership whether payment gateway and backend service keys are configured. */
-export const flutterwaveKeyStatus = createServerFn({ method: "GET" })
+async function assertFinanceLeader(supabase: any, userId: string) {
+  const { data: allowed } = await supabase.rpc("wcbn_has_permission", { _user_id: userId, _permission: "finance.manage" });
+  if (!allowed) throw new Error("Only WCBN finance leadership can manage payment credentials.");
+}
+
+/** Returns sandbox and live credentials for the admin settings page (finance leaders only). */
+export const getPaymentCredentials = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const key = await getFlutterwaveSecretKey(context.supabase);
-    const encKey = await getFlutterwaveEncryptionKey(context.supabase);
-    const serviceRoleKey = await getServiceRoleKey(context.supabase);
+    await assertFinanceLeader(context.supabase, context.userId);
+    const { data } = await (context.supabase as any).from("wcbn_payment_credentials").select("mode, public_key, secret_key, encryption_key");
+    const rows = (data ?? []) as { mode: string; public_key: string | null; secret_key: string | null; encryption_key: string | null }[];
+    const pick = (m: string) => rows.find((r) => r.mode === m) ?? { mode: m, public_key: null, secret_key: null, encryption_key: null };
+    const live = pick("live");
     return {
-      configured: !!key,
-      masked: key ? `${key.slice(0, 7)}...${key.slice(-4)}` : null,
-      encryptionConfigured: !!encKey,
-      encryptionMasked: encKey ? `${encKey.slice(0, 5)}...${encKey.slice(-4)}` : null,
-      serviceRoleConfigured: !!serviceRoleKey,
-      serviceRoleMasked: serviceRoleKey ? `${serviceRoleKey.slice(0, 8)}...${serviceRoleKey.slice(-4)}` : null,
+      test: pick("test"),
+      live,
+      liveServerSecretConfigured: !live.secret_key && !!process.env['FLUTTERWAVE_SECRET_KEY'],
     };
   });
 
-/** Updates Payment Settings and optionally configures server keys. */
+/** Kept for compatibility: reports whether the active environment has a secret key. */
+export const flutterwaveKeyStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const c = await getActiveFlutterwaveCreds();
+    return { configured: !!c.secretKey, encryptionConfigured: !!c.encryptionKey, serviceRoleConfigured: !!process.env['SUPABASE_SERVICE_ROLE_KEY'], mode: c.mode };
+  });
+
+const credSchema = z.object({
+  public_key: z.string().max(200).nullable(),
+  secret_key: z.string().max(200).nullable(),
+  encryption_key: z.string().max(200).nullable(),
+});
+
+/** Saves payment settings plus separate sandbox and live credentials. */
 export const updatePaymentGatewaySettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({
     flutterwave_enabled: z.boolean(),
     flutterwave_mode: z.enum(["test", "live"]),
-    flutterwave_public_key: z.string().nullable().optional(),
-    flutterwave_secret_key: z.string().nullable().optional(),
-    flutterwave_encryption_key: z.string().nullable().optional(),
-    supabase_service_role_key: z.string().nullable().optional(),
     mobile_money_enabled: z.boolean(),
     card_enabled: z.boolean(),
     bank_transfer_enabled: z.boolean(),
     bank_accounts: z.array(z.any()),
     invoice_note: z.string().nullable().optional(),
+    test: credSchema,
+    live: credSchema,
   }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await assertFinanceLeader(supabase, userId);
+    const t = (v: string | null) => (v && v.trim() ? v.trim() : null);
 
-    // Verify leadership role
-    const { data: isSuper } = await supabase.rpc("is_super_admin_user", { _user_id: userId });
-    const { data: roles } = await supabase.from("wcbn_user_roles").select("id").eq("user_id", userId).eq("is_active", true).limit(1);
-    if (!isSuper && !roles?.length) {
-      throw new Error("Only WCBN leadership can update payment settings.");
-    }
-
-    const { flutterwave_secret_key, flutterwave_encryption_key, supabase_service_role_key, ...dbFields } = data;
-
-    // Fetch existing settings to preserve current secret keys if none were passed in this update
-    const { data: existing } = await supabase.from("wcbn_payment_settings").select("*").eq("id", 1).maybeSingle();
-
-    const cleanFlw = flutterwave_secret_key?.trim();
-    const cleanEnc = flutterwave_encryption_key?.trim();
-    const cleanService = supabase_service_role_key?.trim();
-
-    // Preserve or update vault items inside bank_accounts JSON for resilient database persistence
-    const existingBankAccounts = Array.isArray(dbFields.bank_accounts) ? [...dbFields.bank_accounts] : [];
-    const regularAccounts = existingBankAccounts.filter((b) => !b || b._type !== "vault_secret");
-
-    const vaultEntries: any[] = [];
-    const flwKeyToSave = cleanFlw || (existing as any)?.flutterwave_secret_key || process.env['FLUTTERWAVE_SECRET_KEY'];
-    if (flwKeyToSave) {
-      vaultEntries.push({ _type: "vault_secret", key: "FLUTTERWAVE_SECRET_KEY", value: flwKeyToSave });
-    }
-    const flwEncToSave = cleanEnc || (existing as any)?.flutterwave_encryption_key || process.env['FLUTTERWAVE_ENCRYPTION_KEY'];
-    if (flwEncToSave) {
-      vaultEntries.push({ _type: "vault_secret", key: "FLUTTERWAVE_ENCRYPTION_KEY", value: flwEncToSave });
-    }
-    const srvKeyToSave = cleanService || (existing as any)?.supabase_service_role_key || process.env['SUPABASE_SERVICE_ROLE_KEY'];
-    if (srvKeyToSave) {
-      vaultEntries.push({ _type: "vault_secret", key: "SUPABASE_SERVICE_ROLE_KEY", value: srvKeyToSave });
+    for (const mode of ["test", "live"] as const) {
+      const c = data[mode];
+      const row: Record<string, unknown> = { mode, public_key: t(c.public_key), encryption_key: t(c.encryption_key) };
+      // An empty live secret keeps whatever is stored; sandbox saves exactly what is shown.
+      if (mode === "test" || t(c.secret_key)) row["secret_key"] = t(c.secret_key);
+      const { error } = await (supabase as any).from("wcbn_payment_credentials").upsert(row, { onConflict: "mode" });
+      if (error) throw new Error(error.message);
     }
 
-    const combinedBankAccounts = [...regularAccounts, ...vaultEntries];
-
-    const payload: Record<string, any> = {
-      flutterwave_enabled: dbFields.flutterwave_enabled,
-      flutterwave_mode: dbFields.flutterwave_mode,
-      mobile_money_enabled: dbFields.mobile_money_enabled,
-      card_enabled: dbFields.card_enabled,
-      bank_transfer_enabled: dbFields.bank_transfer_enabled,
-      bank_accounts: combinedBankAccounts,
-    };
-    if (dbFields.flutterwave_public_key !== undefined) {
-      payload["flutterwave_public_key"] = dbFields.flutterwave_public_key;
-    }
-    if (dbFields.invoice_note !== undefined) {
-      payload["invoice_note"] = dbFields.invoice_note;
-    }
-    if (flwKeyToSave) {
-      payload["flutterwave_secret_key"] = flwKeyToSave;
-    }
-    if (flwEncToSave) {
-      payload["flutterwave_encryption_key"] = flwEncToSave;
-    }
-    if (srvKeyToSave) {
-      payload["supabase_service_role_key"] = srvKeyToSave;
-    }
-
-    let updateError: { message: string } | null = null;
-    const { error: userError } = await supabase.from("wcbn_payment_settings").update(payload as never).eq("id", 1);
-    if (userError) {
-      // If column doesn't exist yet on remote table, try without the dedicated secret columns, retaining vault in bank_accounts
-      if (userError.message?.includes("column") || userError.message?.includes("does not exist")) {
-        const fallbackPayload = { ...payload };
-        delete fallbackPayload["flutterwave_secret_key"];
-        delete fallbackPayload["flutterwave_encryption_key"];
-        delete fallbackPayload["supabase_service_role_key"];
-        const { error: fallbackErr } = await supabase.from("wcbn_payment_settings").update(fallbackPayload as never).eq("id", 1);
-        if (fallbackErr) updateError = fallbackErr;
-      } else {
-        const serviceKey = await getServiceRoleKey(supabase);
-        if (serviceKey) {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { error: adminError } = await supabaseAdmin.from("wcbn_payment_settings").update(payload as never).eq("id", 1);
-          updateError = adminError;
-        } else {
-          updateError = userError;
-        }
-      }
-    }
-    if (updateError) throw new Error(updateError.message);
-
-    // Update in-memory process.env and attempt updating local .env if available
-    const envUpdates: Record<string, string> = {};
-    if (cleanFlw) {
-      process.env['FLUTTERWAVE_SECRET_KEY'] = cleanFlw;
-      envUpdates['FLUTTERWAVE_SECRET_KEY'] = cleanFlw;
-    }
-    if (cleanEnc) {
-      process.env['FLUTTERWAVE_ENCRYPTION_KEY'] = cleanEnc;
-      envUpdates['FLUTTERWAVE_ENCRYPTION_KEY'] = cleanEnc;
-    }
-    if (cleanService) {
-      process.env['SUPABASE_SERVICE_ROLE_KEY'] = cleanService;
-      envUpdates['SUPABASE_SERVICE_ROLE_KEY'] = cleanService;
-    }
-
-    if (Object.keys(envUpdates).length > 0) {
-      try {
-        const fs = await import("node:fs");
-        const path = await import("node:path");
-        const envPath = path.resolve(process.cwd(), ".env");
-        if (fs.existsSync(envPath)) {
-          let content = fs.readFileSync(envPath, "utf-8");
-          for (const [k, v] of Object.entries(envUpdates)) {
-            const regex = new RegExp(`^${k}=.*$`, "m");
-            if (regex.test(content)) {
-              content = content.replace(regex, `${k}="${v}"`);
-            } else {
-              content += `\n${k}="${v}"\n`;
-            }
-          }
-          fs.writeFileSync(envPath, content, "utf-8");
-        }
-      } catch (err) {
-        console.warn("Could not write to .env (non-filesystem environment):", err);
-      }
-    }
+    const activePublic = t(data[data.flutterwave_mode].public_key);
+    const { error } = await supabase.from("wcbn_payment_settings").update({
+      flutterwave_enabled: data.flutterwave_enabled,
+      flutterwave_mode: data.flutterwave_mode,
+      flutterwave_public_key: activePublic,
+      mobile_money_enabled: data.mobile_money_enabled,
+      card_enabled: data.card_enabled,
+      bank_transfer_enabled: data.bank_transfer_enabled,
+      bank_accounts: data.bank_accounts.filter((b: any) => !b || b._type !== "vault_secret"),
+      invoice_note: data.invoice_note ?? null,
+    } as never).eq("id", 1);
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
