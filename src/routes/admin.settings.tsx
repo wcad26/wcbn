@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   CreditCard,
   Edit2,
+  Eye,
+  EyeOff,
   Key,
   Landmark,
   Layers,
@@ -47,7 +49,7 @@ import {
   type CategoryArchetype,
 } from "@/lib/fees";
 import {
-  flutterwaveKeyStatus,
+  getPaymentCredentials,
   updatePaymentGatewaySettings,
 } from "@/lib/payments.functions";
 
@@ -670,17 +672,17 @@ function PaymentsTabContent() {
     queryFn: fetchPaymentSettings,
   });
 
-  const { data: keyStatus } = useQuery({
-    queryKey: ["admin", "flutterwave-key-status"],
-    queryFn: () => flutterwaveKeyStatus(),
+  const { data: creds } = useQuery({
+    queryKey: ["admin", "payment-credentials"],
+    queryFn: () => getPaymentCredentials(),
   });
 
+  const emptyCreds = { public_key: "", secret_key: "", encryption_key: "" };
   const [flutterwaveEnabled, setFlutterwaveEnabled] = useState(false);
   const [flutterwaveMode, setFlutterwaveMode] = useState<"test" | "live">("test");
-  const [publicKey, setPublicKey] = useState("");
-  const [secretKey, setSecretKey] = useState("");
-  const [encryptionKey, setEncryptionKey] = useState("");
-  const [serviceRoleKey, setServiceRoleKey] = useState("");
+  const [testCreds, setTestCreds] = useState(emptyCreds);
+  const [liveCreds, setLiveCreds] = useState(emptyCreds);
+  const [showLiveSecret, setShowLiveSecret] = useState(false);
   const [mobileMoneyEnabled, setMobileMoneyEnabled] = useState(true);
   const [cardEnabled, setCardEnabled] = useState(true);
   const [bankTransferEnabled, setBankTransferEnabled] = useState(true);
@@ -704,14 +706,23 @@ function PaymentsTabContent() {
     if (settings) {
       setFlutterwaveEnabled(settings.flutterwave_enabled ?? false);
       setFlutterwaveMode(settings.flutterwave_mode ?? "test");
-      setPublicKey(settings.flutterwave_public_key ?? "");
       setMobileMoneyEnabled(settings.mobile_money_enabled ?? true);
       setCardEnabled(settings.card_enabled ?? true);
       setBankTransferEnabled(settings.bank_transfer_enabled ?? true);
       setInvoiceNote(settings.invoice_note ?? "");
-      setBankAccounts(Array.isArray(settings.bank_accounts) ? settings.bank_accounts : []);
+      setBankAccounts(Array.isArray(settings.bank_accounts) ? settings.bank_accounts.filter((b: any) => b?._type !== "vault_secret") : []);
     }
   }, [settings]);
+
+  useEffect(() => {
+    if (creds) {
+      const toForm = (c: { public_key: string | null; secret_key: string | null; encryption_key: string | null }) => ({
+        public_key: c.public_key ?? "", secret_key: c.secret_key ?? "", encryption_key: c.encryption_key ?? "",
+      });
+      setTestCreds(toForm(creds.test));
+      setLiveCreds(toForm(creds.live));
+    }
+  }, [creds]);
 
   const saveSettings = useMutation({
     mutationFn: async () => {
@@ -719,25 +730,20 @@ function PaymentsTabContent() {
         data: {
           flutterwave_enabled: flutterwaveEnabled,
           flutterwave_mode: flutterwaveMode,
-          flutterwave_public_key: publicKey.trim() || null,
-          flutterwave_secret_key: secretKey.trim() || null,
-          flutterwave_encryption_key: encryptionKey.trim() || null,
-          supabase_service_role_key: serviceRoleKey.trim() || null,
           mobile_money_enabled: mobileMoneyEnabled,
           card_enabled: cardEnabled,
           bank_transfer_enabled: bankTransferEnabled,
           bank_accounts: bankAccounts,
           invoice_note: invoiceNote.trim() || null,
+          test: testCreds,
+          live: liveCreds,
         },
       });
     },
     onSuccess: () => {
       toast.success("Payment gateway & bank settings updated.");
-      setSecretKey("");
-      setEncryptionKey("");
-      setServiceRoleKey("");
       queryClient.invalidateQueries({ queryKey: ["admin", "payment-settings"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "flutterwave-key-status"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "payment-credentials"] });
       queryClient.invalidateQueries({ queryKey: ["wcbn", "payment-settings"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -863,80 +869,61 @@ function PaymentsTabContent() {
               </div>
             </div>
 
-            {/* Public Key */}
-            <div className="space-y-1.5">
-              <Label className="text-xs">Public Key (Client side)</Label>
-              <Input
-                value={publicKey}
-                onChange={(e) => setPublicKey(e.target.value)}
-                placeholder="FLWPUBK_TEST-... or FLWPUBK-..."
-                className="h-8 font-mono text-xs"
-              />
+            <div className={`rounded-lg px-3 py-2 text-[11px] font-medium ${flutterwaveMode === "test" ? "bg-amber-500/10 text-amber-700" : "bg-emerald-500/10 text-emerald-700"}`}>
+              Payments currently run in <strong>{flutterwaveMode === "test" ? "Sandbox (test)" : "Live"}</strong> mode using the {flutterwaveMode === "test" ? "sandbox" : "live"} keys below. Save to apply.
             </div>
 
-            {/* Secret Key */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Secret Key (Encrypted server vault)</Label>
-                {keyStatus?.configured && (
-                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] gap-1">
-                    <CheckCircle2 className="size-2.5" /> Vault Key Saved
-                  </Badge>
-                )}
+            {flutterwaveMode === "test" ? (
+              <div className="space-y-3 rounded-xl border border-amber-500/30 p-3.5">
+                <span className="font-semibold text-foreground block">Sandbox credentials</span>
+                {(["public_key", "secret_key", "encryption_key"] as const).map((k) => (
+                  <div key={k} className="space-y-1.5">
+                    <Label className="text-xs">{k === "public_key" ? "Public key" : k === "secret_key" ? "Secret key" : "Encryption key"}</Label>
+                    <Input
+                      value={testCreds[k]}
+                      onChange={(e) => setTestCreds({ ...testCreds, [k]: e.target.value })}
+                      placeholder={k === "public_key" ? "FLWPUBK_TEST-..." : k === "secret_key" ? "FLWSECK_TEST-..." : "FLWSECK_TEST..."}
+                      className="h-8 font-mono text-xs"
+                    />
+                  </div>
+                ))}
               </div>
-              <Input
-                type="password"
-                value={secretKey}
-                onChange={(e) => setSecretKey(e.target.value)}
-                placeholder={keyStatus?.configured ? "Leave blank to keep existing vault key" : "FLWSECK_TEST-... or FLWSECK-..."}
-                className="h-8 font-mono text-xs"
-              />
-            </div>
-
-            {/* Flutterwave Encryption Key */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Flutterwave Encryption Key (Direct In-App Card Vault)</Label>
-                {keyStatus?.encryptionConfigured && (
-                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] gap-1">
-                    <CheckCircle2 className="size-2.5" /> Encryption Key Saved
-                  </Badge>
-                )}
+            ) : (
+              <div className="space-y-3 rounded-xl border border-emerald-500/30 p-3.5">
+                <span className="font-semibold text-foreground block">Live credentials</span>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Public key</Label>
+                  <Input value={liveCreds.public_key} onChange={(e) => setLiveCreds({ ...liveCreds, public_key: e.target.value })} placeholder="FLWPUBK-..." className="h-8 font-mono text-xs" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Secret key</Label>
+                  <div className="relative">
+                    <Input
+                      type={showLiveSecret ? "text" : "password"}
+                      value={liveCreds.secret_key}
+                      onChange={(e) => setLiveCreds({ ...liveCreds, secret_key: e.target.value })}
+                      placeholder={creds?.liveServerSecretConfigured ? "Using the secure server secret — type to replace" : "FLWSECK-..."}
+                      className="h-8 pr-9 font-mono text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLiveSecret((v) => !v)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={showLiveSecret ? "Hide secret key" : "Show secret key"}
+                    >
+                      {showLiveSecret ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  {creds?.liveServerSecretConfigured && (
+                    <p className="text-[10px] text-muted-foreground">The live secret is stored as a secure server secret and cannot be displayed. Enter a new one here to replace it.</p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Encryption key</Label>
+                  <Input value={liveCreds.encryption_key} onChange={(e) => setLiveCreds({ ...liveCreds, encryption_key: e.target.value })} placeholder="FLWSECK..." className="h-8 font-mono text-xs" />
+                </div>
               </div>
-              <Input
-                type="password"
-                value={encryptionKey}
-                onChange={(e) => setEncryptionKey(e.target.value)}
-                placeholder={keyStatus?.encryptionConfigured ? "Leave blank to keep existing encryption key" : "FLWSECK_... (From Flutterwave Dashboard)"}
-                className="h-8 font-mono text-xs"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Required for direct in-app card charge processing and 3DES payload encryption.
-              </p>
-            </div>
-
-            {/* Supabase Service Role Key */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">Supabase Service Role Key (Admin / RPC Vault)</Label>
-                {keyStatus?.serviceRoleConfigured && (
-                  <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 text-[10px] gap-1">
-                    <CheckCircle2 className="size-2.5" /> Service Key Saved
-                  </Badge>
-                )}
-              </div>
-              <Input
-                type="password"
-                value={serviceRoleKey}
-                onChange={(e) => setServiceRoleKey(e.target.value)}
-                placeholder={keyStatus?.serviceRoleConfigured ? "Leave blank to keep existing service key" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}
-                className="h-8 font-mono text-xs"
-              />
-              <p className="text-[10px] text-muted-foreground">
-                Required for automated member activation and instant transaction verification.
-              </p>
-            </div>
-
+            )}
             {/* Accepted Methods */}
             <div className="rounded-xl border border-border p-3.5 bg-muted/20 space-y-3">
               <span className="font-semibold text-foreground block">Accepted Payment Methods</span>
