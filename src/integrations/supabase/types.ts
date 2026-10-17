@@ -4028,6 +4028,30 @@ export type Database = {
         }
         Relationships: []
       }
+      wcbn_payment_credentials: {
+        Row: {
+          encryption_key: string | null
+          mode: string
+          public_key: string | null
+          secret_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          encryption_key?: string | null
+          mode: string
+          public_key?: string | null
+          secret_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          encryption_key?: string | null
+          mode?: string
+          public_key?: string | null
+          secret_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wcbn_payment_settings: {
         Row: {
           bank_accounts: Json
