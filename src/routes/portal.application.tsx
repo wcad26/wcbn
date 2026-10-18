@@ -1436,15 +1436,15 @@ function ApplicationPage() {
               {/* STEP 1: REGISTRATION DETAILS (Dynamic Form based on Archetype) */}
               {step === 1 && (
                 <div className="space-y-6">
-                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex items-center justify-between">
-                    <div>
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
                       <p className="text-xs uppercase font-semibold tracking-wider text-muted-foreground">Selected Track</p>
-                      <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mt-0.5">
+                      <h3 className="text-sm font-bold text-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
                         {isInvestorMentor ? "💎 Investor & Mentor Registration" : "🚀 Entrepreneur & Enterprise Registration"}
                         <span className="text-xs font-normal text-muted-foreground">({selectedCategory?.name})</span>
                       </h3>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setStep(0)} className="text-xs h-8">
+                    <Button variant="default" size="sm" onClick={() => setStep(0)} className="text-xs h-8 w-full sm:w-auto shrink-0">
                       Switch Category
                     </Button>
                   </div>
