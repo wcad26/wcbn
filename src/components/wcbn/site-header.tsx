@@ -44,7 +44,7 @@ export function SiteHeader() {
           {signedIn && (
             <Button asChild variant="ghost" className="rounded-full"><Link to="/portal">My portal</Link></Button>
           )}
-          <Button asChild className="rounded-full gradient-brand shadow-soft"><Link to="/membership">Apply to WCBN</Link></Button>
+          <Button asChild className="rounded-full gradient-brand shadow-soft"><Link to="/auth">Apply to WCBN</Link></Button>
         </div>
         <Button size="icon" variant="ghost" className="lg:hidden" onClick={() => setOpen(!open)} aria-label="Toggle menu">{open ? <X /> : <Menu />}</Button>
       </div>
@@ -55,7 +55,7 @@ export function SiteHeader() {
             {signedIn && (
               <Button asChild variant="outline" className="w-full rounded-full"><Link to="/portal" onClick={() => setOpen(false)}>My portal</Link></Button>
             )}
-            <Button asChild className="w-full rounded-full gradient-brand"><Link to="/membership" onClick={() => setOpen(false)}>Apply to WCBN</Link></Button>
+            <Button asChild className="w-full rounded-full gradient-brand"><Link to="/auth" onClick={() => setOpen(false)}>Apply to WCBN</Link></Button>
           </div>
         </nav>
       )}
