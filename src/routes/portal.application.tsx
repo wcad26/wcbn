@@ -6,6 +6,7 @@ import {
   Save, Send, Smartphone, Sparkles, UserRound, XCircle, ChevronRight, HelpCircle,
   Clock, Info, ShieldCheck, Lock, Pencil
 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { MemberPage } from "@/components/wcbn/admin-page";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -568,9 +571,20 @@ function ApplicationPage() {
 
   // Form completion validation
   const entrepreneurRequired: (keyof Answers)[] = ["business_name", "sector", "country", "city", "business_summary", "impact_statement"];
-  const investorRequired: (keyof Answers)[] = ["investor_role", "experience_summary", "kingdom_vision"];
   // Mentor-type roles see the mentorship fields; investor-only roles do not.
   const showMentorFields = isInvestorMentor && isMentorRole(answers.investor_role);
+  // Experience & track record is only asked of (and required from) mentors.
+  const investorRequired: (keyof Answers)[] = showMentorFields
+    ? ["investor_role", "experience_summary", "kingdom_vision"]
+    : ["investor_role", "kingdom_vision"];
+  // Preferred sectors are stored as one "; "-separated string.
+  const selectedSectors = answers.preferred_sectors.split(";").map((x) => x.trim()).filter(Boolean);
+  const toggleSector = (sector: string) => {
+    const next = selectedSectors.includes(sector)
+      ? selectedSectors.filter((x) => x !== sector)
+      : [...selectedSectors, sector];
+    set("preferred_sectors", next.join("; "));
+  };
   const currentRequired = isInvestorMentor ? investorRequired : entrepreneurRequired;
 
   const missingFormFields = currentRequired.filter((f) => {
@@ -643,7 +657,7 @@ function ApplicationPage() {
         applicant_type: dbTrack,
         applicant_data: {
           ...answers,
-          ...(isInvestorMentor && !showMentorFields ? { advisory_areas: [], mentorship_availability: "" } : {}),
+          ...(isInvestorMentor && !showMentorFields ? { advisory_areas: [], mentorship_availability: "", experience_summary: "" } : {}),
           category_id: categoryId,
           billing_cycle: cycle,
           payment_method: method,
@@ -1729,29 +1743,43 @@ function ApplicationPage() {
                           </Field>
                         )}
 
-                        <Field label="Preferred Sector for Backing / Mentoring">
-                          <Select value={answers.preferred_sectors} onValueChange={(v) => set("preferred_sectors", v)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select preferred sector" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-72">
+                        <Field label="Preferred Sectors for Backing / Mentoring">
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                className="flex min-h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-left text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                              >
+                                <span className={selectedSectors.length ? "text-foreground" : "text-muted-foreground"}>
+                                  {selectedSectors.length ? selectedSectors.join(", ") : "Select preferred sectors"}
+                                </span>
+                                <ChevronDown className="size-4 shrink-0 opacity-50" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start" className="max-h-72 w-[var(--radix-popover-trigger-width)] overflow-y-auto p-1">
                               {PREFERRED_SECTORS.map((ps) => (
-                                <SelectItem key={ps} value={ps}>
+                                <label
+                                  key={ps}
+                                  className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                                >
+                                  <Checkbox checked={selectedSectors.includes(ps)} onCheckedChange={() => toggleSector(ps)} />
                                   {ps}
-                                </SelectItem>
+                                </label>
                               ))}
-                            </SelectContent>
-                          </Select>
+                            </PopoverContent>
+                          </Popover>
                         </Field>
 
-                        <Field label="Executive Experience & Track Record *" className="md:col-span-2">
-                          <Textarea
-                            rows={4}
-                            value={answers.experience_summary}
-                            onChange={(e) => set("experience_summary", e.target.value)}
-                            placeholder="Briefly describe your executive leadership, entrepreneurship background, or investment experience..."
-                          />
-                        </Field>
+                        {showMentorFields && (
+                          <Field label="Executive Experience & Track Record *" className="md:col-span-2">
+                            <Textarea
+                              rows={4}
+                              value={answers.experience_summary}
+                              onChange={(e) => set("experience_summary", e.target.value)}
+                              placeholder="Briefly describe your executive leadership, entrepreneurship background, or investment experience..."
+                            />
+                          </Field>
+                        )}
                       </div>
 
                       {/* Advisory & Mentorship Domains */}
@@ -1895,7 +1923,7 @@ function ApplicationPage() {
                         {answers.preferred_sectors && (
                           <Row label="Preferred Sectors" value={answers.preferred_sectors} />
                         )}
-                        {answers.experience_summary && (
+                        {showMentorFields && answers.experience_summary && (
                           <Row label="Executive Experience" value={answers.experience_summary} />
                         )}
                         {answers.kingdom_vision && (
@@ -2530,7 +2558,7 @@ function ApplicationPage() {
                         <Row label="Investor / Mentor Role" value={answers.investor_role || "—"} />
                         {answers.linkedin_url && <Row label="LinkedIn" value={answers.linkedin_url} />}
                         <Row label="Ticket Size" value={answers.ticket_size || "—"} />
-                        <Row label="Experience" value={answers.experience_summary || "—"} />
+                        {answers.experience_summary && <Row label="Experience" value={answers.experience_summary} />}
                         <Row label="Kingdom Vision" value={answers.kingdom_vision || "—"} />
                       </>
                     )}
