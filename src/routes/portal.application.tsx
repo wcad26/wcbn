@@ -2268,14 +2268,14 @@ function ApplicationPage() {
                   )}
 
                   {/* Part 4: Amount Due Today Summary */}
-                  <div className="flex justify-between items-center rounded-2xl border border-border bg-card p-5">
-                    <div>
+                  <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
                       <span className="text-sm font-bold text-foreground">Amount Due Today</span>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Tier: <strong className="text-foreground">{selectedCategory?.name}</strong> · Plan: <strong className="text-foreground">{CYCLES.find((c) => c.value === cycle)?.label ?? "Annual"}</strong>
                       </p>
                     </div>
-                    <span className="text-2xl font-black text-primary">
+                    <span className="border-t border-border pt-3 text-2xl font-black text-primary sm:shrink-0 sm:border-0 sm:pt-0">
                       {fee != null ? money(instalment(fee, cycle, currency), currency) : "—"}
                     </span>
                   </div>
@@ -2564,7 +2564,8 @@ type DetailOption = {
 function DetailOptionBody({ o, active }: { o: DetailOption; active: boolean }) {
   const Icon = o.icon;
   return (
-    <>
+    <span className="flex min-w-0 flex-1 flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+      <span className="flex min-w-0 flex-1 items-center gap-3">
       {Icon && (
         <span
           className={`grid size-10 shrink-0 place-items-center rounded-xl ${
@@ -2579,13 +2580,14 @@ function DetailOptionBody({ o, active }: { o: DetailOption; active: boolean }) {
         <span className="block text-xs text-muted-foreground">{o.description}</span>
         {o.note && <span className="mt-0.5 block text-[11px] text-muted-foreground">{o.note}</span>}
       </span>
+      </span>
       {o.meta && (
-        <span className="shrink-0 text-right">
-          {o.metaLabel && <span className="block text-[11px] text-muted-foreground">{o.metaLabel}</span>}
-          <span className="block text-sm font-extrabold text-foreground">{o.meta}</span>
+        <span className="flex items-baseline justify-between gap-3 border-t border-border pt-2 sm:block sm:shrink-0 sm:border-0 sm:pt-0 sm:text-right">
+          {o.metaLabel && <span className="text-[11px] text-muted-foreground sm:block">{o.metaLabel}</span>}
+          <span className="text-base font-extrabold text-foreground sm:block sm:text-sm">{o.meta}</span>
         </span>
       )}
-    </>
+    </span>
   );
 }
 
@@ -2608,7 +2610,7 @@ function DetailDropdown({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={`flex w-full items-center gap-3 rounded-2xl border bg-card p-4 text-left shadow-xs outline-none transition focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
+          className={`flex w-full items-start gap-3 rounded-2xl border bg-card p-4 text-left shadow-xs sm:items-center outline-none transition focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
             current ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/40"
           }`}
         >
@@ -2634,7 +2636,7 @@ function DetailDropdown({
                 onChange(o.value);
                 setOpen(false);
               }}
-              className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition ${
+              className={`flex w-full items-start gap-3 rounded-xl p-3 text-left transition sm:items-center ${
                 active ? "bg-primary/10" : "hover:bg-muted/60"
               }`}
             >
