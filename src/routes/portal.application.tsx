@@ -57,6 +57,16 @@ export const INVESTOR_ROLES = [
   "Industry & Subject Matter Expert",
 ] as const;
 
+export const MENTOR_ROLES: readonly string[] = [
+  "Executive Mentor / Leadership Coach",
+  "Strategic Board Advisor / Non-Exec Director",
+  "Industry & Subject Matter Expert",
+];
+
+export function isMentorRole(role: string): boolean {
+  return MENTOR_ROLES.includes(role);
+}
+
 export const ADVISORY_DOMAINS = [
   "Corporate Strategy & Governance",
   "Fundraising & Investment Readiness",
@@ -504,7 +514,9 @@ function ApplicationPage() {
 
   // Form completion validation
   const entrepreneurRequired: (keyof Answers)[] = ["business_name", "sector", "country", "city", "business_summary", "impact_statement"];
-  const investorRequired: (keyof Answers)[] = ["investor_role", "country", "city", "linkedin_url", "experience_summary", "kingdom_vision"];
+  const investorRequired: (keyof Answers)[] = ["investor_role", "experience_summary", "kingdom_vision"];
+  // Mentor-type roles see the mentorship fields; investor-only roles do not.
+  const showMentorFields = isInvestorMentor && isMentorRole(answers.investor_role);
   const currentRequired = isInvestorMentor ? investorRequired : entrepreneurRequired;
 
   const missingFormFields = currentRequired.filter((f) => {
@@ -577,6 +589,7 @@ function ApplicationPage() {
         applicant_type: dbTrack,
         applicant_data: {
           ...answers,
+          ...(isInvestorMentor && !showMentorFields ? { advisory_areas: [], mentorship_availability: "" } : {}),
           category_id: categoryId,
           billing_cycle: cycle,
           payment_method: method,
@@ -1622,38 +1635,7 @@ function ApplicationPage() {
                           </Select>
                         </Field>
 
-                        <Field label="Firm / Fund / Organization (Optional)">
-                          <Input
-                            value={answers.organization}
-                            onChange={(e) => set("organization", e.target.value)}
-                            placeholder="e.g. Africa Kingdom Angels / Independent"
-                          />
-                        </Field>
-
-                        <Field label="Country of Residence / Operation *">
-                          <Select value={answers.country} onValueChange={(v) => set("country", v)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select country" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-72">
-                              {COUNTRIES.map((c) => (
-                                <SelectItem key={c} value={c}>
-                                  {c}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </Field>
-
-                        <Field label="City *">
-                          <Input
-                            value={answers.city}
-                            onChange={(e) => set("city", e.target.value)}
-                            placeholder="e.g. London, Douala, Paris, Houston"
-                          />
-                        </Field>
-
-                        <Field label="LinkedIn / Professional Profile URL *">
+                        <Field label="LinkedIn / Professional Profile URL (Optional)">
                           <Input
                             value={answers.linkedin_url}
                             onChange={(e) => set("linkedin_url", e.target.value)}
@@ -1676,20 +1658,22 @@ function ApplicationPage() {
                           </Select>
                         </Field>
 
-                        <Field label="Mentorship & Advisory Availability">
-                          <Select value={answers.mentorship_availability} onValueChange={(v) => set("mentorship_availability", v)}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select advisory availability" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {MENTORSHIP_AVAILABILITY.map((ma) => (
-                                <SelectItem key={ma} value={ma}>
-                                  {ma}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </Field>
+                        {showMentorFields && (
+                          <Field label="Mentorship & Advisory Availability">
+                            <Select value={answers.mentorship_availability} onValueChange={(v) => set("mentorship_availability", v)}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select advisory availability" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {MENTORSHIP_AVAILABILITY.map((ma) => (
+                                  <SelectItem key={ma} value={ma}>
+                                    {ma}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </Field>
+                        )}
 
                         <Field label="Preferred Sectors for Backing / Mentoring">
                           <Input
@@ -1710,29 +1694,31 @@ function ApplicationPage() {
                       </div>
 
                       {/* Advisory & Mentorship Domains */}
-                      <div>
-                        <Label className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                          Domains of Mentorship & Strategic Expertise
-                        </Label>
-                        <p className="text-xs text-muted-foreground mb-3">Select the areas where you can best guide WCBN entrepreneurs:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {ADVISORY_DOMAINS.map((ad) => {
-                            const on = answers.advisory_areas.includes(ad);
-                            return (
-                              <button
-                                type="button"
-                                key={ad}
-                                onClick={() => toggleArrayItem("advisory_areas", ad)}
-                                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                                  on ? "gradient-brand text-white" : "bg-muted text-muted-foreground hover:bg-secondary"
-                                }`}
-                              >
-                                {ad}
-                              </button>
-                            );
-                          })}
+                      {showMentorFields && (
+                        <div>
+                          <Label className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground">
+                            Domains of Mentorship & Strategic Expertise
+                          </Label>
+                          <p className="text-xs text-muted-foreground mb-3">Select the areas where you can best guide WCBN entrepreneurs:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {ADVISORY_DOMAINS.map((ad) => {
+                              const on = answers.advisory_areas.includes(ad);
+                              return (
+                                <button
+                                  type="button"
+                                  key={ad}
+                                  onClick={() => toggleArrayItem("advisory_areas", ad)}
+                                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                                    on ? "gradient-brand text-white" : "bg-muted text-muted-foreground hover:bg-secondary"
+                                  }`}
+                                >
+                                  {ad}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* SDGs */}
                       <div>
@@ -1840,11 +1826,9 @@ function ApplicationPage() {
                     ) : (
                       <>
                         <Row label="Primary Role" value={answers.investor_role || "—"} />
-                        {answers.organization && <Row label="Organization / Fund" value={answers.organization} />}
-                        <Row label="Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
-                        <Row label="LinkedIn Profile" value={answers.linkedin_url || "—"} />
+                        {answers.linkedin_url && <Row label="LinkedIn Profile" value={answers.linkedin_url} />}
                         {answers.ticket_size && <Row label="Capital Capacity" value={answers.ticket_size} />}
-                        {answers.mentorship_availability && (
+                        {showMentorFields && answers.mentorship_availability && (
                           <Row label="Mentorship Availability" value={answers.mentorship_availability} />
                         )}
                         {answers.preferred_sectors && (
@@ -1856,7 +1840,7 @@ function ApplicationPage() {
                         {answers.kingdom_vision && (
                           <Row label="Kingdom Vision" value={answers.kingdom_vision} />
                         )}
-                        {answers.advisory_areas.length > 0 && (
+                        {showMentorFields && answers.advisory_areas.length > 0 && (
                           <Row label="Mentorship Domains" value={answers.advisory_areas.join(", ")} />
                         )}
                       </>
@@ -2483,9 +2467,7 @@ function ApplicationPage() {
                     ) : (
                       <>
                         <Row label="Investor / Mentor Role" value={answers.investor_role || "—"} />
-                        <Row label="Organization" value={answers.organization || "—"} />
-                        <Row label="Location" value={[answers.city, answers.country].filter(Boolean).join(", ") || "—"} />
-                        <Row label="LinkedIn" value={answers.linkedin_url || "—"} />
+                        {answers.linkedin_url && <Row label="LinkedIn" value={answers.linkedin_url} />}
                         <Row label="Ticket Size" value={answers.ticket_size || "—"} />
                         <Row label="Experience" value={answers.experience_summary || "—"} />
                         <Row label="Kingdom Vision" value={answers.kingdom_vision || "—"} />
