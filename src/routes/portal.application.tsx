@@ -1754,97 +1754,51 @@ function ApplicationPage() {
                         )}
 
                         <Field label="Preferred Sectors for Investing / Mentoring">
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button
-                                type="button"
-                                className="flex min-h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-left text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                              >
-                                <span className={selectedSectors.length ? "text-foreground" : "text-muted-foreground"}>
-                                  {selectedSectors.length ? selectedSectors.join(", ") : "Select preferred sectors"}
-                                </span>
-                                <ChevronDown className="size-4 shrink-0 opacity-50" />
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent align="start" className="max-h-72 w-[var(--radix-popover-trigger-width)] overflow-y-auto p-1">
-                              {PREFERRED_SECTORS.map((ps) => (
-                                <label
-                                  key={ps}
-                                  className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                                >
-                                  <Checkbox checked={selectedSectors.includes(ps)} onCheckedChange={() => toggleSector(ps)} />
-                                  {ps}
-                                </label>
-                              ))}
-                            </PopoverContent>
-                          </Popover>
+                          <MultiSelectDropdown
+                            placeholder="Select preferred sectors"
+                            options={PREFERRED_SECTORS.map((ps) => ({ value: ps, label: ps }))}
+                            selected={selectedSectors}
+                            onToggle={toggleSector}
+                          />
                         </Field>
 
                         {showMentorFields && (
-                          <Field label="Executive Experience & Track Record *" className="md:col-span-2">
-                            <Textarea
-                              rows={4}
-                              value={answers.experience_summary}
-                              onChange={(e) => set("experience_summary", e.target.value)}
-                              placeholder="Briefly describe your executive leadership, entrepreneurship background, or investment experience..."
+                          <Field label="Domains of Mentorship & Strategic Expertise">
+                            <MultiSelectDropdown
+                              placeholder="Select the areas where you can guide entrepreneurs"
+                              options={ADVISORY_DOMAINS.map((ad) => ({ value: ad, label: ad }))}
+                              selected={answers.advisory_areas}
+                              onToggle={(ad) => toggleArrayItem("advisory_areas", ad)}
                             />
                           </Field>
                         )}
+
+                        <Field
+                          label="SDGs Aligned with Your Strategic Investments & Mentorship"
+                          className="md:col-span-2"
+                        >
+                          <MultiSelectDropdown
+                            placeholder="Select the SDGs you align with"
+                            options={SDGS.map((label, i) => ({ value: String(i + 1), label: `${i + 1}. ${label}` }))}
+                            selected={answers.sdgs.map(String)}
+                            onToggle={(v) => {
+                              const n = Number(v);
+                              set("sdgs", answers.sdgs.includes(n) ? answers.sdgs.filter((s) => s !== n) : [...answers.sdgs, n]);
+                            }}
+                          />
+                        </Field>
                       </div>
 
-                      {/* Advisory & Mentorship Domains */}
                       {showMentorFields && (
-                        <div>
-                          <Label className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                            Domains of Mentorship & Strategic Expertise
-                          </Label>
-                          <p className="text-xs text-muted-foreground mb-3">Select the areas where you can best guide WCBN entrepreneurs:</p>
-                          <div className="flex flex-wrap gap-2">
-                            {ADVISORY_DOMAINS.map((ad) => {
-                              const on = answers.advisory_areas.includes(ad);
-                              return (
-                                <button
-                                  type="button"
-                                  key={ad}
-                                  onClick={() => toggleArrayItem("advisory_areas", ad)}
-                                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
-                                    on ? "gradient-brand text-white" : "bg-muted text-muted-foreground hover:bg-secondary"
-                                  }`}
-                                >
-                                  {ad}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        <Field label="Executive Experience & Track Record *">
+                          <Textarea
+                            rows={4}
+                            value={answers.experience_summary}
+                            onChange={(e) => set("experience_summary", e.target.value)}
+                            placeholder="Briefly describe your executive leadership, entrepreneurship background, or investment experience..."
+                          />
+                        </Field>
                       )}
-
-                      {/* SDGs */}
-                      <div>
-                        <Label className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground">
-                          SDGs Aligned with Your Strategic Investments & Mentorship
-                        </Label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {SDGS.map((label, i) => {
-                            const n = i + 1;
-                            const on = answers.sdgs.includes(n);
-                            return (
-                              <button
-                                type="button"
-                                key={n}
-                                onClick={() =>
-                                  set("sdgs", on ? answers.sdgs.filter((s) => s !== n) : [...answers.sdgs, n])
-                                }
-                                className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
-                                  on ? "gradient-brand text-white shadow-xs" : "bg-muted text-muted-foreground hover:bg-secondary"
-                                }`}
-                              >
-                                {n}. {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
 
                       <Field label="Kingdom Vision & Contribution to African Businesses *">
                         <Textarea
@@ -2594,6 +2548,52 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-4 border-b border-border py-2">
       <span className="text-muted-foreground text-xs">{label}</span>
       <span className="font-medium text-xs text-right max-w-[65%] truncate">{value}</span>
+    </div>
+  );
+}
+
+/** Dropdown with checkboxes for fields where several options can be chosen. */
+function MultiSelectDropdown({
+  options,
+  selected,
+  onToggle,
+  placeholder,
+}: {
+  options: { value: string; label: string }[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  placeholder: string;
+}) {
+  const chosen = options.filter((o) => selected.includes(o.value));
+  return (
+    <div className="space-y-1">
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className="flex min-h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-left text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          >
+            <span className={chosen.length ? "text-foreground" : "text-muted-foreground"}>
+              {chosen.length ? chosen.map((o) => o.label).join(", ") : placeholder}
+            </span>
+            <ChevronDown className="size-4 shrink-0 opacity-50" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="max-h-72 w-[var(--radix-popover-trigger-width)] overflow-y-auto p-1">
+          {options.map((o) => (
+            <label
+              key={o.value}
+              className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              <Checkbox checked={selected.includes(o.value)} onCheckedChange={() => onToggle(o.value)} />
+              {o.label}
+            </label>
+          ))}
+        </PopoverContent>
+      </Popover>
+      <p className="text-xs text-muted-foreground">
+        You can select more than one option{chosen.length ? ` · ${chosen.length} selected` : ""}
+      </p>
     </div>
   );
 }
