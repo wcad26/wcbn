@@ -50,11 +50,65 @@ export const GROWTH_PRIORITIES = [
 
 export const INVESTOR_ROLES = [
   "Angel Investor",
-  "Venture Capital / Private Equity Partner",
   "Executive Mentor / Leadership Coach",
-  "Strategic Board Advisor / Non-Exec Director",
-  "Family Office / Wealth Steward",
-  "Industry & Subject Matter Expert",
+] as const;
+
+export const PREFERRED_SECTORS = [
+  "Accounting & Auditing",
+  "Advertising & Marketing",
+  "Aerospace & Aviation",
+  "Agriculture & Agribusiness",
+  "AgriTech",
+  "Architecture & Design",
+  "Artificial Intelligence & Data",
+  "Arts & Culture",
+  "Automotive",
+  "Banking & Financial Services",
+  "Beauty & Personal Care",
+  "Biotechnology",
+  "Clean Energy & Renewables",
+  "Construction & Engineering",
+  "Consulting & Professional Services",
+  "Consumer Goods & FMCG",
+  "Creative Industries & Media",
+  "Cybersecurity",
+  "E-commerce",
+  "EdTech",
+  "Education & Training",
+  "Energy, Oil & Gas",
+  "Entertainment & Events",
+  "Environmental Services & Recycling",
+  "Fashion & Textiles",
+  "FinTech",
+  "Fisheries & Aquaculture",
+  "Food & Beverage",
+  "Forestry & Wood Products",
+  "Healthcare & Medical Services",
+  "HealthTech",
+  "Hospitality & Tourism",
+  "Human Resources & Recruitment",
+  "Import & Export Trade",
+  "Information Technology & Software",
+  "Insurance",
+  "Legal Services",
+  "Livestock & Poultry",
+  "Logistics & Supply Chain",
+  "Manufacturing",
+  "Maritime & Shipping",
+  "Microfinance",
+  "Mining & Minerals",
+  "Non-Profit & Social Enterprise",
+  "Pharmaceuticals",
+  "Printing & Publishing",
+  "Real Estate & Property",
+  "Retail & Wholesale",
+  "Security Services",
+  "Sports & Fitness",
+  "Telecommunications",
+  "Transportation & Mobility",
+  "Waste Management",
+  "Water & Sanitation",
+  "Other",
 ] as const;
 
 export const MENTOR_ROLES: readonly string[] = [
@@ -1675,12 +1729,19 @@ function ApplicationPage() {
                           </Field>
                         )}
 
-                        <Field label="Preferred Sectors for Backing / Mentoring">
-                          <Input
-                            value={answers.preferred_sectors}
-                            onChange={(e) => set("preferred_sectors", e.target.value)}
-                            placeholder="e.g. AgriTech, FinTech, Logistics, Health"
-                          />
+                        <Field label="Preferred Sector for Backing / Mentoring">
+                          <Select value={answers.preferred_sectors} onValueChange={(v) => set("preferred_sectors", v)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select preferred sector" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-72">
+                              {PREFERRED_SECTORS.map((ps) => (
+                                <SelectItem key={ps} value={ps}>
+                                  {ps}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </Field>
 
                         <Field label="Executive Experience & Track Record *" className="md:col-span-2">
