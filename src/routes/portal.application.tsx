@@ -1933,46 +1933,23 @@ function ApplicationPage() {
                     </div>
 
                     {selectedCategory?.allow_installments ? (
-                      <div className="grid gap-4 sm:grid-cols-3">
-                        {CYCLES.map((c) => {
-                          const on = cycle === c.value;
+                      <DetailDropdown
+                        placeholder="Choose a payment plan"
+                        value={cycle}
+                        onChange={(v) => setCycle(v as typeof cycle)}
+                        options={CYCLES.map((c) => {
                           const partAmt = fee != null ? instalment(fee, c.value, currency) : null;
-
-                          return (
-                            <div
-                              key={c.value}
-                              onClick={() => setCycle(c.value)}
-                              className={`cursor-pointer rounded-2xl border p-4 text-left transition flex flex-col justify-between ${
-                                on
-                                  ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md"
-                                  : "border-border hover:border-primary/40 bg-card hover:bg-muted/30"
-                              }`}
-                            >
-                              <div>
-                                <div className="flex items-center justify-between">
-                                  <h4 className="text-sm font-bold text-foreground">{c.label}</h4>
-                                  <span className={`text-xs font-semibold ${on ? "text-primary" : "text-muted-foreground"}`}>
-                                    {on ? "Selected ✓" : ""}
-                                  </span>
-                                </div>
-                                <p className="mt-1 text-xs text-muted-foreground">{c.blurb}</p>
-                              </div>
-
-                              <div className="mt-3 pt-2.5 border-t border-border">
-                                <p className="text-[11px] text-muted-foreground">Due today:</p>
-                                <p className="text-base font-extrabold text-foreground">
-                                  {partAmt != null ? money(partAmt, currency) : "—"}
-                                </p>
-                                {c.parts > 1 && (
-                                  <p className="text-[11px] text-muted-foreground mt-0.5">
-                                    {c.parts} payments of {partAmt != null ? money(partAmt, currency) : "—"}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          );
+                          const amt = partAmt != null ? money(partAmt, currency) : "—";
+                          return {
+                            value: c.value,
+                            title: c.label,
+                            description: c.blurb,
+                            ...(c.parts > 1 ? { note: `${c.parts} payments of ${amt}` } : {}),
+                            metaLabel: "Due today",
+                            meta: amt,
+                          };
                         })}
-                      </div>
+                      />
                     ) : (
                       <div className="rounded-2xl border border-border bg-muted/20 p-4">
                         <div className="flex items-start gap-3">
@@ -2034,53 +2011,29 @@ function ApplicationPage() {
                       </p>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      {methods.filter((m) => m.on).map((m) => {
-                        const on = method === m.value;
-                        const Icon = m.icon;
-
-                        return (
-                          <div
-                            key={m.value}
-                            onClick={() => setMethod(m.value)}
-                            className={`cursor-pointer rounded-2xl border p-4 text-left transition flex flex-col justify-between ${
-                              on
-                                ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md"
-                                : "border-border hover:border-primary/40 bg-card hover:bg-muted/30"
-                            }`}
-                          >
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <span
-                                  className={`grid size-9 place-items-center rounded-xl ${
-                                    on ? "gradient-brand text-white" : "bg-muted text-muted-foreground"
-                                  }`}
-                                >
-                                  <Icon className="size-4" />
-                                </span>
-                                <span className={`text-xs font-semibold ${on ? "text-primary" : "text-muted-foreground"}`}>
-                                  {on ? "Selected ✓" : ""}
-                                </span>
-                              </div>
-                              <h4 className="mt-2.5 text-sm font-bold text-foreground">{METHOD_LABELS[m.value]}</h4>
-                              <p className="mt-0.5 text-xs text-muted-foreground">{m.hint}</p>
-                            </div>
-
-                            <div className="mt-3 pt-2.5 border-t border-border text-[11px] text-muted-foreground">
-                              {m.value === "bank_transfer"
+                    {methods.some((m) => m.on) ? (
+                      <DetailDropdown
+                        placeholder="Choose a payment method"
+                        value={method}
+                        onChange={(v) => setMethod(v as typeof method)}
+                        options={methods
+                          .filter((m) => m.on)
+                          .map((m) => ({
+                            value: m.value,
+                            title: METHOD_LABELS[m.value],
+                            description: m.hint,
+                            note:
+                              m.value === "bank_transfer"
                                 ? "Official bank details provided on invoice."
-                                : "Instant in-app payment initiation."}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      {!methods.some((m) => m.on) && (
-                        <p className="text-sm text-muted-foreground col-span-3 py-6 text-center">
-                          Payment methods are currently being configured by administration. Please check back shortly.
-                        </p>
-                      )}
-                    </div>
+                                : "Instant in-app payment initiation.",
+                            icon: m.icon,
+                          }))}
+                      />
+                    ) : (
+                      <p className="text-sm text-muted-foreground py-6 text-center">
+                        Payment methods are currently being configured by administration. Please check back shortly.
+                      </p>
+                    )}
                   </div>
 
                   {/* Part 3: Contextual Sub-Forms (Strictly BELOW the payment option cards) */}
@@ -2595,5 +2548,102 @@ function MultiSelectDropdown({
         You can select more than one option{chosen.length ? ` · ${chosen.length} selected` : ""}
       </p>
     </div>
+  );
+}
+
+type DetailOption = {
+  value: string;
+  title: string;
+  description: string;
+  note?: string;
+  metaLabel?: string;
+  meta?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+};
+
+function DetailOptionBody({ o, active }: { o: DetailOption; active: boolean }) {
+  const Icon = o.icon;
+  return (
+    <>
+      {Icon && (
+        <span
+          className={`grid size-10 shrink-0 place-items-center rounded-xl ${
+            active ? "gradient-brand text-white" : "bg-muted text-muted-foreground"
+          }`}
+        >
+          <Icon className="size-4" />
+        </span>
+      )}
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold text-foreground">{o.title}</span>
+        <span className="block text-xs text-muted-foreground">{o.description}</span>
+        {o.note && <span className="mt-0.5 block text-[11px] text-muted-foreground">{o.note}</span>}
+      </span>
+      {o.meta && (
+        <span className="shrink-0 text-right">
+          {o.metaLabel && <span className="block text-[11px] text-muted-foreground">{o.metaLabel}</span>}
+          <span className="block text-sm font-extrabold text-foreground">{o.meta}</span>
+        </span>
+      )}
+    </>
+  );
+}
+
+/** Single-choice dropdown whose trigger and options show the full detail of each choice. */
+function DetailDropdown({
+  options,
+  value,
+  onChange,
+  placeholder,
+}: {
+  options: DetailOption[];
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = options.find((o) => o.value === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={`flex w-full items-center gap-3 rounded-2xl border bg-card p-4 text-left shadow-xs outline-none transition focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
+            current ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-primary/40"
+          }`}
+        >
+          {current ? (
+            <DetailOptionBody o={current} active />
+          ) : (
+            <span className="flex-1 text-sm text-muted-foreground">{placeholder}</span>
+          )}
+          <ChevronDown className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-[var(--radix-popover-trigger-width)] space-y-1 rounded-2xl p-1.5"
+      >
+        {options.map((o) => {
+          const active = o.value === value;
+          return (
+            <button
+              type="button"
+              key={o.value}
+              onClick={() => {
+                onChange(o.value);
+                setOpen(false);
+              }}
+              className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition ${
+                active ? "bg-primary/10" : "hover:bg-muted/60"
+              }`}
+            >
+              <DetailOptionBody o={o} active={active} />
+              <CheckCircle2 className={`size-4 shrink-0 ${active ? "text-primary" : "invisible"}`} />
+            </button>
+          );
+        })}
+      </PopoverContent>
+    </Popover>
   );
 }
