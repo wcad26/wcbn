@@ -1743,7 +1743,7 @@ function ApplicationPage() {
                           </Field>
                         )}
 
-                        <Field label="Preferred Sectors for Backing / Mentoring">
+                        <Field label="Preferred Sectors for Investing / Mentoring">
                           <Popover>
                             <PopoverTrigger asChild>
                               <button
