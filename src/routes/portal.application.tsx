@@ -2546,8 +2546,8 @@ function Field({ label, children, className = "" }: { label: string; children: R
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4 border-b border-border py-2">
-      <span className="text-muted-foreground text-xs">{label}</span>
-      <span className="font-medium text-xs text-right max-w-[65%] truncate">{value}</span>
+      <span className="shrink-0 max-w-[40%] text-muted-foreground text-xs">{label}</span>
+      <span className="min-w-0 font-medium text-xs text-right whitespace-pre-wrap break-words">{value}</span>
     </div>
   );
 }
