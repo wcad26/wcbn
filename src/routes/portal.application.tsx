@@ -1353,7 +1353,7 @@ function ApplicationPage() {
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {selectedCategory && (
-                    <span className="font-semibold text-primary mr-2">
+                    <span className="hidden sm:inline font-semibold text-primary mr-2">
                       {isInvestorMentor ? "💎 Investor & Mentor Track" : "🚀 Entrepreneur Track"}
                     </span>
                   )}
