@@ -1070,7 +1070,10 @@ export type Database = {
           event_id: string
           fee_is_group: boolean
           fee_paid_at: string | null
+          fee_payment_method: string | null
+          fee_payment_reference: string | null
           fee_status: string
+          financial_transaction_id: string | null
           group_id: string | null
           has_children: boolean
           id: string
@@ -1097,7 +1100,10 @@ export type Database = {
           event_id: string
           fee_is_group?: boolean
           fee_paid_at?: string | null
+          fee_payment_method?: string | null
+          fee_payment_reference?: string | null
           fee_status?: string
+          financial_transaction_id?: string | null
           group_id?: string | null
           has_children?: boolean
           id?: string
@@ -1124,7 +1130,10 @@ export type Database = {
           event_id?: string
           fee_is_group?: boolean
           fee_paid_at?: string | null
+          fee_payment_method?: string | null
+          fee_payment_reference?: string | null
           fee_status?: string
+          financial_transaction_id?: string | null
           group_id?: string | null
           has_children?: boolean
           id?: string
@@ -1147,6 +1156,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_pre_registrations_financial_transaction_id_fkey"
+            columns: ["financial_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "financial_transactions"
             referencedColumns: ["id"]
           },
           {
@@ -1475,6 +1491,7 @@ export type Database = {
           end_datetime: string | null
           expectations: string | null
           expectations_fr: string | null
+          fees_compulsory: boolean
           id: string
           image_url: string | null
           image_url_fr: string | null
@@ -1522,6 +1539,7 @@ export type Database = {
           end_datetime?: string | null
           expectations?: string | null
           expectations_fr?: string | null
+          fees_compulsory?: boolean
           id?: string
           image_url?: string | null
           image_url_fr?: string | null
@@ -1569,6 +1587,7 @@ export type Database = {
           end_datetime?: string | null
           expectations?: string | null
           expectations_fr?: string | null
+          fees_compulsory?: boolean
           id?: string
           image_url?: string | null
           image_url_fr?: string | null
@@ -1637,41 +1656,59 @@ export type Database = {
       exchange_rates: {
         Row: {
           ask: number
+          auto_sync: boolean
           base_code: string
           bid: number
+          buy_spread_pct: number
           created_at: string
           created_by: string | null
           effective_at: string
           id: string
           is_active: boolean
+          last_api_fetch_at: string | null
           mid: number | null
           quote_code: string
+          sell_spread_pct: number
+          spot_price: number | null
+          spread_mode: string
           updated_at: string
         }
         Insert: {
           ask: number
+          auto_sync?: boolean
           base_code: string
           bid: number
+          buy_spread_pct?: number
           created_at?: string
           created_by?: string | null
           effective_at?: string
           id?: string
           is_active?: boolean
+          last_api_fetch_at?: string | null
           mid?: number | null
           quote_code: string
+          sell_spread_pct?: number
+          spot_price?: number | null
+          spread_mode?: string
           updated_at?: string
         }
         Update: {
           ask?: number
+          auto_sync?: boolean
           base_code?: string
           bid?: number
+          buy_spread_pct?: number
           created_at?: string
           created_by?: string | null
           effective_at?: string
           id?: string
           is_active?: boolean
+          last_api_fetch_at?: string | null
           mid?: number | null
           quote_code?: string
+          sell_spread_pct?: number
+          spot_price?: number | null
+          spread_mode?: string
           updated_at?: string
         }
         Relationships: [
@@ -1723,8 +1760,23 @@ export type Database = {
           currency_code: string
           dcg_id: string | null
           description: string | null
+          donor_email: string | null
+          donor_name: string | null
+          donor_phone: string | null
+          gateway_transaction_id: string | null
           id: string
+          member_id: string | null
+          payment_confirmed_at: string | null
+          payment_confirmed_by: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          payment_status: string
+          receipt_sent_at: string | null
           recorded_by: string | null
+          refund_reason: string | null
+          refund_reference: string | null
+          refunded_at: string | null
+          refunded_by: string | null
           region_id: string | null
           scope: string
           transaction_date: string
@@ -1737,8 +1789,23 @@ export type Database = {
           currency_code: string
           dcg_id?: string | null
           description?: string | null
+          donor_email?: string | null
+          donor_name?: string | null
+          donor_phone?: string | null
+          gateway_transaction_id?: string | null
           id?: string
+          member_id?: string | null
+          payment_confirmed_at?: string | null
+          payment_confirmed_by?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
+          receipt_sent_at?: string | null
           recorded_by?: string | null
+          refund_reason?: string | null
+          refund_reference?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
           region_id?: string | null
           scope?: string
           transaction_date?: string
@@ -1751,8 +1818,23 @@ export type Database = {
           currency_code?: string
           dcg_id?: string | null
           description?: string | null
+          donor_email?: string | null
+          donor_name?: string | null
+          donor_phone?: string | null
+          gateway_transaction_id?: string | null
           id?: string
+          member_id?: string | null
+          payment_confirmed_at?: string | null
+          payment_confirmed_by?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string
+          receipt_sent_at?: string | null
           recorded_by?: string | null
+          refund_reason?: string | null
+          refund_reference?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
           region_id?: string | null
           scope?: string
           transaction_date?: string
@@ -1778,6 +1860,13 @@ export type Database = {
             columns: ["dcg_id"]
             isOneToOne: false
             referencedRelation: "dcgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_transactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
           {
@@ -2494,6 +2583,56 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_webhook_events: {
+        Row: {
+          created_at: string
+          event_type: string | null
+          flw_tx_id: string | null
+          id: string
+          processed_at: string | null
+          provider: string
+          raw_payload: Json | null
+          signature_valid: boolean
+          tenant_setting_id: string | null
+          tx_ref: string
+          verified_status: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string | null
+          flw_tx_id?: string | null
+          id?: string
+          processed_at?: string | null
+          provider?: string
+          raw_payload?: Json | null
+          signature_valid?: boolean
+          tenant_setting_id?: string | null
+          tx_ref: string
+          verified_status?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string | null
+          flw_tx_id?: string | null
+          id?: string
+          processed_at?: string | null
+          provider?: string
+          raw_payload?: Json | null
+          signature_valid?: boolean
+          tenant_setting_id?: string | null
+          tx_ref?: string
+          verified_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_webhook_events_tenant_setting_id_fkey"
+            columns: ["tenant_setting_id"]
+            isOneToOne: false
+            referencedRelation: "region_payment_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -2543,6 +2682,113 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_region_id_fkey"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      region_payment_settings: {
+        Row: {
+          allow_central_fallback: boolean
+          bank_accounts: Json
+          bank_instructions: string | null
+          bank_transfer_enabled: boolean
+          card_enabled: boolean
+          created_at: string
+          flutterwave_enabled: boolean
+          flutterwave_encryption_key: string | null
+          flutterwave_mode: string
+          flutterwave_public_key: string | null
+          flutterwave_secret_key: string | null
+          id: string
+          last_verified_at: string | null
+          last_verified_mode: string | null
+          mobile_money_enabled: boolean
+          primary_currency: string | null
+          primary_provider: string
+          provider: string
+          region_id: string | null
+          stripe_enabled: boolean
+          stripe_mode: string
+          stripe_publishable_key: string | null
+          stripe_secret_key: string | null
+          stripe_webhook_secret: string | null
+          tenant_code: string | null
+          tenant_type: string
+          updated_at: string
+          updated_by: string | null
+          wallet_pay_enabled: boolean
+          webhook_secret_hash: string | null
+        }
+        Insert: {
+          allow_central_fallback?: boolean
+          bank_accounts?: Json
+          bank_instructions?: string | null
+          bank_transfer_enabled?: boolean
+          card_enabled?: boolean
+          created_at?: string
+          flutterwave_enabled?: boolean
+          flutterwave_encryption_key?: string | null
+          flutterwave_mode?: string
+          flutterwave_public_key?: string | null
+          flutterwave_secret_key?: string | null
+          id?: string
+          last_verified_at?: string | null
+          last_verified_mode?: string | null
+          mobile_money_enabled?: boolean
+          primary_currency?: string | null
+          primary_provider?: string
+          provider?: string
+          region_id?: string | null
+          stripe_enabled?: boolean
+          stripe_mode?: string
+          stripe_publishable_key?: string | null
+          stripe_secret_key?: string | null
+          stripe_webhook_secret?: string | null
+          tenant_code?: string | null
+          tenant_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          wallet_pay_enabled?: boolean
+          webhook_secret_hash?: string | null
+        }
+        Update: {
+          allow_central_fallback?: boolean
+          bank_accounts?: Json
+          bank_instructions?: string | null
+          bank_transfer_enabled?: boolean
+          card_enabled?: boolean
+          created_at?: string
+          flutterwave_enabled?: boolean
+          flutterwave_encryption_key?: string | null
+          flutterwave_mode?: string
+          flutterwave_public_key?: string | null
+          flutterwave_secret_key?: string | null
+          id?: string
+          last_verified_at?: string | null
+          last_verified_mode?: string | null
+          mobile_money_enabled?: boolean
+          primary_currency?: string | null
+          primary_provider?: string
+          provider?: string
+          region_id?: string | null
+          stripe_enabled?: boolean
+          stripe_mode?: string
+          stripe_publishable_key?: string | null
+          stripe_secret_key?: string | null
+          stripe_webhook_secret?: string | null
+          tenant_code?: string | null
+          tenant_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          wallet_pay_enabled?: boolean
+          webhook_secret_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "region_payment_settings_region_id_fkey"
             columns: ["region_id"]
             isOneToOne: false
             referencedRelation: "regions"
@@ -4435,6 +4681,14 @@ export type Database = {
           is_upcoming: boolean
         }[]
       }
+      get_public_payment_capabilities: {
+        Args: {
+          _region_id?: string
+          _tenant_code?: string
+          _tenant_type?: string
+        }
+        Returns: Json
+      }
       get_public_region_dcgs: {
         Args: { _region_id: string }
         Returns: {
@@ -4466,6 +4720,7 @@ export type Database = {
         Args: { _perm: string; _user_id: string }
         Returns: boolean
       }
+      is_portal_staff: { Args: { _user_id: string }; Returns: boolean }
       is_principal_super_admin: { Args: { _user_id: string }; Returns: boolean }
       is_super_admin_user: { Args: { _user_id: string }; Returns: boolean }
       search_all_donors: {
