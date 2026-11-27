@@ -134,12 +134,15 @@ export const ADVISORY_DOMAINS = [
   "Legal, Regulatory & Risk Management",
 ] as const;
 
+export const ADVISORY_ONLY_CAPACITY = "Advisory & Mentorship Only (Non-financial)";
+
 export const TICKET_SIZES = [
-  "Advisory & Mentorship Only (Non-financial)",
-  "Micro-Angel (Under $5,000 / 3M XAF)",
-  "Seed Investment ($5,000 – $25,000 / 3M–15M XAF)",
-  "Growth Investment ($25,000 – $100,000 / 15M–60M XAF)",
-  "Scale / Institutional ($100,000+ / 60M+ XAF)",
+  ADVISORY_ONLY_CAPACITY,
+  "Micro Angel (Under $500 / 600k XAF)",
+  "Mini Angel ($500 - $1,700 / 600k - 1M XAF)",
+  "Macro Angel ($1,700 - $5,000 / 1M - 3M XAF)",
+  "Mega Angel ($5,000 - 10,000 / 3M - 6M XAF)",
+  "Super Angel (Above $10,000 / 6M XAF)",
 ] as const;
 
 export const MENTORSHIP_AVAILABILITY = [
@@ -1689,7 +1692,14 @@ function ApplicationPage() {
                     <div className="space-y-6">
                       <div className="grid gap-4 md:grid-cols-2">
                         <Field label="Primary Role / Profile *">
-                          <Select value={answers.investor_role} onValueChange={(v) => set("investor_role", v)}>
+                          <Select
+                            value={answers.investor_role}
+                            onValueChange={(v) => {
+                              set("investor_role", v);
+                              // The advisory-only capacity is reserved for mentors.
+                              if (!isMentorRole(v) && answers.ticket_size === ADVISORY_ONLY_CAPACITY) set("ticket_size", "");
+                            }}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Select your primary profile" />
                             </SelectTrigger>
@@ -1711,13 +1721,13 @@ function ApplicationPage() {
                           />
                         </Field>
 
-                        <Field label="Typical Ticket Size / Capital Capacity">
+                        <Field label="Annual Investment Capacity">
                           <Select value={answers.ticket_size} onValueChange={(v) => set("ticket_size", v)}>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select capital capacity" />
+                              <SelectValue placeholder="Select annual investment capacity" />
                             </SelectTrigger>
                             <SelectContent>
-                              {TICKET_SIZES.map((ts) => (
+                              {TICKET_SIZES.filter((ts) => ts !== ADVISORY_ONLY_CAPACITY || showMentorFields).map((ts) => (
                                 <SelectItem key={ts} value={ts}>
                                   {ts}
                                 </SelectItem>
@@ -1916,7 +1926,7 @@ function ApplicationPage() {
                       <>
                         <Row label="Primary Role" value={answers.investor_role || "—"} />
                         {answers.linkedin_url && <Row label="LinkedIn Profile" value={answers.linkedin_url} />}
-                        {answers.ticket_size && <Row label="Capital Capacity" value={answers.ticket_size} />}
+                        {answers.ticket_size && <Row label="Annual Investment Capacity" value={answers.ticket_size} />}
                         {showMentorFields && answers.mentorship_availability && (
                           <Row label="Mentorship Availability" value={answers.mentorship_availability} />
                         )}
@@ -2557,7 +2567,7 @@ function ApplicationPage() {
                       <>
                         <Row label="Investor / Mentor Role" value={answers.investor_role || "—"} />
                         {answers.linkedin_url && <Row label="LinkedIn" value={answers.linkedin_url} />}
-                        <Row label="Ticket Size" value={answers.ticket_size || "—"} />
+                        <Row label="Annual Investment Capacity" value={answers.ticket_size || "—"} />
                         {answers.experience_summary && <Row label="Experience" value={answers.experience_summary} />}
                         <Row label="Kingdom Vision" value={answers.kingdom_vision || "—"} />
                       </>

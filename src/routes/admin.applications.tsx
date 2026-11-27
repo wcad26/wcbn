@@ -539,7 +539,7 @@ function ApplicationsPipeline() {
                     </div>
 
                     <div className="rounded-2xl bg-muted/30 p-4 border border-border">
-                      <span className="text-muted-foreground block">Investment Ticket Size / Capacity</span>
+                      <span className="text-muted-foreground block">Annual Investment Capacity</span>
                       <p className="font-semibold text-foreground mt-1 text-sm">{answers["ticket_size"] || "—"}</p>
                     </div>
 
